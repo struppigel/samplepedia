@@ -29,7 +29,7 @@
               >
             </div>
             
-            <select name="difficulty" class="form-control form-control-sm mr-2" style="width: 120px;">
+            <select name="difficulty" class="form-control form-control-sm mr-2" style="width: 120px;" onchange="this.form.submit()">
               <option value="">All Difficulties</option>
               {% for value, label in difficulties %}
                 <option value="{{ value }}" {% if selected_difficulty == value %}selected{% endif %}>
@@ -38,7 +38,7 @@
               {% endfor %}
             </select>
             
-            <select name="tag" class="form-control form-control-sm mr-2" style="width: 120px;">
+            <select name="tag" class="form-control form-control-sm mr-2" style="width: 120px;" onchange="this.form.submit()">
               <option value="">All Tags</option>
               {% for tag in all_tags %}
                 <option value="{{ tag.name }}" {% if selected_tag == tag.name %}selected{% endif %}>
@@ -58,7 +58,7 @@
       </div>
 
       <div class="card-body p-0">
-        <table class="table table-hover text-nowrap">
+        <table class="table table-striped table-hover text-nowrap">
           <thead>
             <tr>
               <th>SHA256</th>

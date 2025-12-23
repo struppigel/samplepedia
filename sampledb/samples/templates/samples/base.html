@@ -53,6 +53,19 @@
     color: white !important;
     text-decoration: none;
   }
+  
+  /* Enhanced striped rows for dark mode */
+  .dark-mode .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .dark-mode .table-striped tbody tr:nth-of-type(even) {
+    background-color: rgba(0, 0, 0, 0.078);
+  }
+  
+  .dark-mode .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 </style>
 
   
@@ -70,10 +83,15 @@
 
       <ul class="navbar-nav ml-auto">
         <li class="nav-item">
-          <a href="/" class="nav-link">Browse</a>
+          <a href="/" class="nav-link">
+            <i class="fas fa-list"></i> Browse
+          </a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link" id="darkToggle">Dark</a>
+          <a href="#" class="nav-link" id="darkToggle">
+            <i class="fas fa-moon" id="darkIcon"></i>
+            <i class="fas fa-sun" id="lightIcon" style="display: none;"></i>
+          </a>
         </li>
         <li class="nav-item">
           <a href="/admin/" class="nav-link">Admin</a>
@@ -99,10 +117,23 @@
   const key = "adminlte-dark";
   const body = document.body;
   const toggle = document.getElementById("darkToggle");
+  const darkIcon = document.getElementById("darkIcon");
+  const lightIcon = document.getElementById("lightIcon");
+
+  function updateIcon() {
+    if (body.classList.contains("dark-mode")) {
+      darkIcon.style.display = "none";
+      lightIcon.style.display = "inline-block";
+    } else {
+      darkIcon.style.display = "inline-block";
+      lightIcon.style.display = "none";
+    }
+  }
 
   if (localStorage.getItem(key) === "on") {
     body.classList.add("dark-mode");
   }
+  updateIcon();
 
   if (toggle) {
     toggle.onclick = function (e) {
@@ -112,6 +143,7 @@
         key,
         body.classList.contains("dark-mode") ? "on" : "off"
       );
+      updateIcon();
     };
   }
 </script>
