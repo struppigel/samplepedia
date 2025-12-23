@@ -1,0 +1,147 @@
+{% extends "samples/base.html" %}
+
+{% block title %}Trainings Samples{% endblock %}
+
+{% block content %}
+
+<section class="content-header">
+  <div class="container-fluid">
+    <h1>Trainings Samples</h1>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Samples</h3>
+
+        <div class="card-tools">
+          <form method="get" class="form-inline">
+            <div class="input-group input-group-sm mr-2" style="width: 520px;">
+              <input
+                type="text"
+                name="q"
+                class="form-control"
+                placeholder="Search SHA256"
+                value="{{ q }}"
+              >
+            </div>
+            
+            <select name="difficulty" class="form-control form-control-sm mr-2" style="width: 120px;">
+              <option value="">All Difficulties</option>
+              {% for value, label in difficulties %}
+                <option value="{{ value }}" {% if selected_difficulty == value %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endfor %}
+            </select>
+            
+            <select name="tag" class="form-control form-control-sm mr-2" style="width: 120px;">
+              <option value="">All Tags</option>
+              {% for tag in all_tags %}
+                <option value="{{ tag.name }}" {% if selected_tag == tag.name %}selected{% endif %}>
+                  {{ tag.name }}
+                </option>
+              {% endfor %}
+            </select>
+            
+            <button type="submit" class="btn btn-default btn-sm">
+              Filter
+            </button>
+            {% if q or selected_tag or selected_difficulty %}
+              <a href="/" class="btn btn-sm btn-secondary ml-1">Clear</a>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+
+      <div class="card-body p-0">
+        <table class="table table-hover text-nowrap">
+          <thead>
+            <tr>
+              <th>SHA256</th>
+              <th>Difficulty</th>
+              <th>Tags</th>
+              <th>Goal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in page_obj %}
+            <tr>
+              <td>
+                <a href="{% url 'sample_detail' s.sha256 %}">
+                  <code>{{ s.sha256|slice:":12" }}…</code>
+                </a>
+              </td>
+
+<td>
+  <a href="/?difficulty={{ s.difficulty }}"
+     class="badge
+     {% if s.difficulty == 'easy' %}badge-success
+     {% elif s.difficulty == 'medium' %}badge-warning
+     {% elif s.difficulty == 'advanced' %}badge-danger
+     {% else %}badge-dark{% endif %}">
+    {{ s.difficulty }}
+  </a>
+</td>
+
+
+              <td>
+                {% for tag in s.tags.all %}
+                  <a href="/?tag={{ tag.name|urlencode }}" class="badge badge-tag">
+  {{ tag.name }}
+</a>
+
+                {% empty %}
+                  <span class="text-muted">—</span>
+                {% endfor %}
+              </td>
+
+              <td class="text-muted">
+                {{ s.goal|truncatechars:80 }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center text-muted">
+                No samples found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card-footer clearfix">
+        <span class="float-left text-muted">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        <ul class="pagination pagination-sm m-0 float-right">
+          {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.previous_page_number }}&q={{ q }}">
+              «
+            </a>
+          </li>
+          {% endif %}
+          {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.next_page_number }}&q={{ q }}">
+              »
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,48 @@
+.github
+
+# Python
+*.py[cod]
+*$py.class
+*.so
+__pycache__/
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+settings.py
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+
+# Backup files
+*.bak
+*.tmp
+*~
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
