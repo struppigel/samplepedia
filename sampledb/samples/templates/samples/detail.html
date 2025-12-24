@@ -6,7 +6,7 @@
 
 <section class="content-header">
   <div class="container-fluid">
-    <h1>Sample</h1>
+    <h1>Sample Record</h1>
   </div>
 </section>
 
@@ -21,27 +21,26 @@
         <!-- Metadata Card -->
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Metadata</h3>
+            <h3 class="card-title">System Info</h3>
             <div class="card-tools">
               <button id="likeButton" class="btn btn-sm {% if user_has_liked %}btn-danger{% else %}btn-outline-secondary{% endif %}" 
                       data-sha256="{{ sample.sha256 }}"
                       data-liked="{{ user_has_liked|yesno:'true,false' }}">
-                <i class="{% if user_has_liked %}fas{% else %}far{% endif %} fa-heart"></i>
-                <span id="likeCount">{{ sample.like_count }}</span>
+                ♥ <span id="likeCount">{{ sample.like_count }}</span>
               </button>
             </div>
           </div>
           <div class="card-body">
             <dl class="row mb-0">
-              <dt class="col-sm-3">SHA256</dt>
+              <dt class="col-sm-3">SHA256:</dt>
               <dd class="col-sm-9">
                 <code id="sha256Text">{{ sample.sha256 }}</code>
-                <button class="btn btn-sm btn-link text-muted ml-2" id="copySha256" title="Copy SHA256" style="text-decoration: none; box-shadow: none !important; outline: none !important;">
-                  <i class="fas fa-copy"></i>
+                <button class="btn btn-sm btn-link ml-2" id="copySha256" title="Copy SHA256" style="text-decoration: none; box-shadow: none !important; outline: none !important;">
+                  [COPY]
                 </button>
               </dd>
 
-              <dt class="col-sm-3">Difficulty</dt>
+              <dt class="col-sm-3">Difficulty:</dt>
               <dd class="col-sm-9">
                 <a href="/?difficulty={{ sample.difficulty }}"
                    class="badge
@@ -49,18 +48,18 @@
                    {% elif sample.difficulty == 'medium' %}badge-warning
                    {% elif sample.difficulty == 'advanced' %}badge-danger
                    {% else %}badge-dark{% endif %}">
-                  {{ sample.difficulty }}
+                  [{{ sample.difficulty|upper }}]
                 </a>
               </dd>
 
-              <dt class="col-sm-3">Tags</dt>
+              <dt class="col-sm-3">Tags:</dt>
               <dd class="col-sm-9">
                 {% for tag in sample.tags.all %}
                   <a href="/?tag={{ tag.name|urlencode }}" class="badge badge-tag">
-                    {{ tag.name }}
+                    #{{ tag.name|upper }}
                   </a>
                 {% empty %}
-                  <span class="text-muted">—</span>
+                  <span class="text-muted">[NONE]</span>
                 {% endfor %}
               </dd>
             </dl>
@@ -70,23 +69,23 @@
         <!-- Analysis Card -->
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Analysis</h3>
+            <h3 class="card-title">Analysis Data</h3>
           </div>
           <div class="card-body">
             {% if sample.goal %}
-              <h6>Goal</h6>
+              <h6>[ OBJECTIVE ]</h6>
               <p>{{ sample.goal|linebreaks }}</p>
             {% endif %}
 
             {% if sample.description %}
-              <h6>Description</h6>
+              <h6>[ DESCRIPTION ]</h6>
               <div class="spoiler">
                 <div class="spoiler-text">{{ sample.description|linebreaks }}</div>
               </div>
             {% endif %}
 
             {% if sample.tools %}
-              <h6>Tools</h6>
+              <h6>[ TOOLS REQUIRED ]</h6>
               <p>{{ sample.tools|linebreaks }}</p>
             {% endif %}
           </div>
@@ -101,10 +100,10 @@
         {% if sample.image %}
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Image</h3>
+            <h3 class="card-title">Visual Data</h3>
           </div>
           <div class="card-body">
-            <img src="{{ sample.image.url }}" alt="Sample image" class="img-fluid rounded">
+            <img src="{{ sample.image.url }}" alt="Sample image" class="img-fluid">
           </div>
         </div>
         {% endif %}
@@ -113,7 +112,7 @@
         {% if sample.youtube_id %}
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Video</h3>
+            <h3 class="card-title">Video Tutorial</h3>
           </div>
           <div class="card-body">
             <div class="embed-responsive embed-responsive-16by9"
@@ -132,18 +131,21 @@
     <!-- Download -->
     {% if sample.download_link %}
     <div class="card card-danger">
+      <div class="card-header">
+        <h3 class="card-title">WARNING: Malware Sample</h3>
+      </div>
       <div class="card-body">
         <a href="{{ sample.download_link }}"
            target="_blank"
            class="btn btn-danger">
-          Download sample
+          [DOWNLOAD SAMPLE]
         </a>
       </div>
     </div>
     {% endif %}
 
     <a href="/" class="btn btn-link mt-2">
-      ← Back to list
+      << [RETURN TO DATABASE]
     </a>
 
   </div>
@@ -154,14 +156,12 @@
 document.getElementById('copySha256').addEventListener('click', function() {
   const sha256Text = document.getElementById('sha256Text').textContent;
   navigator.clipboard.writeText(sha256Text).then(() => {
-    const icon = this.querySelector('i');
-    icon.classList.remove('fa-copy');
-    icon.classList.add('fa-check');
+    const originalText = this.textContent;
+    this.textContent = '[COPIED]';
     this.blur(); // Remove focus to prevent outline
     
     setTimeout(() => {
-      icon.classList.remove('fa-check');
-      icon.classList.add('fa-copy');
+      this.textContent = originalText;
     }, 2000);
   });
 });
@@ -171,7 +171,6 @@ document.getElementById('likeButton').addEventListener('click', function() {
   const button = this;
   const sha256 = button.dataset.sha256;
   const likeCountSpan = document.getElementById('likeCount');
-  const icon = button.querySelector('i');
   
   // Send AJAX request to toggle like
   fetch(`/sample/${sha256}/like/`, {
@@ -187,13 +186,9 @@ document.getElementById('likeButton').addEventListener('click', function() {
     if (data.liked) {
       button.classList.remove('btn-outline-secondary');
       button.classList.add('btn-danger');
-      icon.classList.remove('far');
-      icon.classList.add('fas');
     } else {
       button.classList.remove('btn-danger');
       button.classList.add('btn-outline-secondary');
-      icon.classList.remove('fas');
-      icon.classList.add('far');
     }
     
     // Update like count

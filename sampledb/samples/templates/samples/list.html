@@ -16,7 +16,7 @@
 
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Samples</h3>
+        <h3 class="card-title">Database Query</h3>
 
         <div class="card-tools">
           <form method="get" class="form-inline">
@@ -25,13 +25,13 @@
                 type="text"
                 name="q"
                 class="form-control"
-                placeholder="Search SHA256"
+                placeholder="> SEARCH SHA256..."
                 value="{{ q }}"
               >
             </div>
             
             <select name="difficulty" class="form-control form-control-sm mr-2" style="width: 120px;" onchange="this.form.submit()">
-              <option value="">All Difficulties</option>
+              <option value="">[ALL LEVELS]</option>
               {% for value, label in difficulties %}
                 <option value="{{ value }}" {% if selected_difficulty == value %}selected{% endif %}>
                   {{ label }}
@@ -49,10 +49,10 @@
             </select>
             
             <button type="submit" class="btn btn-default btn-sm">
-              Filter
+              [EXECUTE]
             </button>
             {% if q or selected_tag or selected_difficulty %}
-              <a href="/" class="btn btn-sm btn-secondary ml-1">Clear</a>
+              <a href="/" class="btn btn-sm btn-secondary ml-1">[RESET]</a>
             {% endif %}
           </form>
         </div>
@@ -90,7 +90,7 @@
      {% elif s.difficulty == 'medium' %}badge-warning
      {% elif s.difficulty == 'advanced' %}badge-danger
      {% else %}badge-dark{% endif %}">
-    {{ s.difficulty }}
+    [{{ s.difficulty|upper }}]
   </a>
 </td>
 
@@ -98,11 +98,11 @@
               <td>
                 {% for tag in s.tags.all %}
                   <a href="/?tag={{ tag.name|urlencode }}" class="badge badge-tag">
-  {{ tag.name }}
+  #{{ tag.name|upper }}
 </a>
 
                 {% empty %}
-                  <span class="text-muted">—</span>
+                  <span class="text-muted">[NONE]</span>
                 {% endfor %}
               </td>
 
@@ -112,18 +112,18 @@
 
               <td style="text-align: center;">
                 {% if s.like_count > 0 %}
-                  <span class="text-danger" title="{{ s.like_count }} like{{ s.like_count|pluralize }}">
-                    <i class="fas fa-heart"></i> {{ s.like_count }}
+                  <span style="color: #ff0066;" title="{{ s.like_count }} like{{ s.like_count|pluralize }}">
+                    ♥ {{ s.like_count }}
                   </span>
                 {% else %}
-                  <span class="text-muted">—</span>
+                  <span class="text-muted">[0]</span>
                 {% endif %}
               </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="4" class="text-center text-muted">
-                No samples found.
+              <td colspan="5" class="text-center">
+                [NO RECORDS FOUND IN DATABASE]
               </td>
             </tr>
             {% endfor %}
@@ -132,8 +132,8 @@
       </div>
 
       <div class="card-footer clearfix">
-        <span class="float-left text-muted">
-          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        <span class="float-left">
+          [PAGE {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}]
         </span>
 
         <ul class="pagination pagination-sm m-0 float-right">
@@ -141,7 +141,7 @@
           <li class="page-item">
             <a class="page-link"
                href="?page={{ page_obj.previous_page_number }}&q={{ q }}">
-              «
+              << PREV
             </a>
           </li>
           {% endif %}
@@ -149,7 +149,7 @@
           <li class="page-item">
             <a class="page-link"
                href="?page={{ page_obj.next_page_number }}&q={{ q }}">
-              »
+              NEXT >>
             </a>
           </li>
           {% endif %}
