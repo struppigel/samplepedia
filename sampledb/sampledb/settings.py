@@ -151,6 +151,9 @@ CLOUDINARY_STORAGE = {
 if config('CLOUDINARY_CLOUD_NAME', default=''):
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     MEDIA_URL = '/media/'  # Cloudinary will handle this
+    
+    # Configure easy-thumbnails to use Cloudinary
+    THUMBNAIL_DEFAULT_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 else:
     # Local development - use local file storage
     MEDIA_URL = "/media/"
