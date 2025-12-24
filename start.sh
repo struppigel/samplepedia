@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Change to the Django project directory
+cd sampledb
+
 # Run database migrations
 python manage.py migrate --no-input
 
