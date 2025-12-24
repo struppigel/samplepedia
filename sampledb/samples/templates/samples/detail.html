@@ -36,7 +36,7 @@
               <dt class="col-sm-3">SHA256</dt>
               <dd class="col-sm-9">
                 <code id="sha256Text">{{ sample.sha256 }}</code>
-                <button class="btn btn-sm btn-outline-secondary ml-2" id="copySha256" title="Copy SHA256">
+                <button class="btn btn-sm btn-link text-muted ml-2" id="copySha256" title="Copy SHA256" style="text-decoration: none; box-shadow: none !important; outline: none !important;">
                   <i class="fas fa-copy"></i>
                 </button>
               </dd>
@@ -157,14 +157,11 @@ document.getElementById('copySha256').addEventListener('click', function() {
     const icon = this.querySelector('i');
     icon.classList.remove('fa-copy');
     icon.classList.add('fa-check');
-    this.classList.remove('btn-outline-secondary');
-    this.classList.add('btn-success');
+    this.blur(); // Remove focus to prevent outline
     
     setTimeout(() => {
       icon.classList.remove('fa-check');
       icon.classList.add('fa-copy');
-      this.classList.remove('btn-success');
-      this.classList.add('btn-outline-secondary');
     }, 2000);
   });
 });

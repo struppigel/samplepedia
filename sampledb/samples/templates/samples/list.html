@@ -1,4 +1,5 @@
 {% extends "samples/base.html" %}
+{% load thumbnail %}
 
 {% block title %}Trainings Samples{% endblock %}
 
@@ -65,14 +66,20 @@
               <th>Difficulty</th>
               <th>Tags</th>
               <th>Goal</th>
+              <th style="width: 80px; text-align: center;">Likes</th>
             </tr>
           </thead>
           <tbody>
             {% for s in page_obj %}
             <tr>
-              <td>
-                <a href="{% url 'sample_detail' s.sha256 %}">
-                  <code>{{ s.sha256|slice:":12" }}…</code>
+              <td style="max-width: 200px;">
+                <a href="{% url 'sample_detail' s.sha256 %}" class="d-flex align-items-center" style="min-width: 0;">
+                  {% if s.image %}
+                    <img src="{% thumbnail s.image 40x40 crop %}" alt="Thumbnail" class="rounded mr-2" style="width: 40px; height: 40px; object-fit: cover; flex-shrink: 0;">
+                  {% else %}
+                    <div class="rounded mr-2 bg-secondary" style="width: 40px; height: 40px; display: inline-block; flex-shrink: 0;"></div>
+                  {% endif %}
+                  <code style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="{{ s.sha256 }}">{{ s.sha256 }}</code>
                 </a>
               </td>
 
@@ -101,6 +108,16 @@
 
               <td class="text-muted">
                 {{ s.goal|truncatechars:80 }}
+              </td>
+
+              <td style="text-align: center;">
+                {% if s.like_count > 0 %}
+                  <span class="text-danger" title="{{ s.like_count }} like{{ s.like_count|pluralize }}">
+                    <i class="fas fa-heart"></i> {{ s.like_count }}
+                  </span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
               </td>
             </tr>
             {% empty %}
