@@ -48,7 +48,6 @@ class Sample(models.Model):
     tags = TaggableManager(blank=True)
     youtube_id = models.CharField(max_length=32, blank=True, verbose_name="YouTube ID")
     image = CloudinaryField('image')
-    #image = models.ImageField(upload_to='sample_images/', blank=True, verbose_name="Image")
     like_count = models.IntegerField(default=0, verbose_name="Like count")
 
     def __str__(self):
