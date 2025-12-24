@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from .models import Sample, Difficulty
 from django.core.paginator import Paginator
+from django.db.models.functions import Lower
 from taggit.models import Tag
 
 
@@ -30,7 +31,7 @@ def sample_list(request):
     # Get all tags used in samples
     all_tags = Tag.objects.filter(
         taggit_taggeditem_items__content_type__model='sample'
-    ).distinct().order_by('name')
+    ).distinct().order_by(Lower('name'))
 
     return render(request, "samples/list.html", {
         "page_obj": page_obj,
