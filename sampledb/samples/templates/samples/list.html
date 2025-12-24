@@ -1,5 +1,5 @@
 {% extends "samples/base.html" %}
-{% load thumbnail %}
+{% load cloudinary %}
 
 {% block title %}Trainings Samples{% endblock %}
 
@@ -75,7 +75,7 @@
               <td style="max-width: 200px;">
                 <a href="{% url 'sample_detail' s.sha256 %}" class="d-flex align-items-center" style="min-width: 0;">
                   {% if s.image %}
-                    <img src="{% thumbnail s.image 40x40 crop %}" alt="Thumbnail" class="rounded mr-2" style="width: 40px; height: 40px; object-fit: cover; flex-shrink: 0;">
+                    <img src="{% cloudinary_url s.image width=40 height=40 crop='fill' %}" alt="Thumbnail" class="rounded mr-2" style="width: 40px; height: 40px; object-fit: cover; flex-shrink: 0;">
                   {% else %}
                     <div class="rounded mr-2 bg-secondary" style="width: 40px; height: 40px; display: inline-block; flex-shrink: 0;"></div>
                   {% endif %}
