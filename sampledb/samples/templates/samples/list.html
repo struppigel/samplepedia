@@ -127,15 +127,21 @@ function toggleFavorites(form) {
               </td>
 
               <td style="text-align: center;">
-                {% if s.id in user_favorited_ids %}
-                  <span class="text-danger" title="{{ s.favorite_count }} favorite{{ s.favorite_count|pluralize }}">
-                    <i class="fas fa-heart"></i> {{ s.favorite_count }}
-                  </span>
-                {% else %}
-                  <span class="text-muted" title="{{ s.favorite_count }} favorite{{ s.favorite_count|pluralize }}">
-                    <i class="far fa-heart"></i> {{ s.favorite_count }}
-                  </span>
-                {% endif %}
+                <button class="btn btn-link p-0 favorite-btn" 
+                        data-sha256="{{ s.sha256 }}"
+                        data-sample-id="{{ s.id }}"
+                        data-liked="{% if s.id in user_favorited_ids %}true{% else %}false{% endif %}"
+                        style="border: none; background: none; cursor: pointer;">
+                  {% if s.id in user_favorited_ids %}
+                    <span class="text-danger" title="{{ s.favorite_count }} favorite{{ s.favorite_count|pluralize }}">
+                      <i class="fas fa-heart"></i> <span class="favorite-count">{{ s.favorite_count }}</span>
+                    </span>
+                  {% else %}
+                    <span class="text-muted" title="{{ s.favorite_count }} favorite{{ s.favorite_count|pluralize }}">
+                      <i class="far fa-heart"></i> <span class="favorite-count">{{ s.favorite_count }}</span>
+                    </span>
+                  {% endif %}
+                </button>
               </td>
             </tr>
             {% empty %}

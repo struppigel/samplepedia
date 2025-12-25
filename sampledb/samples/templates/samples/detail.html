@@ -23,11 +23,19 @@
           <div class="card-header">
             <h3 class="card-title">Metadata</h3>
             <div class="card-tools">
-              <button id="likeButton" class="btn btn-sm {% if user_has_liked %}btn-danger{% else %}btn-outline-secondary{% endif %}" 
+              <button class="btn btn-link p-0 favorite-btn" 
                       data-sha256="{{ sample.sha256 }}"
-                      data-liked="{{ user_has_liked|yesno:'true,false' }}">
-                <i class="{% if user_has_liked %}fas{% else %}far{% endif %} fa-heart"></i>
-                <span id="likeCount">{{ sample.favorite_count }}</span>
+                      data-liked="{{ user_has_liked|yesno:'true,false' }}"
+                      style="border: none; background: none; cursor: pointer;">
+                {% if user_has_liked %}
+                  <span class="text-danger" title="{{ sample.favorite_count }} favorite{{ sample.favorite_count|pluralize }}">
+                    <i class="fas fa-heart"></i> <span class="favorite-count">{{ sample.favorite_count }}</span>
+                  </span>
+                {% else %}
+                  <span class="text-muted" title="{{ sample.favorite_count }} favorite{{ sample.favorite_count|pluralize }}">
+                    <i class="far fa-heart"></i> <span class="favorite-count">{{ sample.favorite_count }}</span>
+                  </span>
+                {% endif %}
               </button>
             </div>
           </div>
@@ -169,65 +177,6 @@ document.getElementById('copySha256').addEventListener('click', function() {
     }, 2000);
   });
 });
-
-// Like button functionality
-document.getElementById('likeButton').addEventListener('click', function() {
-  const button = this;
-  const sha256 = button.dataset.sha256;
-  const likeCountSpan = document.getElementById('likeCount');
-  const icon = button.querySelector('i');
-  
-  // Send AJAX request to toggle like
-  fetch(`/sample/${sha256}/like/`, {
-    method: 'POST',
-    headers: {
-      'X-CSRFToken': getCookie('csrftoken'),
-      'Content-Type': 'application/json'
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    // Check if login is required
-    if (data.error && data.redirect) {
-      window.location.href = data.redirect;
-      return;
-    }
-    
-    // Update button appearance
-    if (data.liked) {
-      button.classList.remove('btn-outline-secondary');
-      button.classList.add('btn-danger');
-      icon.classList.remove('far');
-      icon.classList.add('fas');
-    } else {
-      button.classList.remove('btn-danger');
-      button.classList.add('btn-outline-secondary');
-      icon.classList.remove('fas');
-      icon.classList.add('far');
-    }
-    
-    // Update like count
-    likeCountSpan.textContent = data.like_count;
-    button.dataset.liked = data.liked;
-  })
-  .catch(error => console.error('Error:', error));
-});
-
-// Helper function to get CSRF token from cookies
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-}
 </script>
 
 {% endblock %}
