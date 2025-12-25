@@ -241,6 +241,17 @@
     display: none;
   }
   
+  /* Light mode spoiler improvements */
+  body:not(.dark-mode) .spoiler {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+  }
+  
+  body:not(.dark-mode) .spoiler::after {
+    background: #6c757d;
+    color: white;
+  }
+  
   /* Headings */
   h1, h2, h3, h4, h5, h6 {
     font-weight: 600;

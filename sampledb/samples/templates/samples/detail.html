@@ -89,11 +89,11 @@
             {% if sample.description %}
               <h6>Description</h6>
               <div class="spoiler">
-                <div class="spoiler-text">{{ sample.description|linebreaks }}</div>
+                <div class="spoiler-text" style="margin: 0;">{{ sample.description|linebreaks }}</div>
               </div>
             {% endif %}
 
-            <h6>Tools</h6>
+            <h6 style="margin-top: 0.5rem;">Tools</h6>
             <p>
               {% for tool in sample.tools.all %}
                 <span class="badge badge-secondary">{{ tool.name }}</span>
