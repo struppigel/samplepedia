@@ -85,7 +85,7 @@
               <td>
                 <a href="/?difficulty={{ s.difficulty }}"
                   class="badge
-                  {% if s.difficulty == 'easy' %}badge-success
+                  {% if s.difficulty == 'easy' %}badge-info
                   {% elif s.difficulty == 'medium' %}badge-warning
                   {% elif s.difficulty == 'advanced' %}badge-danger
                   {% else %}badge-dark{% endif %}">
@@ -103,8 +103,10 @@
                 {% endfor %}
               </td>
 
-              <td class="text-muted">
-                {{ s.goal|truncatechars:80 }}
+              <td>
+                <a href="{% url 'sample_detail' s.sha256 %}" class="text-muted">
+                  {{ s.goal|truncatechars:80 }}
+                </a>
               </td>
 
               <td style="text-align: center;">

@@ -45,7 +45,7 @@
               <dd class="col-sm-9">
                 <a href="/?difficulty={{ sample.difficulty }}"
                    class="badge
-                   {% if sample.difficulty == 'easy' %}badge-success
+                   {% if sample.difficulty == 'easy' %}badge-info
                    {% elif sample.difficulty == 'medium' %}badge-warning
                    {% elif sample.difficulty == 'advanced' %}badge-danger
                    {% else %}badge-dark{% endif %}">
@@ -133,10 +133,14 @@
     {% if sample.download_link %}
     <div class="card card-danger">
       <div class="card-body">
+        <h5 class="text-danger mb-2">
+          <i class="fas fa-exclamation-triangle"></i> Warning: Malware
+        </h5>
+        <p class="text-muted mb-3">This is a live malware sample. Handle with extreme caution in an isolated environment.</p>
         <a href="{{ sample.download_link }}"
            target="_blank"
            class="btn btn-danger">
-          Download sample
+          <i class="fas fa-download"></i> Download sample
         </a>
       </div>
     </div>
