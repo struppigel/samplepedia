@@ -99,7 +99,7 @@ function toggleFavorites(form) {
                   {% endif %}
                 </a>
               </th>
-              <th>Tags</th>
+              <th><span class="text-dark">Tags</span></th>
               <th style="cursor: pointer;">
                 <a href="?{% if q %}q={{ q }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if selected_difficulty %}difficulty={{ selected_difficulty }}&{% endif %}{% if favorites_only %}favorites=true&{% endif %}sort={% if sort == 'goal' %}-goal{% else %}goal{% endif %}" class="text-dark text-decoration-none">
                   Goal
