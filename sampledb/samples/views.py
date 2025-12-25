@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Sample, Difficulty
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
+from django.db.models import Count, Case, When, IntegerField
 from taggit.models import Tag
 
 
@@ -12,8 +13,24 @@ def sample_list(request):
     tag = request.GET.get("tag")
     difficulty = request.GET.get("difficulty")
     favorites_only = request.GET.get("favorites") == "true"
+    sort = request.GET.get("sort", "-id")  # Default to reverse chronological
 
-    samples = Sample.objects.all().order_by("-id")
+    # Annotate with favorite count and difficulty order for sorting
+    samples = Sample.objects.annotate(
+        favorite_count_annotated=Count('favorited_by'),
+        difficulty_order=Case(
+            When(difficulty='easy', then=1),
+            When(difficulty='medium', then=2),
+            When(difficulty='advanced', then=3),
+            When(difficulty='expert', then=4),
+            output_field=IntegerField(),
+        ),
+        has_video=Case(
+            When(youtube_id='', then=0),
+            default=1,
+            output_field=IntegerField(),
+        )
+    ).all()
 
     if q:
         samples = samples.filter(sha256__icontains=q)
@@ -29,6 +46,24 @@ def sample_list(request):
         samples = samples.filter(favorited_by=request.user)
 
     samples = samples.distinct()
+    
+    # Apply sorting with custom difficulty order
+    valid_sorts = {
+        'sha256': 'sha256',
+        '-sha256': '-sha256',
+        'difficulty': 'difficulty_order',
+        '-difficulty': '-difficulty_order',
+        'goal': 'goal',
+        '-goal': '-goal',
+        'video': 'has_video',
+        '-video': '-has_video',
+        'likes': 'favorite_count_annotated',
+        '-likes': '-favorite_count_annotated',
+        '-id': '-id',  # Default
+    }
+    
+    sort_field = valid_sorts.get(sort, '-id')
+    samples = samples.order_by(sort_field, '-id')  # Secondary sort by ID for consistency
 
     paginator = Paginator(samples, 25)
     page_number = request.GET.get("page")
@@ -38,7 +73,7 @@ def sample_list(request):
     user_favorited_ids = set()
     if request.user.is_authenticated:
         user_favorited_ids = set(
-            Sample.objects.filter(favorited_by=request.user).values_list('id', flat=True)
+            request.user.favorite_samples.values_list('id', flat=True)
         )
     
     # Get all tags used in samples
@@ -55,6 +90,7 @@ def sample_list(request):
         "difficulties": Difficulty.choices,
         "favorites_only": favorites_only,
         "user_favorited_ids": user_favorited_ids,
+        "sort": sort,
     })
 
 

@@ -79,11 +79,57 @@ function toggleFavorites(form) {
         <table class="table table-striped table-hover text-nowrap table-sm">
           <thead>
             <tr>
-              <th>SHA256</th>
-              <th>Difficulty</th>
+              <th style="cursor: pointer;">
+                <a href="?{% if q %}q={{ q }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if selected_difficulty %}difficulty={{ selected_difficulty }}&{% endif %}{% if favorites_only %}favorites=true&{% endif %}sort={% if sort == 'sha256' %}-sha256{% else %}sha256{% endif %}" class="text-dark text-decoration-none">
+                  SHA256
+                  {% if sort == 'sha256' %}
+                    <i class="fas fa-sort-up"></i>
+                  {% elif sort == '-sha256' %}
+                    <i class="fas fa-sort-down"></i>
+                  {% endif %}
+                </a>
+              </th>
+              <th style="cursor: pointer;">
+                <a href="?{% if q %}q={{ q }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if selected_difficulty %}difficulty={{ selected_difficulty }}&{% endif %}{% if favorites_only %}favorites=true&{% endif %}sort={% if sort == 'difficulty' %}-difficulty{% else %}difficulty{% endif %}" class="text-dark text-decoration-none">
+                  Difficulty
+                  {% if sort == 'difficulty' %}
+                    <i class="fas fa-sort-up"></i>
+                  {% elif sort == '-difficulty' %}
+                    <i class="fas fa-sort-down"></i>
+                  {% endif %}
+                </a>
+              </th>
               <th>Tags</th>
-              <th>Goal</th>
-              <th style="width: 80px; text-align: center;">Likes</th>
+              <th style="cursor: pointer;">
+                <a href="?{% if q %}q={{ q }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if selected_difficulty %}difficulty={{ selected_difficulty }}&{% endif %}{% if favorites_only %}favorites=true&{% endif %}sort={% if sort == 'goal' %}-goal{% else %}goal{% endif %}" class="text-dark text-decoration-none">
+                  Goal
+                  {% if sort == 'goal' %}
+                    <i class="fas fa-sort-up"></i>
+                  {% elif sort == '-goal' %}
+                    <i class="fas fa-sort-down"></i>
+                  {% endif %}
+                </a>
+              </th>
+              <th style="width: 60px; text-align: center; cursor: pointer;">
+                <a href="?{% if q %}q={{ q }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if selected_difficulty %}difficulty={{ selected_difficulty }}&{% endif %}{% if favorites_only %}favorites=true&{% endif %}sort={% if sort == 'video' %}-video{% else %}video{% endif %}" class="text-dark text-decoration-none">
+                  Video
+                  {% if sort == 'video' %}
+                    <i class="fas fa-sort-up"></i>
+                  {% elif sort == '-video' %}
+                    <i class="fas fa-sort-down"></i>
+                  {% endif %}
+                </a>
+              </th>
+              <th style="width: 80px; text-align: center; cursor: pointer;">
+                <a href="?{% if q %}q={{ q }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if selected_difficulty %}difficulty={{ selected_difficulty }}&{% endif %}{% if favorites_only %}favorites=true&{% endif %}sort={% if sort == 'likes' %}-likes{% else %}likes{% endif %}" class="text-dark text-decoration-none">
+                  Likes
+                  {% if sort == 'likes' %}
+                    <i class="fas fa-sort-up"></i>
+                  {% elif sort == '-likes' %}
+                    <i class="fas fa-sort-down"></i>
+                  {% endif %}
+                </a>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -127,6 +173,16 @@ function toggleFavorites(form) {
               </td>
 
               <td style="text-align: center;">
+                {% if s.youtube_id %}
+                  <a href="https://www.youtube.com/watch?v={{ s.youtube_id }}" target="_blank" title="Watch video tutorial">
+                    <i class="fab fa-youtube text-danger" style="font-size: 1.2em;"></i>
+                  </a>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+
+              <td style="text-align: center;">
                 <button class="btn btn-link p-0 favorite-btn" 
                         data-sha256="{{ s.sha256 }}"
                         data-sample-id="{{ s.id }}"
@@ -146,7 +202,7 @@ function toggleFavorites(form) {
             </tr>
             {% empty %}
             <tr>
-              <td colspan="4" class="text-center text-muted">
+              <td colspan="6" class="text-center text-muted">
                 No samples found.
               </td>
             </tr>
@@ -164,7 +220,7 @@ function toggleFavorites(form) {
           {% if page_obj.has_previous %}
           <li class="page-item">
             <a class="page-link"
-               href="?page={{ page_obj.previous_page_number }}&q={{ q }}">
+               href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}{% if selected_difficulty %}&difficulty={{ selected_difficulty }}{% endif %}{% if favorites_only %}&favorites=true{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
               «
             </a>
           </li>
@@ -172,7 +228,7 @@ function toggleFavorites(form) {
           {% if page_obj.has_next %}
           <li class="page-item">
             <a class="page-link"
-               href="?page={{ page_obj.next_page_number }}&q={{ q }}">
+               href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_tag %}&tag={{ selected_tag }}{% endif %}{% if selected_difficulty %}&difficulty={{ selected_difficulty }}{% endif %}{% if favorites_only %}&favorites=true{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
               »
             </a>
           </li>
