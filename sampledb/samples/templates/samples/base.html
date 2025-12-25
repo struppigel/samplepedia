@@ -257,6 +257,17 @@
 </head>
 
 <body class="hold-transition layout-top-nav">
+
+<!-- Apply dark mode immediately before page renders -->
+<script>
+  (function() {
+    const key = "adminlte-dark";
+    if (localStorage.getItem(key) === "on") {
+      document.body.classList.add("dark-mode");
+    }
+  })();
+</script>
+
 <div class="wrapper">
 
   <!-- Navbar -->
@@ -339,9 +350,7 @@
     }
   }
 
-  if (localStorage.getItem(key) === "on") {
-    body.classList.add("dark-mode");
-  }
+  // Update icon on page load
   updateIcon();
 
   if (toggle) {
