@@ -27,7 +27,7 @@
                       data-sha256="{{ sample.sha256 }}"
                       data-liked="{{ user_has_liked|yesno:'true,false' }}">
                 <i class="{% if user_has_liked %}fas{% else %}far{% endif %} fa-heart"></i>
-                <span id="likeCount">{{ sample.like_count }}</span>
+                <span id="likeCount">{{ sample.favorite_count }}</span>
               </button>
             </div>
           </div>
@@ -136,7 +136,7 @@
         <h5 class="text-danger mb-2">
           <i class="fas fa-exclamation-triangle"></i> Warning: Malware
         </h5>
-        <p class="text-muted mb-3">This is a live malware sample. Handle with extreme caution in an isolated environment.</p>
+        <p class="text-muted mb-3">This is a live malware sample. Handle in an isolated environment. Archive is password protected with the password "infected"</p>
         <a href="{{ sample.download_link }}"
            target="_blank"
            class="btn btn-danger">
@@ -187,6 +187,12 @@ document.getElementById('likeButton').addEventListener('click', function() {
   })
   .then(response => response.json())
   .then(data => {
+    // Check if login is required
+    if (data.error && data.redirect) {
+      window.location.href = data.redirect;
+      return;
+    }
+    
     // Update button appearance
     if (data.liked) {
       button.classList.remove('btn-outline-secondary');

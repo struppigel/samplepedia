@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from taggit.managers import TaggableManager
 from cloudinary.models import CloudinaryField
 
@@ -49,6 +50,11 @@ class Sample(models.Model):
     youtube_id = models.CharField(max_length=32, blank=True, verbose_name="YouTube ID")
     image = CloudinaryField('image')
     like_count = models.IntegerField(default=0, verbose_name="Like count")
+    favorited_by = models.ManyToManyField(User, related_name='favorite_samples', blank=True)
+    
+    @property
+    def favorite_count(self):
+        return self.favorited_by.count()
 
     def __str__(self):
         return self.sha256

@@ -92,12 +92,6 @@
     box-shadow: 0 0 0 0.2rem rgba(230, 57, 70, 0.25) !important;
   }
   
-  /* Dark mode select dropdown options */
-  .dark-mode select.form-control option {
-    background-color: var(--card-bg);
-    color: var(--text-primary);
-  }
-  
   /* Dark mode pagination */
   .dark-mode .pagination .page-link {
     background-color: var(--card-bg) !important;
@@ -176,11 +170,13 @@
   
   /* Badge hover effects */
   a.badge {
-    transition: opacity 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
   }
   
   a.badge:hover {
-    opacity: 0.85;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    opacity: 0.9;
     text-decoration: none;
   }
   
@@ -266,9 +262,32 @@
             <i class="fas fa-sun" id="lightIcon" style="display: none;"></i>
           </a>
         </li>
-        <li class="nav-item">
-          <a href="/admin/" class="nav-link">Admin</a>
-        </li>
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+            <span class="nav-link text-muted">
+              <i class="fas fa-user"></i> {{ user.username }}
+            </span>
+          </li>
+          <li class="nav-item">
+            <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+              {% csrf_token %}
+              <button type="submit" class="nav-link btn btn-link" style="border: none; background: none; cursor: pointer;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </button>
+            </form>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a href="{% url 'login' %}" class="nav-link">
+              <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+          </li>
+        {% endif %}
+        {% if user.is_staff %}
+          <li class="nav-item">
+            <a href="/admin/" class="nav-link">Admin</a>
+          </li>
+        {% endif %}
       </ul>
     </div>
   </nav>

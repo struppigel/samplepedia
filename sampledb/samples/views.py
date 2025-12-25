@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 from .models import Sample, Difficulty
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
@@ -10,6 +11,7 @@ def sample_list(request):
     q = request.GET.get("q", "")
     tag = request.GET.get("tag")
     difficulty = request.GET.get("difficulty")
+    favorites_only = request.GET.get("favorites") == "true"
 
     samples = Sample.objects.all().order_by("-id")
 
@@ -21,12 +23,23 @@ def sample_list(request):
 
     if difficulty:
         samples = samples.filter(difficulty=difficulty)
+    
+    # Filter by favorites if requested and user is authenticated
+    if favorites_only and request.user.is_authenticated:
+        samples = samples.filter(favorited_by=request.user)
 
     samples = samples.distinct()
 
     paginator = Paginator(samples, 25)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+    
+    # Get user's favorited sample IDs for display
+    user_favorited_ids = set()
+    if request.user.is_authenticated:
+        user_favorited_ids = set(
+            Sample.objects.filter(favorited_by=request.user).values_list('id', flat=True)
+        )
     
     # Get all tags used in samples
     all_tags = Tag.objects.filter(
@@ -40,6 +53,8 @@ def sample_list(request):
         "selected_difficulty": difficulty,
         "all_tags": all_tags,
         "difficulties": Difficulty.choices,
+        "favorites_only": favorites_only,
+        "user_favorited_ids": user_favorited_ids,
     })
 
 
@@ -47,44 +62,38 @@ def sample_list(request):
 def sample_detail(request, sha256):
     sample = get_object_or_404(Sample, sha256=sha256)
     
-    # Check if user has liked this sample (stored in cookies)
-    liked_samples = request.COOKIES.get('liked_samples', '').split(',')
-    user_has_liked = sha256 in liked_samples
+    # Check if user has favorited this sample
+    user_has_favorited = False
+    if request.user.is_authenticated:
+        user_has_favorited = sample.favorited_by.filter(id=request.user.id).exists()
     
     return render(request, "samples/detail.html", {
         "sample": sample,
-        "user_has_liked": user_has_liked,
+        "user_has_liked": user_has_favorited,
     })
 
 
 def toggle_like(request, sha256):
-    """Toggle like for a sample using cookies to track"""
+    """Toggle favorite for a sample (requires authentication)"""
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'error': 'Login required',
+            'redirect': '/accounts/login/'
+        }, status=401)
+    
     sample = get_object_or_404(Sample, sha256=sha256)
     
-    # Get list of liked samples from cookies
-    liked_samples = request.COOKIES.get('liked_samples', '').split(',')
-    liked_samples = [s for s in liked_samples if s]  # Remove empty strings
-    
-    if sha256 in liked_samples:
-        # Unlike: remove from cookie and decrement counter
-        liked_samples.remove(sha256)
-        sample.like_count = max(0, sample.like_count - 1)
-        user_has_liked = False
+    if sample.favorited_by.filter(id=request.user.id).exists():
+        # Remove from favorites
+        sample.favorited_by.remove(request.user)
+        user_has_favorited = False
     else:
-        # Like: add to cookie and increment counter
-        liked_samples.append(sha256)
-        sample.like_count += 1
-        user_has_liked = True
-    
-    sample.save()
+        # Add to favorites
+        sample.favorited_by.add(request.user)
+        user_has_favorited = True
     
     # Return JSON response for AJAX
-    response = JsonResponse({
-        'liked': user_has_liked,
-        'like_count': sample.like_count
+    return JsonResponse({
+        'liked': user_has_favorited,
+        'like_count': sample.favorite_count
     })
-    
-    # Update cookie with new liked samples list
-    response.set_cookie('liked_samples', ','.join(liked_samples), max_age=365*24*60*60)  # 1 year
-    
-    return response

@@ -31,7 +31,7 @@
             </div>
             
             <select name="difficulty" class="form-control form-control-sm mr-2" style="width: 120px;" onchange="this.form.submit()">
-              <option value="">All Difficulties</option>
+              <option value="">All Levels</option>
               {% for value, label in difficulties %}
                 <option value="{{ value }}" {% if selected_difficulty == value %}selected{% endif %}>
                   {{ label }}
@@ -48,17 +48,34 @@
               {% endfor %}
             </select>
             
+            {% if user.is_authenticated %}
+              <input type="hidden" name="favorites" value="{{ favorites_only|yesno:'true,false' }}">
+              <button type="button" class="btn btn-sm mr-2 {% if favorites_only %}btn-danger{% else %}btn-default{% endif %}" onclick="toggleFavorites(this.form)">
+                <i class="fas fa-heart"></i> My Likes
+              </button>
+            {% endif %}
+            
             <button type="submit" class="btn btn-default btn-sm">
               Filter
             </button>
-            {% if q or selected_tag or selected_difficulty %}
+            {% if q or selected_tag or selected_difficulty or favorites_only %}
               <a href="/" class="btn btn-sm btn-secondary ml-1">Clear</a>
             {% endif %}
           </form>
         </div>
       </div>
 
-      <div class="card-body p-0">
+<script>
+function toggleFavorites(form) {
+  const favInput = form.querySelector('input[name="favorites"]');
+  if (favInput.value === 'true') {
+    favInput.value = 'false';
+  } else {
+    favInput.value = 'true';
+  }
+  form.submit();
+}
+</script>      <div class="card-body p-0">
         <table class="table table-striped table-hover text-nowrap table-sm">
           <thead>
             <tr>
@@ -110,12 +127,14 @@
               </td>
 
               <td style="text-align: center;">
-                {% if s.like_count > 0 %}
-                  <span class="text-danger" title="{{ s.like_count }} like{{ s.like_count|pluralize }}">
-                    <i class="fas fa-heart"></i> {{ s.like_count }}
+                {% if s.id in user_favorited_ids %}
+                  <span class="text-danger" title="{{ s.favorite_count }} favorite{{ s.favorite_count|pluralize }}">
+                    <i class="fas fa-heart"></i> {{ s.favorite_count }}
                   </span>
                 {% else %}
-                  <span class="text-muted">—</span>
+                  <span class="text-muted" title="{{ s.favorite_count }} favorite{{ s.favorite_count|pluralize }}">
+                    <i class="far fa-heart"></i> {{ s.favorite_count }}
+                  </span>
                 {% endif %}
               </td>
             </tr>
