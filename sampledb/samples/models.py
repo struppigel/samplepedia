@@ -86,7 +86,7 @@ class Sample(models.Model):
     favorited_by = models.ManyToManyField(User, related_name='favorite_samples', blank=True)
     course_references = models.ManyToManyField(CourseReference, related_name='samples', blank=True, verbose_name="Course references")
     
-    created_at = models.DateTimeField(default=timezone.now, verbose_name="Created at")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     send_discord_notification = models.BooleanField(default=True, verbose_name="Send Discord notification")
     
     @property
