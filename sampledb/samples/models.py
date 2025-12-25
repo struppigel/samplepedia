@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from cloudinary.models import CloudinaryField
@@ -84,6 +85,9 @@ class Sample(models.Model):
     like_count = models.IntegerField(default=0, verbose_name="Like count")
     favorited_by = models.ManyToManyField(User, related_name='favorite_samples', blank=True)
     course_references = models.ManyToManyField(CourseReference, related_name='samples', blank=True, verbose_name="Course references")
+    
+    created_at = models.DateTimeField(default=timezone.now, verbose_name="Created at")
+    send_discord_notification = models.BooleanField(default=True, verbose_name="Send Discord notification")
     
     @property
     def favorite_count(self):

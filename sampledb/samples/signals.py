@@ -22,9 +22,12 @@ def notify_discord_on_new_sample(sender, instance, created, **kwargs):
         **kwargs: Additional keyword arguments
     """
     if created:
-        logger.info(f"New sample created: {instance.sha256}, sending Discord notification")
-        try:
-            send_sample_notification(instance)
-        except Exception as e:
-            # Don't fail the save operation if Discord notification fails
-            logger.error(f"Failed to send Discord notification for sample {instance.sha256}: {e}")
+        if instance.send_discord_notification:
+            logger.info(f"New sample created: {instance.sha256}, sending Discord notification")
+            try:
+                send_sample_notification(instance)
+            except Exception as e:
+                # Don't fail the save operation if Discord notification fails
+                logger.error(f"Failed to send Discord notification for sample {instance.sha256}: {e}")
+        else:
+            logger.info(f"New sample created: {instance.sha256}, Discord notification skipped (disabled)")

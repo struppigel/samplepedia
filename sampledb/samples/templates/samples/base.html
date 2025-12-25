@@ -92,6 +92,12 @@
     box-shadow: 0 0 0 0.2rem rgba(230, 57, 70, 0.25) !important;
   }
   
+  /* Dark mode select dropdowns - fix white text on white background */
+  .dark-mode select.form-control option {
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+  }
+  
   /* Dark mode pagination */
   .dark-mode .pagination .page-link {
     background-color: var(--card-bg) !important;
