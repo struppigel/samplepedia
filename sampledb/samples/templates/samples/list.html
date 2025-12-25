@@ -82,24 +82,21 @@
                   <code style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="{{ s.sha256 }}">{{ s.sha256 }}</code>
                 </a>
               </td>
-
-<td>
-  <a href="/?difficulty={{ s.difficulty }}"
-     class="badge
-     {% if s.difficulty == 'easy' %}badge-success
-     {% elif s.difficulty == 'medium' %}badge-warning
-     {% elif s.difficulty == 'advanced' %}badge-danger
-     {% else %}badge-dark{% endif %}">
-    {{ s.difficulty }}
-  </a>
-</td>
-
-
+              <td>
+                <a href="/?difficulty={{ s.difficulty }}"
+                  class="badge
+                  {% if s.difficulty == 'easy' %}badge-success
+                  {% elif s.difficulty == 'medium' %}badge-warning
+                  {% elif s.difficulty == 'advanced' %}badge-danger
+                  {% else %}badge-dark{% endif %}">
+                  {{ s.difficulty }}
+                </a>
+              </td>
               <td>
                 {% for tag in s.tags.all %}
                   <a href="/?tag={{ tag.name|urlencode }}" class="badge badge-tag">
-  {{ tag.name }}
-</a>
+                    {{ tag.name }}
+                  </a>
 
                 {% empty %}
                   <span class="text-muted">—</span>
