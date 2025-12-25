@@ -103,6 +103,23 @@
             </p>
           </div>
         </div>
+
+        <!-- Download Card -->
+        {% if sample.download_link %}
+        <div class="card card-danger">
+          <div class="card-body">
+            <h5 class="text-danger mb-2">
+              <i class="fas fa-exclamation-triangle"></i> Warning: Malware
+            </h5>
+            <p class="text-muted mb-3">This is a live malware sample. Handle in an isolated environment. Archive is password protected with the password "infected"</p>
+            <a href="{{ sample.download_link }}"
+               target="_blank"
+               class="btn btn-danger">
+              <i class="fas fa-download"></i> Download sample
+            </a>
+          </div>
+        </div>
+        {% endif %}
       </div>
 
       <!-- RIGHT COLUMN: Image and Video -->
@@ -139,24 +156,6 @@
       </div>
       {% endif %}
     </div>
-
-
-    <!-- Download -->
-    {% if sample.download_link %}
-    <div class="card card-danger">
-      <div class="card-body">
-        <h5 class="text-danger mb-2">
-          <i class="fas fa-exclamation-triangle"></i> Warning: Malware
-        </h5>
-        <p class="text-muted mb-3">This is a live malware sample. Handle in an isolated environment. Archive is password protected with the password "infected"</p>
-        <a href="{{ sample.download_link }}"
-           target="_blank"
-           class="btn btn-danger">
-          <i class="fas fa-download"></i> Download sample
-        </a>
-      </div>
-    </div>
-    {% endif %}
 
     <a href="/" class="btn btn-link mt-2">
       ← Back to list
