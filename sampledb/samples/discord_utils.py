@@ -44,24 +44,29 @@ def send_sample_notification(sample):
     
     # Build Discord embed
     embed = {
-        "title": f"New Training Sample: {sample.sha256[:16]}...",
+        "title": sample.sha256,
         "url": sample_url,
-        "description": sample.description[:200] + "..." if len(sample.description) > 200 else sample.description,
+        "description": "A new malware training sample has been added to Samplepedia.",
         "color": difficulty_colors.get(sample.difficulty, 0x007bff),
         "fields": [
+            {
+                "name": "Description",
+                "value": "||" + (sample.description[:200] + "..." if len(sample.description) > 200 else sample.description or "N/A") + "||",
+                "inline": False
+            },
             {
                 "name": "Goal",
                 "value": sample.goal[:200] + "..." if len(sample.goal) > 200 else sample.goal or "N/A",
                 "inline": False
             },
             {
-                "name": "*Difficulty",
+                "name": "Difficulty",
                 "value": sample.get_difficulty_display(),
                 "inline": True
             },
             {
                 "name": "Tags",
-                "value": ", ".join([tag.name for tag in sample.tags.all()]) or "None",
+                "value": ", ".join([tag.name for tag in sample.tags.all()]) if sample.tags.exists() else "None",
                 "inline": True
             }
         ],
@@ -69,6 +74,16 @@ def send_sample_notification(sample):
             "text": "Samplepedia • Malware Training Samples"
         }
     }
+    
+    # Add tools if available
+    if sample.tools.exists():
+        tools_list = [tool.name for tool in sample.tools.all()]
+        tools_text = ", ".join(tools_list)
+        embed["fields"].append({
+            "name": "Tools",
+            "value": "||" + tools_text + "||",
+            "inline": True
+        })
     
     # Add download link if available
     if sample.download_link:
