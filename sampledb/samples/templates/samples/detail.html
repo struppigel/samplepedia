@@ -93,10 +93,14 @@
               </div>
             {% endif %}
 
-            {% if sample.tools %}
-              <h6>Tools</h6>
-              <p>{{ sample.tools|linebreaks }}</p>
-            {% endif %}
+            <h6>Tools</h6>
+            <p>
+              {% for tool in sample.tools.all %}
+                <span class="badge badge-secondary">{{ tool.name }}</span>
+              {% empty %}
+                <span class="text-muted">—</span>
+              {% endfor %}
+            </p>
           </div>
         </div>
       </div>
