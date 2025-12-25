@@ -39,7 +39,7 @@
             </div>
             
             <select name="difficulty" class="form-control form-control-sm mr-2" style="width: 120px;" onchange="this.form.submit()">
-              <option value="">[ALL LEVELS]</option>
+              <option value="">All Levels</option>
               {% for value, label in difficulties %}
                 <option value="{{ value }}" {% if selected_difficulty == value %}selected{% endif %}>
                   {{ label }}
