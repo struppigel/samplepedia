@@ -160,3 +160,14 @@ LOGIN_URL = '/accounts/login/'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Discord webhook for sample notifications
+# You can configure a default webhook or per-difficulty webhooks
+DISCORD_WEBHOOK_URL = config('DISCORD_WEBHOOK_URL', default='')  # Fallback/default
+DISCORD_WEBHOOK_EASY = config('DISCORD_WEBHOOK_EASY', default='')
+DISCORD_WEBHOOK_MEDIUM = config('DISCORD_WEBHOOK_MEDIUM', default='')
+DISCORD_WEBHOOK_ADVANCED = config('DISCORD_WEBHOOK_ADVANCED', default='')
+DISCORD_WEBHOOK_EXPERT = config('DISCORD_WEBHOOK_EXPERT', default='')
+
+# Base URL for Discord notifications (used for sample links)
+BASE_URL = config('BASE_URL', default='http://localhost:8000')
+
