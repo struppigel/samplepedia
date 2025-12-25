@@ -59,6 +59,8 @@ def sample_list(request):
         '-video': '-has_video',
         'likes': 'favorite_count_annotated',
         '-likes': '-favorite_count_annotated',
+        'created': 'created_at',
+        '-created': '-created_at',
         '-id': '-id',  # Default
     }
     

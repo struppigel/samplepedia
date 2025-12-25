@@ -130,6 +130,16 @@ function toggleFavorites(form) {
                   {% endif %}
                 </a>
               </th>
+              <th style="width: 100px; text-align: center; cursor: pointer;">
+                <a href="?{% if q %}q={{ q }}&{% endif %}{% if selected_tag %}tag={{ selected_tag }}&{% endif %}{% if selected_difficulty %}difficulty={{ selected_difficulty }}&{% endif %}{% if favorites_only %}favorites=true&{% endif %}sort={% if sort == 'created' %}-created{% else %}created{% endif %}" class="text-dark text-decoration-none">
+                  Created
+                  {% if sort == 'created' %}
+                    <i class="fas fa-sort-up"></i>
+                  {% elif sort == '-created' %}
+                    <i class="fas fa-sort-down"></i>
+                  {% endif %}
+                </a>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -166,7 +176,7 @@ function toggleFavorites(form) {
                 {% endfor %}
               </td>
 
-              <td>
+              <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 <a href="{% url 'sample_detail' s.sha256 %}" class="text-muted">
                   {{ s.goal|truncatechars:80 }}
                 </a>
@@ -199,10 +209,13 @@ function toggleFavorites(form) {
                   {% endif %}
                 </button>
               </td>
+              <td style="text-align: center;">
+                <span class="text-muted" style="font-size: 0.9em;">{{ s.created_at|date:"d M Y" }}</span>
+              </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="6" class="text-center text-muted">
+              <td colspan="7" class="text-center text-muted">
                 No samples found.
               </td>
             </tr>
