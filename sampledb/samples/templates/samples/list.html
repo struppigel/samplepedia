@@ -3,6 +3,14 @@
 
 {% block title %}Trainings Samples{% endblock %}
 
+{% block extra_css %}
+<style>
+.clickable-row:hover {
+  background-color: rgba(0, 255, 65, 0.15) !important;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 
 <section class="content-header">
@@ -71,7 +79,7 @@
           </thead>
           <tbody>
             {% for s in page_obj %}
-            <tr>
+            <tr class="clickable-row" data-url="{% url 'sample_detail' s.sha256 %}" style="cursor: pointer;">
               <td style="max-width: 200px; padding: 0.3rem 0.75rem;">
                 <a href="{% url 'sample_detail' s.sha256 %}" class="d-flex align-items-center" style="min-width: 0;">
                   {% if s.image %}
@@ -106,7 +114,7 @@
                 {% endfor %}
               </td>
 
-              <td class="text-muted">
+              <td style="color: #88ff88;">
                 {{ s.goal|truncatechars:80 }}
               </td>
 
@@ -161,4 +169,19 @@
   </div>
 </section>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Make table rows clickable except for links
+document.querySelectorAll('.clickable-row').forEach(row => {
+  row.addEventListener('click', function(e) {
+    // Don't navigate if clicking on a link or badge (tags/difficulty)
+    if (e.target.closest('a') || e.target.closest('.badge')) {
+      return;
+    }
+    window.location.href = this.dataset.url;
+  });
+});
+</script>
 {% endblock %}

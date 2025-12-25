@@ -26,12 +26,12 @@
   /* === RETRO HACKER TERMINAL THEME === */
   
   :root {
-    --terminal-bg: #0d0208;
+    --terminal-bg: #000000;
     --terminal-fg: #00ff41;
     --terminal-glow: #00ff41;
     --terminal-dim: #008f11;
     --terminal-border: #00ff41;
-    --card-bg: #0a0a0a;
+    --card-bg: #050505;
   }
   
   body {
@@ -56,7 +56,7 @@
     width: 100%;
     height: 100%;
     background: linear-gradient(
-      rgba(18, 16, 16, 0) 50%, 
+      rgba(16, 16, 18, 0) 50%, 
       rgba(0, 0, 0, 0.25) 50%
     );
     background-size: 100% 4px;
@@ -153,24 +153,43 @@
     padding: 4px 8px;
     border: 1px solid currentColor;
     background: transparent !important;
-    text-shadow: 0 0 3px currentColor;
+    text-shadow: 0 0 2px currentColor;
+    transition: all 0.2s ease;
+  }
+  
+  .badge:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 0 10px currentColor;
+    transform: scale(1.05);
   }
   
   .badge-success { 
-    color: #00ff41 !important; 
-    border-color: #00ff41 !important;
+    color: #00d4ff !important; 
+    border-color: #00d4ff !important;
+  }
+  .badge-success:hover { 
+    color: #00d4ff !important; 
   }
   .badge-warning { 
     color: #ffb000 !important; 
     border-color: #ffb000 !important;
   }
+  .badge-warning:hover { 
+    color: #ffb000 !important; 
+  }
   .badge-danger { 
     color: #ff0066 !important; 
     border-color: #ff0066 !important;
   }
+  .badge-danger:hover { 
+    color: #ff0066 !important; 
+  }
   .badge-dark { 
     color: #ff00ff !important; 
     border-color: #ff00ff !important;
+  }
+  .badge-dark:hover { 
+    color: #ff00ff !important; 
   }
   
   /* Navbar */
@@ -344,6 +363,8 @@
   .far.fa-heart, .fas.fa-heart {
     text-shadow: 0 0 5px currentColor;
   }
+  
+  {% block extra_css %}{% endblock %}
 </style>
 
   
@@ -404,13 +425,18 @@
   }
   
   document.querySelectorAll('.badge-tag').forEach(badge => {
-    const tagName = badge.textContent.trim();
+    const tagName = badge.textContent.trim().replace('#', '').toLowerCase();
     const hue = hashString(tagName) % 360;
-    const saturation = 65;
-    const lightness = 50;
-    badge.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    const saturation = 70;
+    const lightness = 55;
+    const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    badge.style.setProperty('color', color, 'important');
+    badge.style.setProperty('border-color', color, 'important');
+    badge.style.textShadow = `0 0 0px ${color}`;
   });
 </script>
+
+{% block extra_js %}{% endblock %}
 
 </body>
 </html>
