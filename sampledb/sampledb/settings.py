@@ -54,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'csp.middleware.CSPMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -83,7 +84,7 @@ WSGI_APPLICATION = 'sampledb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# Use DATABASE_URL from environment if available (Railway provides this)
+# Use DATABASE_URL from environment if available
 # Falls back to SQLite for local development
 DATABASES = {
     'default': dj_database_url.config(
@@ -161,7 +162,6 @@ LOGIN_URL = '/accounts/login/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Discord webhook for sample notifications
-# You can configure a default webhook or per-difficulty webhooks
 DISCORD_WEBHOOK_URL = config('DISCORD_WEBHOOK_URL', default='')  # Fallback/default
 DISCORD_WEBHOOK_EASY = config('DISCORD_WEBHOOK_EASY', default='')
 DISCORD_WEBHOOK_MEDIUM = config('DISCORD_WEBHOOK_MEDIUM', default='')
@@ -171,5 +171,8 @@ DISCORD_WEBHOOK_EXPERT = config('DISCORD_WEBHOOK_EXPERT', default='')
 # Base URL for Discord notifications (used for sample links)
 BASE_URL = config('BASE_URL', default='http://localhost:8000')
 
-# For testing, will be removed
-X_FRAME_OPTIONS = 'ALLOWALL'
+# Allow embedding only from my platform
+CSP_FRAME_ANCESTORS = ["'self'", "https://malwareanalysis-for-hedgehogs.learnworlds.com"]
+
+# Apart from ancestors, no embedding of the site in iframes
+X_FRAME_OPTIONS = None
