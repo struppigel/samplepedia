@@ -98,6 +98,22 @@
     color: var(--text-primary) !important;
   }
   
+  /* Dark mode list groups */
+  .dark-mode .list-group-item {
+    background-color: var(--card-bg) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-primary) !important;
+  }
+  
+  .dark-mode .list-group-item-action:hover {
+    background-color: rgba(230, 57, 70, 0.1) !important;
+    color: var(--text-primary) !important;
+  }
+  
+  .dark-mode .list-group-item h5 {
+    color: var(--text-primary) !important;
+  }
+  
   /* Dark mode pagination */
   .dark-mode .pagination .page-link {
     background-color: var(--card-bg) !important;
@@ -155,6 +171,19 @@
   .btn-primary:hover {
     background-color: var(--accent-red) !important;
     border-color: var(--accent-red) !important;
+  }
+
+  .btn-back {
+    color: var(--primary-red);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .btn-back:hover {
+    color: #007bff;
   }
   
   .navbar-brand {
@@ -300,14 +329,20 @@
 
       <ul class="navbar-nav ml-auto">
         <li class="nav-item">
-          <a href="/" class="nav-link">
-            <i class="fas fa-list"></i>
+          <a href="/" class="nav-link" title="Browse Samples">
+            <i class="fas fa-list"></i> Browse
           </a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link" id="darkToggle">
+          <a href="{% url 'course_list' %}" class="nav-link" title="Courses">
+            <i class="fas fa-graduation-cap"></i> Courses
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link" id="darkToggle" title="Toggle Dark Mode">
             <i class="fas fa-moon" id="darkIcon"></i>
             <i class="fas fa-sun" id="lightIcon" style="display: none;"></i>
+            <span id="darkModeText" class="ml-1">Dark</span>
           </a>
         </li>
         {% if user.is_authenticated %}
@@ -319,14 +354,14 @@
           <li class="nav-item">
             <form method="post" action="{% url 'logout' %}" style="margin: 0;">
               {% csrf_token %}
-              <button type="submit" class="nav-link btn btn-link" style="border: none; background: none; cursor: pointer;">
+              <button type="submit" class="nav-link btn btn-link" style="border: none; background: none; cursor: pointer;" title="Logout">
                 <i class="fas fa-sign-out-alt"></i> Logout
               </button>
             </form>
           </li>
         {% else %}
           <li class="nav-item">
-            <a href="{% url 'login' %}" class="nav-link">
+            <a href="{% url 'login' %}" class="nav-link" title="Login">
               <i class="fas fa-sign-in-alt"></i> Login
             </a>
           </li>
@@ -359,14 +394,17 @@
   const toggle = document.getElementById("darkToggle");
   const darkIcon = document.getElementById("darkIcon");
   const lightIcon = document.getElementById("lightIcon");
+  const darkModeText = document.getElementById("darkModeText");
 
   function updateIcon() {
     if (body.classList.contains("dark-mode")) {
       darkIcon.style.display = "none";
       lightIcon.style.display = "inline-block";
+      if (darkModeText) darkModeText.textContent = "Light";
     } else {
       darkIcon.style.display = "inline-block";
       lightIcon.style.display = "none";
+      if (darkModeText) darkModeText.textContent = "Dark";
     }
   }
 

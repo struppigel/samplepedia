@@ -35,18 +35,22 @@ class CourseReference(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(20)]
     )
     
-    video_title = models.CharField(
+    lecture_number = models.IntegerField(
+        verbose_name="Lecture number",
+        validators=[MinValueValidator(0), MaxValueValidator(20)]
+    )
+
+    lecture_title = models.CharField(
         max_length=500,
-        verbose_name="Video title"
+        verbose_name="Lecture title"
     )
     
     class Meta:
-        ordering = ['course_name', 'section']
-        unique_together = ['course_name', 'section', 'video_title']
+        ordering = ['course_name', 'section', 'lecture_number']
+        unique_together = ['course_name', 'section', 'lecture_number']
     
     def __str__(self):
-        return f"{self.get_course_name_display()} - Section {self.section}: {self.video_title[:50]}"
-
+        return f"{self.get_course_name_display()} - Section {self.section} Lecture {self.lecture_number}: {self.lecture_title[:50]}"
 
 class Sample(models.Model):
     sha256 = models.CharField(
