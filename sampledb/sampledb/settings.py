@@ -171,3 +171,5 @@ DISCORD_WEBHOOK_EXPERT = config('DISCORD_WEBHOOK_EXPERT', default='')
 # Base URL for Discord notifications (used for sample links)
 BASE_URL = config('BASE_URL', default='http://localhost:8000')
 
+# For testing, will be removed
+X_FRAME_OPTIONS = 'ALLOWALL'
