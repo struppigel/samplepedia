@@ -54,10 +54,9 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'csp.middleware.CSPMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'csp.middleware.CSPMiddleware',
 ]
 
 ROOT_URLCONF = 'sampledb.urls'
@@ -173,6 +172,4 @@ BASE_URL = config('BASE_URL', default='http://localhost:8000')
 
 # Allow embedding only from my platform
 CSP_FRAME_ANCESTORS = ["'self'", "https://malwareanalysis-for-hedgehogs.learnworlds.com"]
-
-# Apart from ancestors, no embedding of the site in iframes
 X_FRAME_OPTIONS = None
