@@ -5,7 +5,7 @@ from django.utils import timezone
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from cloudinary.models import CloudinaryField
-
+from django.core.validators import RegexValidator
 
 class Difficulty(models.TextChoices):
     EASY = "easy", "Easy"
@@ -71,8 +71,16 @@ class CourseReference(models.Model):
         return f"{self.course.name} - Section {self.section} Lecture {self.lecture_number}: {self.lecture_title[:50]}"
 
 class Sample(models.Model):
+
+    sha256_validator = RegexValidator(
+        regex=r'^[a-fA-F0-9]{64}$',
+        message='Must be a valid SHA256 hash (64 hexadecimal characters)',
+        code='invalid_sha256'
+    )
+
     sha256 = models.CharField(
         max_length=64,
+        validators=[sha256_validator],
         unique=True,
         verbose_name="SHA256"
     )
@@ -117,4 +125,11 @@ class Sample(models.Model):
 
     def __str__(self):
         return self.sha256
+    
+    def save(self, *args, **kwargs):
+        # Convert to lowercase before saving
+        if self.sha256:
+            self.sha256 = self.sha256.lower()
+        
+        super().save(*args, **kwargs)
 

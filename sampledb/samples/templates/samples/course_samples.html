@@ -49,7 +49,7 @@
                 <!-- Lecture Title -->
                 <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ item.lecture_title }}">
                   <a href="{% url 'sample_detail' item.sample.sha256 %}" class="text-muted">
-                    {{ item.lecture_title|truncatechars:40 }}
+                    <small>{{ item.lecture_title|truncatechars:40 }}</small>
                   </a>
                 </td>
 
@@ -74,14 +74,14 @@
                 <!-- Goal -->
                 <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   <a href="{% url 'sample_detail' item.sample.sha256 %}" class="text-muted">
-                    {{ item.sample.goal|truncatechars:80 }}
+                    <small>{{ item.sample.goal|truncatechars:80 }}</small>
                   </a>
                 </td>
 
                   <!-- Download -->
                 <td style="text-align: center;">
                   {% if item.sample.download_link %}
-                    <a href="{{ item.sample.download_link }}" target="_blank" class="btn btn-sm btn-primary" title="Download sample">
+                    <a href="{{ item.sample.download_link }}" target="_blank" class="btn btn-xs btn-primary" title="Download sample">
                       <i class="fas fa-download"></i>
                     </a>
                   {% else %}
