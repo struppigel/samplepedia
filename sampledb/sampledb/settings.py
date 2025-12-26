@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'cloudinary_storage',
     'cloudinary',
     'taggit',
-    'samples'
+    'samples',
 ]
 
 MIDDLEWARE = [
@@ -73,6 +73,10 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries':{
+            'custom_templatetag': 'samples.templatetags.url_helpers',
+
+            }
         },
     },
 ]
