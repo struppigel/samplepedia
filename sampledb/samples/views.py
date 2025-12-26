@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from .models import Sample, Difficulty, CourseName, CourseReference
+from .models import Sample, Difficulty, Course, CourseReference
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.db.models import Count, Case, When, IntegerField
@@ -143,37 +143,24 @@ def toggle_like(request, sha256):
 
 def course_list(request):
     """Display list of available courses"""
-    courses = []
-    for course_code, course_name in CourseName.choices:
-        # Count samples that have at least one reference to this course
-        sample_count = Sample.objects.filter(
-            course_references__course_name=course_code
-        ).distinct().count()
-        
-        courses.append({
-            'code': course_code,
-            'name': course_name,
-            'sample_count': sample_count
-        })
+    courses = Course.objects.annotate(
+        sample_count=Count('references__samples', distinct=True)
+    ).order_by('name')
     
     return render(request, "samples/course_list.html", {
         "courses": courses,
     })
 
 
-def course_samples(request, course_name):
+def course_samples(request, course_id):
     """Display samples for a specific course, sorted by section number"""
-    # Validate course name
-    if course_name not in dict(CourseName.choices):
-        return redirect('course_list')
-    
-    # Get the display name for the course
-    course_display_name = dict(CourseName.choices)[course_name]
+    # Get the course or 404
+    course = get_object_or_404(Course, id=course_id)
     
     # Get all samples that have references to this course
     # We need to get distinct samples and annotate with the minimum section number
     samples = Sample.objects.filter(
-        course_references__course_name=course_name
+        course_references__course=course
     ).prefetch_related('course_references').distinct()
     
     # Build a list with samples and their course references
@@ -181,7 +168,7 @@ def course_samples(request, course_name):
     for sample in samples:
         # Get all course references for this sample in this course
         refs = sample.course_references.filter(
-            course_name=course_name
+            course=course
         ).order_by('section')
         
         for ref in refs:
@@ -203,8 +190,7 @@ def course_samples(request, course_name):
         )
     
     return render(request, "samples/course_samples.html", {
-        "course_name": course_name,
-        "course_display_name": course_display_name,
+        "course": course,
         "sample_data": sample_data,
         "user_favorited_ids": user_favorited_ids,
     })

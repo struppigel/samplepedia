@@ -14,9 +14,26 @@ class Difficulty(models.TextChoices):
     EXPERT = "expert", "Expert"
 
 
-class CourseName(models.TextChoices):
-    BEGINNER = "beginner", "Beginner"
-    INTERMEDIATE = "intermediate", "Intermediate"
+class Course(models.Model):
+    name = models.CharField(
+        max_length=200,
+        unique=True,
+        verbose_name="Course name"
+    )
+    
+    url = models.URLField(
+        max_length=500,
+        blank=True,
+        verbose_name="Course URL"
+    )
+    
+    image = CloudinaryField('course_image', blank=True, null=True)
+    
+    class Meta:
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
 
 
 class TaggedTools(TaggedItemBase):
@@ -24,10 +41,11 @@ class TaggedTools(TaggedItemBase):
 
 
 class CourseReference(models.Model):
-    course_name = models.CharField(
-        max_length=20,
-        choices=CourseName.choices,
-        verbose_name="Course name"
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='references',
+        verbose_name="Course"
     )
     
     section = models.IntegerField(
@@ -46,11 +64,11 @@ class CourseReference(models.Model):
     )
     
     class Meta:
-        ordering = ['course_name', 'section', 'lecture_number']
-        unique_together = ['course_name', 'section', 'lecture_number']
+        ordering = ['course__name', 'section', 'lecture_number']
+        unique_together = ['course', 'section', 'lecture_number']
     
     def __str__(self):
-        return f"{self.get_course_name_display()} - Section {self.section} Lecture {self.lecture_number}: {self.lecture_title[:50]}"
+        return f"{self.course.name} - Section {self.section} Lecture {self.lecture_number}: {self.lecture_title[:50]}"
 
 class Sample(models.Model):
     sha256 = models.CharField(
