@@ -1,0 +1,36 @@
+{% extends "samples/base.html" %}
+
+{% block title %}{{ page_title }} | Samplepedia{% endblock %}
+
+{% block content %}
+
+<section class="content-header">
+  <div class="container-fluid">
+    <h1>{{ page_title }}</h1>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-body text-center py-5">
+            <div class="mb-4">
+              <i class="fas fa-tools" style="font-size: 4rem; color: var(--primary-red);"></i>
+            </div>
+            <h2 class="mb-3">Under Construction</h2>
+            <p class="text-muted mb-4">
+              This page is currently being developed. Please check back soon.
+            </p>
+            <a href="/" class="btn btn-primary">
+              <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

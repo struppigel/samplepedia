@@ -241,6 +241,39 @@
     text-decoration: none;
   }
   
+  /* Alert info styling to match theme */
+  .alert-info {
+    background-color: rgba(57, 69, 230, 0.1) !important;
+    border-color: rgba(57, 63, 230, 0.3) !important;
+    color: #333 !important;
+  }
+  
+  .dark-mode .alert-info {
+    background-color: rgba(57, 92, 230, 0.437) !important;
+    border-color: rgba(57, 69, 230, 0.4) !important;
+    color: var(--text-primary) !important;
+  }
+  
+  /* Alert link styling for both themes */
+  .alert-info .alert-link {
+    color: var(--primary-red) !important;
+    text-decoration: underline;
+    font-weight: 600;
+  }
+  
+  .alert-info .alert-link:hover {
+    color: var(--primary-blue) !important;
+    text-decoration: underline;
+  }
+  
+  .dark-mode .alert-info .alert-link {
+    color: #ffffff !important;
+  }
+  
+  .dark-mode .alert-info .alert-link:hover {
+    color: #000000 !important;
+  }
+  
   /* Spoiler styling (both themes) */
   .spoiler {
     display: inline-block;
@@ -546,7 +579,7 @@
     <span class="text-muted">|</span>
     <a href="/privacy/" class="text-muted mx-2">Privacy Policy</a>
     <span class="text-muted">|</span>
-    <a href="https://discord.gg/placeholder" class="text-muted mx-2" target="_blank" rel="noopener">
+    <a href="https://discord.gg/xEkHFNKX" class="text-muted mx-2" target="_blank" rel="noopener">
       <i class="fab fa-discord"></i> Discord
     </a>
   </div>

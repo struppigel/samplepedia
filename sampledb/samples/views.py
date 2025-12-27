@@ -194,3 +194,11 @@ def course_samples(request, course_id):
         "sample_data": sample_data,
         "user_favorited_ids": user_favorited_ids,
     })
+
+
+def impressum(request):
+    return render(request, "samples/impressum.html")
+
+
+def privacy_policy(request):
+    return render(request, "samples/privacy.html")
