@@ -21,6 +21,25 @@ class SolutionForm(forms.ModelForm):
         }
 
 
+class AnalysisTaskForm(forms.ModelForm):
+    class Meta:
+        model = AnalysisTask
+        fields = ['sha256', 'download_link', 'description', 'goal', 'difficulty', 'tags', 'tools']
+        widgets = {
+            'sha256': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '64 character hex string'}),
+            'download_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Detailed description of the sample'}),
+            'goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Analysis goal or learning objective'}),
+            'difficulty': forms.Select(attrs={'class': 'form-control'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make all fields required
+        for field_name in self.fields:
+            self.fields[field_name].required = True
+
+
 def sample_list(request):
     q = request.GET.get("q", "")
     tag = request.GET.get("tag")
@@ -198,6 +217,34 @@ def delete_solution(request, sha256, task_id, solution_id):
         return redirect('sample_detail', sha256=sha256, task_id=task_id)
     
     return redirect('sample_detail', sha256=sha256, task_id=task_id)
+
+
+@login_required
+def submit_task(request):
+    """Allow users to submit their own analysis task"""
+    if request.method == 'POST':
+        form = AnalysisTaskForm(request.POST)
+        if form.is_valid():
+            sample = form.save(commit=False)
+            sample.save()
+            
+            # Convert tags and tools to lowercase
+            if form.cleaned_data.get('tags'):
+                tags = [tag.strip().lower() for tag in form.cleaned_data['tags'] if tag.strip()]
+                sample.tags.set(*tags)
+            
+            if form.cleaned_data.get('tools'):
+                tools = [tool.strip().lower() for tool in form.cleaned_data['tools'] if tool.strip()]
+                sample.tools.set(*tools)
+            
+            messages.success(request, f'AnalysisTask {sample.sha256[:12]}... submitted successfully!')
+            return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
+    else:
+        form = AnalysisTaskForm()
+    
+    return render(request, 'samples/submit_task.html', {
+        'form': form,
+    })
 
 
 def course_list(request):
