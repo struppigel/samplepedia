@@ -120,16 +120,27 @@
             <h3 class="card-title">Solution Links</h3>
           </div>
           <div class="card-body">
-            <ul class="list-unstyled mb-0">
-              <li class="mb-2">
-                <i class="fas fa-link text-primary"></i>
-                <a href="#" class="ml-2">Example Solution #1 - Detailed Walkthrough</a>
-              </li>
-              <li class="mb-0">
-                <i class="fas fa-link text-primary"></i>
-                <a href="#" class="ml-2">Example Solution #2 - Alternative Approach</a>
-              </li>
-            </ul>
+            {% if solutions %}
+              <ul class="list-unstyled mb-0">
+                {% for solution in solutions %}
+                <li class="{% if not forloop.last %}mb-2{% else %}mb-0{% endif %}">
+                  {% if solution.solution_type == 'blog' %}
+                    <i class="fas fa-blog text-primary"></i>
+                  {% elif solution.solution_type == 'paper' %}
+                    <i class="fas fa-file-alt text-success"></i>
+                  {% elif solution.solution_type == 'video' %}
+                    <i class="fas fa-video text-danger"></i>
+                  {% else %}
+                    <i class="fas fa-link text-primary"></i>
+                  {% endif %}
+                  <a href="{{ solution.url }}" target="_blank" class="ml-2">{{ solution.title }}</a>
+                  <span class="text-muted small">by {{ solution.author.username }}</span>
+                </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-muted mb-0">No solutions available yet.</p>
+            {% endif %}
           </div>
         </div>
       </div>

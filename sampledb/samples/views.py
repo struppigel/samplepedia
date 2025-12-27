@@ -109,9 +109,13 @@ def sample_detail(request, sha256, task_id):
     if request.user.is_authenticated:
         user_has_favorited = sample.favorited_by.filter(id=request.user.id).exists()
     
+    # Get solutions for this sample
+    solutions = sample.solutions.select_related('author').all()
+    
     return render(request, "samples/detail.html", {
         "sample": sample,
         "user_has_liked": user_has_favorited,
+        "solutions": solutions,
     })
 
 

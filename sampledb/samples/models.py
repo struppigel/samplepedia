@@ -140,3 +140,50 @@ class AnalysisTask(models.Model):
         
         super().save(*args, **kwargs)
 
+
+class SolutionType(models.TextChoices):
+    BLOG = "blog", "Blog"
+    PAPER = "paper", "Paper"
+    VIDEO = "video", "Video"
+
+
+class Solution(models.Model):
+    analysis_task = models.ForeignKey(
+        AnalysisTask,
+        on_delete=models.CASCADE,
+        related_name='solutions',
+        verbose_name="Analysis task"
+    )
+    
+    title = models.CharField(
+        max_length=200,
+        verbose_name="Title"
+    )
+    
+    solution_type = models.CharField(
+        max_length=10,
+        choices=SolutionType.choices,
+        verbose_name="Solution type"
+    )
+    
+    url = models.URLField(
+        max_length=500,
+        verbose_name="URL"
+    )
+    
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='solutions',
+        verbose_name="Author"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
+    
+    class Meta:
+        unique_together = ['title', 'analysis_task']
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.title} ({self.get_solution_type_display()}) for {self.analysis_task.sha256}"
+

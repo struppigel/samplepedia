@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AnalysisTask, CourseReference, Course
+from .models import AnalysisTask, CourseReference, Course, Solution
 
 @admin.register(CourseReference)
 class CourseReferenceAdmin(admin.ModelAdmin):
@@ -26,3 +26,16 @@ class AnalysisTaskAdmin(admin.ModelAdmin):
     list_filter = ("difficulty",)
     search_fields = ("sha256", "goal", "description")
     filter_horizontal = ("course_references",)
+
+
+@admin.register(Solution)
+class SolutionAdmin(admin.ModelAdmin):
+    list_display = ("title", "analysis_task_sha256", "solution_type", "author", "created_at")
+    list_filter = ("solution_type", "created_at")
+    search_fields = ("title", "analysis_task__sha256", "author__username")
+    autocomplete_fields = ["analysis_task", "author"]
+    readonly_fields = ("created_at",)
+    
+    def analysis_task_sha256(self, obj):
+        return obj.analysis_task.sha256[:12] + "..."
+    analysis_task_sha256.short_description = "Analysis Task"
