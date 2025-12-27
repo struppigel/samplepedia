@@ -43,7 +43,7 @@
                     {{ form.download_link.errors }}
                   </div>
                 {% else %}
-                  <small class="form-text text-muted">URL where the sample can be downloaded (optional)</small>
+                  <small class="form-text text-muted">URL where the sample can be downloaded</small>
                 {% endif %}
               </div>
 
@@ -89,7 +89,7 @@
                     {{ form.tags.errors }}
                   </div>
                 {% else %}
-                  <small class="form-text text-muted">Comma-separated tags (e.g., ransomware, obfuscation, APT)</small>
+                  <small class="form-text text-muted">Comma-separated tags (e.g., ransomware, "string deobfuscation")</small>
                 {% endif %}
               </div>
 
@@ -101,7 +101,7 @@
                     {{ form.tools.errors }}
                   </div>
                 {% else %}
-                  <small class="form-text text-muted">Comma-separated tools (e.g., IDA Pro, Ghidra, x64dbg)</small>
+                  <small class="form-text text-muted">Comma-separated tools (e.g., ghidra, x64dbg)</small>
                 {% endif %}
               </div>
 
@@ -132,12 +132,32 @@
           </div>
           <div class="card-body">
             <ul class="mb-0">
-              <li class="mb-2">Provide a valid SHA256 hash (64 hex characters)</li>
-              <li class="mb-2">Include a clear analysis goal</li>
-              <li class="mb-2">Choose appropriate difficulty level</li>
-              <li class="mb-2">Add relevant tags for discoverability</li>
-              <li class="mb-0">List recommended analysis tools</li>
+              <li class="mb-2">Provide a valid SHA256 hash (64 hex characters), if the download consists of several files, use the hash of the archive</li>
+              <li class="mb-2">Download link should be to malshare or malwarebazaar (for now)</li>
+              <li class="mb-2">Choose the appropriate difficulty level, see explanation below</li>
             </ul>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Difficulty Levels</h3>
+          </div>
+          <div class="card-body">
+            <h6 class="text-info">Easy</h6>
+            <p class="small mb-3">
+              Easy samples are not packed or obfuscated or have trivial obfuscation like base64. They should only use favorable execution environments (no Rust or Go). Samples must not be self-modifying. Samples can be inside of installers (NSIS) or basic wrappers (Batch2Exe) which drop the non-packed payload to disk.
+            </p>
+            
+            <h6 class="text-warning">Medium</h6>
+            <p class="small mb-3">
+              Medium samples are easy to unpack (if packed) and can have some obfuscation or simple anti-reversing techniques. Deobfuscation should not require to change the control flow. But deobfuscation may require to decrypt strings or data. Execution environment can be somewhat unfavorable for current tooling.
+            </p>
+            
+            <h6 class="text-danger">Advanced</h6>
+            <p class="small mb-0">
+              Advanced samples may require to write custom tooling for unpacking or deobfuscation. They may employ several anti-reversing mechanisms or self-modifying code. They may use control flow obfuscation. They may use unusual execution environments without good RE tooling or use packers which require more work for unpacking than just setting a few breakpoints.
+            </p>
           </div>
         </div>
       </div>

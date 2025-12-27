@@ -22,10 +22,12 @@ class CourseAdmin(admin.ModelAdmin):
 
 @admin.register(AnalysisTask)
 class AnalysisTaskAdmin(admin.ModelAdmin):
-    list_display = ("sha256", "difficulty")
-    list_filter = ("difficulty",)
-    search_fields = ("sha256", "goal", "description")
+    list_display = ("sha256", "difficulty", "author", "created_at")
+    list_filter = ("difficulty", "author")
+    search_fields = ("sha256", "goal", "description", "author__username")
     filter_horizontal = ("course_references",)
+    autocomplete_fields = ["author"]
+    readonly_fields = ("created_at",)
 
 
 @admin.register(Solution)

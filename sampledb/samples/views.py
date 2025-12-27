@@ -38,6 +38,12 @@ class AnalysisTaskForm(forms.ModelForm):
         # Make all fields required
         for field_name in self.fields:
             self.fields[field_name].required = True
+        
+        # Exclude expert difficulty from choices
+        self.fields['difficulty'].choices = [
+            (value, label) for value, label in Difficulty.choices 
+            if value != Difficulty.EXPERT
+        ]
 
 
 def sample_list(request):
@@ -226,16 +232,17 @@ def submit_task(request):
         form = AnalysisTaskForm(request.POST)
         if form.is_valid():
             sample = form.save(commit=False)
+            sample.author = request.user
             sample.save()
             
             # Convert tags and tools to lowercase
             if form.cleaned_data.get('tags'):
                 tags = [tag.strip().lower() for tag in form.cleaned_data['tags'] if tag.strip()]
-                sample.tags.set(*tags)
+                sample.tags.set(tags)
             
             if form.cleaned_data.get('tools'):
                 tools = [tool.strip().lower() for tool in form.cleaned_data['tools'] if tool.strip()]
-                sample.tools.set(*tools)
+                sample.tools.set(tools)
             
             messages.success(request, f'AnalysisTask {sample.sha256[:12]}... submitted successfully!')
             return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
