@@ -1,0 +1,102 @@
+{% extends "samples/base.html" %}
+
+{% block title %}Add Solution{% endblock %}
+
+{% block content %}
+
+<section class="content-header">
+  <div class="container-fluid">
+    <h1>Add Solution</h1>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-8">
+        
+        <!-- Sample Info Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Analysis Task</h3>
+          </div>
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-sm-3">SHA256</dt>
+              <dd class="col-sm-9">
+                <code class="text-danger">{{ sample.sha256 }}</code>
+              </dd>
+
+              {% if sample.goal %}
+              <dt class="col-sm-3">Goal</dt>
+              <dd class="col-sm-9">
+                {{ sample.goal|truncatewords:30 }}
+              </dd>
+              {% endif %}
+            </dl>
+          </div>
+        </div>
+
+        <!-- Solution Form Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Solution Details</h3>
+          </div>
+          <div class="card-body">
+            <form method="post" novalidate>
+              {% csrf_token %}
+              
+              <div class="form-group">
+                <label for="{{ form.title.id_for_label }}">Title</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                  <div class="text-danger small">
+                    {{ form.title.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.solution_type.id_for_label }}">Solution Type</label>
+                {{ form.solution_type }}
+                {% if form.solution_type.errors %}
+                  <div class="text-danger small">
+                    {{ form.solution_type.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.url.id_for_label }}">URL</label>
+                {{ form.url }}
+                {% if form.url.errors %}
+                  <div class="text-danger small">
+                    {{ form.url.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                  {{ form.non_field_errors }}
+                </div>
+              {% endif %}
+
+              <div class="form-group mb-0">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save"></i> Save Solution
+                </button>
+                <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-secondary">
+                  <i class="fas fa-times"></i> Cancel
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
