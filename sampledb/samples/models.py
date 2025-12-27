@@ -115,6 +115,13 @@ class AnalysisTask(models.Model):
     favorited_by = models.ManyToManyField(User, related_name='favorite_samples', blank=True)
     course_references = models.ManyToManyField(CourseReference, related_name='samples', blank=True, verbose_name="Course references")
     
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='analysis_tasks',
+        verbose_name="Author"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     send_discord_notification = models.BooleanField(default=True, verbose_name="Send Discord notification")
     
