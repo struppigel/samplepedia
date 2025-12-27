@@ -79,6 +79,15 @@
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Analysis</h3>
+            {% if sample.download_link %}
+            <div class="card-tools" style="margin-right: 0.1rem;">
+              <a href="{{ sample.download_link }}"
+                 target="_blank"
+                 class="btn btn-danger btn-sm">
+                <i class="fas fa-download"></i> Download Sample
+              </a>
+            </div>
+            {% endif %}
           </div>
           <div class="card-body">
             {% if sample.goal %}
@@ -88,13 +97,13 @@
 
             {% if sample.description %}
               <h6>Description</h6>
-              <div class="spoiler">
-                <div class="spoiler-text" style="margin: 0;">{{ sample.description|linebreaks }}</div>
+              <div class="spoiler" style="width: 100%;">
+                <div class="spoiler-text" style="margin: 0; width: 100%;">{{ sample.description|linebreaks }}</div>
               </div>
             {% endif %}
 
-            <h6 style="margin-top: 0.5rem;">Tools</h6>
-            <p>
+            <h6 style="margin-top: 0.5rem;">Recommended Tools</h6>
+            <p class="mb-2">
               {% for tool in sample.tools.all %}
                 <span class="badge badge-secondary">{{ tool.name }}</span>
               {% empty %}
@@ -104,22 +113,24 @@
           </div>
         </div>
 
-        <!-- Download Card -->
-        {% if sample.download_link %}
-        <div class="card card-danger">
+        <!-- Solution Links Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Solution Links</h3>
+          </div>
           <div class="card-body">
-            <h5 class="text-danger mb-2">
-              <i class="fas fa-exclamation-triangle"></i> Warning: Malware
-            </h5>
-            <p class="text-muted mb-3">This is a live malware sample. Handle in an isolated environment. Archive is password protected with the password "infected"</p>
-            <a href="{{ sample.download_link }}"
-               target="_blank"
-               class="btn btn-danger">
-              <i class="fas fa-download"></i> Download sample
-            </a>
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2">
+                <i class="fas fa-link text-primary"></i>
+                <a href="#" class="ml-2">Example Solution #1 - Detailed Walkthrough</a>
+              </li>
+              <li class="mb-0">
+                <i class="fas fa-link text-primary"></i>
+                <a href="#" class="ml-2">Example Solution #2 - Alternative Approach</a>
+              </li>
+            </ul>
           </div>
         </div>
-        {% endif %}
       </div>
 
       <!-- RIGHT COLUMN: Image and Video -->
