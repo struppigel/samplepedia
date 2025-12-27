@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from .models import Sample, Difficulty, Course, CourseReference
+from .models import AnalysisTask, Difficulty, Course, CourseReference
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.db.models import Count, Case, When, IntegerField
@@ -16,7 +16,7 @@ def sample_list(request):
     sort = request.GET.get("sort", "-id")  # Default to reverse chronological
 
     # Annotate with favorite count and difficulty order for sorting
-    samples = Sample.objects.annotate(
+    samples = AnalysisTask.objects.annotate(
         favorite_count_annotated=Count('favorited_by'),
         difficulty_order=Case(
             When(difficulty='easy', then=1),
@@ -84,7 +84,7 @@ def sample_list(request):
     
     # Get all tags used in samples
     all_tags = Tag.objects.filter(
-        taggit_taggeditem_items__content_type__model='sample'
+        taggit_taggeditem_items__content_type__model='analysistask'
     ).distinct().order_by(Lower('name'))
 
     return render(request, "samples/list.html", {
@@ -101,8 +101,8 @@ def sample_list(request):
 
 
 
-def sample_detail(request, sha256):
-    sample = get_object_or_404(Sample, sha256=sha256)
+def sample_detail(request, sha256, task_id):
+    sample = get_object_or_404(AnalysisTask, id=task_id)
     
     # Check if user has favorited this sample
     user_has_favorited = False
@@ -115,7 +115,7 @@ def sample_detail(request, sha256):
     })
 
 
-def toggle_like(request, sha256):
+def toggle_like(request, sha256, task_id):
     """Toggle favorite for a sample (requires authentication)"""
     if not request.user.is_authenticated:
         return JsonResponse({
@@ -123,7 +123,7 @@ def toggle_like(request, sha256):
             'redirect': '/accounts/login/'
         }, status=401)
     
-    sample = get_object_or_404(Sample, sha256=sha256)
+    sample = get_object_or_404(AnalysisTask, id=task_id)
     
     if sample.favorited_by.filter(id=request.user.id).exists():
         # Remove from favorites
@@ -159,7 +159,7 @@ def course_samples(request, course_id):
     
     # Get all samples that have references to this course
     # We need to get distinct samples and annotate with the minimum section number
-    samples = Sample.objects.filter(
+    samples = AnalysisTask.objects.filter(
         course_references__course=course
     ).prefetch_related('course_references').distinct()
     

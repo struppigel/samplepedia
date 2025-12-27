@@ -25,6 +25,7 @@
             <div class="card-tools">
               <button class="btn btn-link p-0 favorite-btn" 
                       data-sha256="{{ sample.sha256 }}"
+                      data-task-id="{{ sample.id }}"
                       data-liked="{{ user_has_liked|yesno:'true,false' }}"
                       style="border: none; background: none; cursor: pointer;">
                 {% if user_has_liked %}

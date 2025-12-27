@@ -48,14 +48,14 @@
                 
                 <!-- Lecture Title -->
                 <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ item.lecture_title }}">
-                  <a href="{% url 'sample_detail' item.sample.sha256 %}" class="text-muted">
+                  <a href="{% url 'sample_detail' item.sample.sha256 item.sample.id %}" class="text-muted">
                     <small>{{ item.lecture_title|truncatechars:40 }}</small>
                   </a>
                 </td>
 
                 <!-- Sample SHA256 -->
                 <td style="max-width: 200px; padding: 0.3rem 0.75rem;">
-                  <a href="{% url 'sample_detail' item.sample.sha256 %}" class="d-flex align-items-center" style="min-width: 0;">
+                  <a href="{% url 'sample_detail' item.sample.sha256 item.sample.id %}" class="d-flex align-items-center" style="min-width: 0;">
                     <code style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="{{ item.sample.sha256 }}">{{ item.sample.sha256 }}</code>
                   </a>
                 </td>
@@ -73,7 +73,7 @@
 
                 <!-- Goal -->
                 <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                  <a href="{% url 'sample_detail' item.sample.sha256 %}" class="text-muted">
+                  <a href="{% url 'sample_detail' item.sample.sha256 item.sample.id %}" class="text-muted">
                     <small>{{ item.sample.goal|truncatechars:80 }}</small>
                   </a>
                 </td>

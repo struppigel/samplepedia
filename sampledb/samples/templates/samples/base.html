@@ -528,9 +528,10 @@
     button.addEventListener('click', function(e) {
       e.preventDefault();
       const sha256 = this.dataset.sha256;
+      const taskId = this.dataset.taskId;
       
       // Send AJAX request to toggle favorite
-      fetch(`/sample/${sha256}/like/`, {
+      fetch(`/sample/${sha256}/${taskId}/like/`, {
         method: 'POST',
         headers: {
           'X-CSRFToken': getCookie('csrftoken'),

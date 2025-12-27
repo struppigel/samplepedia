@@ -37,7 +37,7 @@ class Course(models.Model):
 
 
 class TaggedTools(TaggedItemBase):
-    content_object = models.ForeignKey('Sample', on_delete=models.CASCADE)
+    content_object = models.ForeignKey('AnalysisTask', on_delete=models.CASCADE)
 
 
 class CourseReference(models.Model):
@@ -70,7 +70,7 @@ class CourseReference(models.Model):
     def __str__(self):
         return f"{self.course.name} - Section {self.section} Lecture {self.lecture_number}: {self.lecture_title[:50]}"
 
-class Sample(models.Model):
+class AnalysisTask(models.Model):
 
     sha256_validator = RegexValidator(
         regex=r'^[a-fA-F0-9]{64}$',
@@ -81,7 +81,6 @@ class Sample(models.Model):
     sha256 = models.CharField(
         max_length=64,
         validators=[sha256_validator],
-        unique=True,
         verbose_name="SHA256"
     )
 

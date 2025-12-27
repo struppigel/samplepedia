@@ -32,7 +32,7 @@ def send_sample_notification(sample):
     
     # Build the absolute URL for the sample detail page
     base_url = settings.BASE_URL
-    sample_url = f"{base_url}/sample/{sample.sha256}/"
+    sample_url = f"{base_url}/sample/{sample.sha256}/{sample.id}/"
     
     # Map difficulty to colors
     difficulty_colors = {

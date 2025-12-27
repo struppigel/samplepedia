@@ -4,21 +4,21 @@ Django signals for the samples app.
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import transaction
-from .models import Sample
+from .models import AnalysisTask
 from .discord_utils import send_sample_notification
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-@receiver(post_save, sender=Sample)
+@receiver(post_save, sender=AnalysisTask)
 def notify_discord_on_new_sample(sender, instance, created, **kwargs):
     """
     Send a Discord notification when a new sample is created.
     
     Args:
-        sender: The Sample model class
-        instance: The actual Sample instance being saved
+        sender: The AnalysisTask model class
+        instance: The actual AnalysisTask instance being saved
         created: Boolean; True if a new record was created
         **kwargs: Additional keyword arguments
     """

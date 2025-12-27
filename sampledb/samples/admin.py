@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Sample, CourseReference, Course
+from .models import AnalysisTask, CourseReference, Course
 
 @admin.register(CourseReference)
 class CourseReferenceAdmin(admin.ModelAdmin):
@@ -20,8 +20,8 @@ class CourseAdmin(admin.ModelAdmin):
     ordering = ("name",)
 
 
-@admin.register(Sample)
-class SampleAdmin(admin.ModelAdmin):
+@admin.register(AnalysisTask)
+class AnalysisTaskAdmin(admin.ModelAdmin):
     list_display = ("sha256", "difficulty")
     list_filter = ("difficulty",)
     search_fields = ("sha256", "goal", "description")
