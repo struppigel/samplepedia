@@ -1,4 +1,5 @@
 {% extends "samples/base.html" %}
+{% load cloudinary %}
 
 {% block title %}Submit Sample{% endblock %}
 
@@ -105,6 +106,23 @@
                 {% endif %}
               </div>
 
+              <div class="form-group">
+                <label>Sample Image (Optional)</label>
+                <input type="hidden" id="selected_image" name="image_id" value="">
+                <div>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#imageGalleryModal">
+                    <i class="fas fa-images"></i> Select Image
+                  </button>
+                  <div id="selected_image_preview" class="mt-2" style="display: none;">
+                    <img id="preview_img" src="" alt="Selected" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                    <button type="button" class="btn btn-sm btn-link text-danger" onclick="clearImageSelection()">
+                      <i class="fas fa-times"></i> Remove
+                    </button>
+                  </div>
+                </div>
+                <small class="form-text text-muted">Choose an image from existing samples</small>
+              </div>
+
               {% if form.non_field_errors %}
                 <div class="alert alert-danger">
                   {{ form.non_field_errors }}
@@ -163,6 +181,84 @@
       </div>
     </div>
   </div>
+
+  <!-- Image Gallery Modal -->
+  <div class="modal fade" id="imageGalleryModal" tabindex="-1" role="dialog" aria-labelledby="imageGalleryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="imageGalleryModalLabel">Select Sample Image</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% if available_images %}
+            <div class="row">
+              {% for img in available_images %}
+                {% cloudinary_url img.image width=300 height=300 crop='fill' as image_url %}
+                <div class="col-md-3 col-sm-4 col-6 mb-3">
+                  <div class="card image-select-card" onclick="selectImage('{{ image_url }}', '{{ img.id }}')" style="cursor: pointer;">
+                    <img src="{{ image_url }}" class="card-img-top" alt="Sample image" style="height: 200px; object-fit: cover;">
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted">No images available in the database yet.</p>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+  .image-select-card {
+    transition: all 0.2s;
+    border: 2px solid transparent;
+  }
+  .image-select-card:hover {
+    border-color: #e63946;
+    transform: scale(1.02);
+  }
+  .image-select-card.selected {
+    border-color: #e63946;
+    box-shadow: 0 0 10px rgba(230, 57, 70, 0.5);
+  }
+  </style>
+
+  <script>
+  function selectImage(imageUrl, taskId) {
+    // Set hidden input value
+    document.getElementById('selected_image').value = taskId;
+    
+    // Update preview
+    const previewDiv = document.getElementById('selected_image_preview');
+    const previewImg = document.getElementById('preview_img');
+    previewImg.src = imageUrl;
+    previewDiv.style.display = 'block';
+    
+    // Highlight selected card
+    document.querySelectorAll('.image-select-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    // Close modal
+    $('#imageGalleryModal').modal('hide');
+  }
+  
+  function clearImageSelection() {
+    document.getElementById('selected_image').value = '';
+    document.getElementById('selected_image_preview').style.display = 'none';
+    document.querySelectorAll('.image-select-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+  }
+  </script>
 </section>
 
 {% endblock %}

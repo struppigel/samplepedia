@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import AnalysisTask, Difficulty, Course, CourseReference, Solution
+from .models import AnalysisTask, Difficulty, Course, CourseReference, Solution, SampleImage
 from django import forms
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
@@ -233,6 +233,16 @@ def submit_task(request):
         if form.is_valid():
             sample = form.save(commit=False)
             sample.author = request.user
+            
+            # Handle image selection
+            image_id = request.POST.get('image_id')
+            if image_id:
+                try:
+                    sample_image = SampleImage.objects.get(id=image_id)
+                    sample.image = sample_image.image
+                except SampleImage.DoesNotExist:
+                    pass
+            
             sample.save()
             
             # Convert tags and tools to lowercase
@@ -249,8 +259,12 @@ def submit_task(request):
     else:
         form = AnalysisTaskForm()
     
+    # Get available images from image library
+    available_images = SampleImage.objects.all()
+    
     return render(request, 'samples/submit_task.html', {
         'form': form,
+        'available_images': available_images,
     })
 
 

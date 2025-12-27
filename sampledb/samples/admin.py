@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AnalysisTask, CourseReference, Course, Solution
+from .models import AnalysisTask, CourseReference, Course, Solution, SampleImage
 
 @admin.register(CourseReference)
 class CourseReferenceAdmin(admin.ModelAdmin):
@@ -41,3 +41,17 @@ class SolutionAdmin(admin.ModelAdmin):
     def analysis_task_sha256(self, obj):
         return obj.analysis_task.sha256[:12] + "..."
     analysis_task_sha256.short_description = "Analysis Task"
+
+
+@admin.register(SampleImage)
+class SampleImageAdmin(admin.ModelAdmin):
+    list_display = ("id", "image_preview", "created_at")
+    list_filter = ("created_at",)
+    readonly_fields = ("created_at", "image_preview")
+    
+    def image_preview(self, obj):
+        if obj.image:
+            from django.utils.html import format_html
+            return format_html('<img src="{}" style="max-width: 100px; max-height: 100px;" />', obj.image.url)
+        return "No image"
+    image_preview.short_description = "Preview"

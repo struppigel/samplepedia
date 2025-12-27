@@ -194,3 +194,18 @@ class Solution(models.Model):
     def __str__(self):
         return f"{self.title} ({self.get_solution_type_display()}) for {self.analysis_task.sha256}"
 
+
+class SampleImage(models.Model):
+    """Library of images that can be used for analysis tasks"""
+    image = CloudinaryField('sample_library_image')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Uploaded at")
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Sample Image"
+        verbose_name_plural = "Sample Images"
+    
+    def __str__(self):
+        return f"Sample Image {self.id}"
+
