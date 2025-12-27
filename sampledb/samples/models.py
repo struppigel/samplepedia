@@ -118,6 +118,14 @@ class AnalysisTask(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     send_discord_notification = models.BooleanField(default=True, verbose_name="Send Discord notification")
     
+    class Meta:
+        indexes = [
+            models.Index(fields=['difficulty'], name='idx_difficulty'),
+            models.Index(fields=['-created_at'], name='idx_created_desc'),
+            models.Index(fields=['difficulty', '-created_at'], name='idx_diff_created'),
+            models.Index(fields=['sha256'], name='idx_sha256'),
+        ]
+    
     @property
     def favorite_count(self):
         return self.favorited_by.count()
