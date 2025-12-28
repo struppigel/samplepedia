@@ -96,8 +96,8 @@ function toggleFavorites(form) {
               <th style="cursor: pointer;">
                 {% include 'samples/_sortable_column.html' with field='goal' minus_field='-goal' label='Goal' %}
               </th>
-              <th style="width: 60px; text-align: center; cursor: pointer;">
-                {% include 'samples/_sortable_column.html' with field='video' minus_field='-video' label='Video' %}
+              <th style="width: 80px; text-align: center; cursor: pointer;">
+                <span class="text-dark">Solutions</span>
               </th>
               <th style="width: 80px; text-align: center; cursor: pointer;">
                 {% include 'samples/_sortable_column.html' with field='likes' minus_field='-likes' label='Likes' %}
@@ -148,11 +148,17 @@ function toggleFavorites(form) {
               </td>
 
               <td style="text-align: center;">
+                {% if s.solutions.count > 0 %}
+                  <span class="text-success" title="{{ s.solutions.count }} solution{{ s.solutions.count|pluralize }}">
+                    <i class="fas fa-check-circle"></i> {{ s.solutions.count }}
+                  </span>
+                {% endif %}
                 {% if s.youtube_id %}
-                  <a href="https://www.youtube.com/watch?v={{ s.youtube_id }}" target="_blank" title="Watch video tutorial">
-                    <i class="fab fa-youtube text-danger" style="font-size: 1.2em;"></i>
+                  <a href="https://www.youtube.com/watch?v={{ s.youtube_id }}" target="_blank" title="Watch video tutorial" class="ml-1">
+                    <i class="fab fa-youtube text-danger"></i>
                   </a>
-                {% else %}
+                {% endif %}
+                {% if not s.solutions.count and not s.youtube_id %}
                   <span class="text-muted">—</span>
                 {% endif %}
               </td>

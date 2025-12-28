@@ -1,0 +1,183 @@
+{% extends "samples/base.html" %}
+{% load static %}
+{% load user_tags %}
+
+{% block title %}{{ profile_user.username }}'s Profile - Samplepedia{% endblock %}
+
+{% block content %}
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-12">
+        <h1 class="m-0">
+          <i class="fas fa-user-circle"></i> {{ profile_user.username }}'s Profile
+        </h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    
+    <!-- User Info Card -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-info-circle"></i> User Information</h3>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <p class="mb-2"><strong>Groups:</strong> {% display_user_groups profile_user %}</p>
+                
+                <p class="mb-2"><strong>Member since:</strong> {{ profile_user.date_joined|date:"M d, Y" }}</p>
+              </div>
+              <div class="col-md-6">
+                <p class="mb-2"><strong>Samples:</strong> {{ analysis_tasks.count }}</p>
+                <p class="mb-2"><strong>Solutions:</strong> {{ solutions.count }} </p>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submitted Solutions -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-check-circle"></i> Submitted Solutions ({{ solutions.count }})</h3>
+          </div>
+          <div class="card-body">
+            {% if solutions %}
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Type</th>
+                      <th>Task</th>
+                      <th>Date</th>
+                      <th>Link</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for solution in solutions %}
+                      <tr>
+                        <td>
+                          <i class="fas fa-{% if solution.solution_type == 'blog' %}book{% elif solution.solution_type == 'paper' %}file-alt{% else %}video{% endif %}"></i>
+                          {{ solution.title|truncatechars:50 }}
+                        </td>
+                        <td><span class="badge badge-info">{{ solution.get_solution_type_display }}</span></td>
+                        <td>
+                          <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}">
+                            {{ solution.analysis_task.sha256|slice:":8" }}...
+                          </a>
+                          <span class="badge badge-{% if solution.analysis_task.difficulty == 'easy' %}success{% elif solution.analysis_task.difficulty == 'medium' %}warning{% elif solution.analysis_task.difficulty == 'advanced' %}danger{% else %}dark{% endif %}">
+                            {{ solution.analysis_task.get_difficulty_display }}
+                          </span>
+                        </td>
+                        <td><small>{{ solution.created_at|date:"M d, Y" }}</small></td>
+                        <td>
+                          <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" title="View Solution">
+                            <i class="fas fa-external-link-alt"></i>
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No solutions submitted yet.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submitted Analysis Tasks -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-tasks"></i> Submitted Analysis Tasks ({{ analysis_tasks.count }})</h3>
+          </div>
+          <div class="card-body">
+            {% if analysis_tasks %}
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>SHA256</th>
+                      <th>Difficulty</th>
+                      <th>Goal</th>
+                      <th>Tags</th>
+                      <th>Stats</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for task in analysis_tasks %}
+                      <tr>
+                        <td>
+                          <a href="{% url 'sample_detail' task.sha256 task.id %}">
+                            <i class="fas fa-file-code"></i> {{ task.sha256|slice:":8" }}...
+                          </a>
+                        </td>
+                        <td>
+                          <span class="badge badge-{% if task.difficulty == 'easy' %}success{% elif task.difficulty == 'medium' %}warning{% elif task.difficulty == 'advanced' %}danger{% else %}dark{% endif %}">
+                            {{ task.get_difficulty_display }}
+                          </span>
+                        </td>
+                        <td>{{ task.goal|truncatechars:60 }}</td>
+                        <td>
+                          {% for tag in task.tags.all|slice:":3" %}
+                            <a href="/?tag={{ tag.slug }}" class="badge badge-tag badge-sm">{{ tag.name }}</a>
+                          {% endfor %}
+                          {% if task.tags.count > 3 %}
+                            <span class="badge badge-secondary badge-sm">+{{ task.tags.count|add:"-3" }}</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <small>
+                            <i class="fas fa-heart text-danger"></i> {{ task.favorite_count }}
+                            {% if task.solutions.count > 0 %}
+                              | <i class="fas fa-check-circle text-success"></i> {{ task.solutions.count }}
+                            {% endif %}
+                          </small>
+                        </td>
+                        <td><small>{{ task.created_at|date:"M d, Y" }}</small></td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No analysis tasks submitted yet.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="row">
+      <div class="col-12">
+        <a href="/" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Back to Browse
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

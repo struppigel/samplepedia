@@ -418,3 +418,23 @@ def resend_verification(request):
         return redirect('verification_sent')
     
     return render(request, 'registration/resend_verification.html')
+
+
+@login_required
+def user_profile(request, username):
+    """Display user profile with their submitted solutions and analysis tasks"""
+    profile_user = get_object_or_404(User, username=username)
+    
+    # Get user's submitted solutions with related analysis tasks
+    solutions = Solution.objects.filter(author=profile_user).select_related('analysis_task').order_by('-created_at')
+    
+    # Get user's submitted analysis tasks
+    analysis_tasks = AnalysisTask.objects.filter(author=profile_user).order_by('-created_at')
+    
+    context = {
+        'profile_user': profile_user,
+        'solutions': solutions,
+        'analysis_tasks': analysis_tasks,
+    }
+    
+    return render(request, 'samples/profile.html', context)
