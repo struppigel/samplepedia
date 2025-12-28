@@ -12,4 +12,8 @@ urlpatterns = [
     path("sample/<str:sha256>/<int:task_id>/solution/<int:solution_id>/delete/", views.delete_solution, name="delete_solution"),
     path("impressum/", views.impressum, name="impressum"),
     path("privacy/", views.privacy_policy, name="privacy_policy"),
+    path("register/", views.register, name="register"),
+    path("verification-sent/", views.verification_sent, name="verification_sent"),
+    path("verify-email/<uidb64>/<token>/", views.verify_email, name="verify_email"),
+    path("resend-verification/", views.resend_verification, name="resend_verification"),
 ]

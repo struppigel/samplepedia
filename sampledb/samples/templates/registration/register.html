@@ -1,0 +1,111 @@
+{% extends "samples/base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<section class="content-header">
+  <div class="container-fluid">
+    <h1>Create Account</h1>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Register for Samplepedia</h3>
+          </div>
+          <div class="card-body">
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            <form method="post" action="{% url 'register' %}">
+              {% csrf_token %}
+              
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                  {{ form.non_field_errors }}
+                </div>
+              {% endif %}
+
+              <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Username:</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                  <div class="text-danger">
+                    {{ form.username.errors }}
+                  </div>
+                {% endif %}
+                <small class="form-text text-muted">
+                  Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Email:</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                  <div class="text-danger">
+                    {{ form.email.errors }}
+                  </div>
+                {% endif %}
+                <small class="form-text text-muted">
+                  Required. We'll send a verification link to this address.
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.password1.id_for_label }}">Password:</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                  <div class="text-danger">
+                    {{ form.password1.errors }}
+                  </div>
+                {% endif %}
+                <small class="form-text text-muted">
+                  <ul class="mb-0">
+                    <li>Your password can't be too similar to your other personal information.</li>
+                    <li>Your password must contain at least 8 characters.</li>
+                    <li>Your password can't be a commonly used password.</li>
+                    <li>Your password can't be entirely numeric.</li>
+                  </ul>
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.password2.id_for_label }}">Confirm Password:</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                  <div class="text-danger">
+                    {{ form.password2.errors }}
+                  </div>
+                {% endif %}
+                <small class="form-text text-muted">
+                  Enter the same password as before, for verification.
+                </small>
+              </div>
+
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Create Account
+              </button>
+              <a href="{% url 'login' %}" class="btn btn-secondary">
+                <i class="fas fa-sign-in-alt"></i> Back to Login
+              </a>
+            </form>
+          </div>
+          <div class="card-footer text-muted">
+            Already have an account? <a href="{% url 'login' %}">Login here</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
