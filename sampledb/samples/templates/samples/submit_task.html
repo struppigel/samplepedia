@@ -32,7 +32,6 @@
                     {{ form.sha256.errors }}
                   </div>
                 {% else %}
-                  <small class="form-text text-muted">64 character hexadecimal hash</small>
                 {% endif %}
               </div>
 
@@ -44,7 +43,7 @@
                     {{ form.download_link.errors }}
                   </div>
                 {% else %}
-                  <small class="form-text text-muted">URL where the sample can be downloaded</small>
+                  <small class="form-text text-muted">Provide a malshare or malwarebazaar URL!</small>
                 {% endif %}
               </div>
 
@@ -56,7 +55,6 @@
                     {{ form.goal.errors }}
                   </div>
                 {% else %}
-                  <small class="form-text text-muted">What should be learned or achieved through this analysis?</small>
                 {% endif %}
               </div>
 
@@ -68,7 +66,6 @@
                     {{ form.description.errors }}
                   </div>
                 {% else %}
-                  <small class="form-text text-muted">Detailed information about the sample (will be hidden as spoiler)</small>
                 {% endif %}
               </div>
 
@@ -149,10 +146,9 @@
             <h3 class="card-title">Submission Guidelines</h3>
           </div>
           <div class="card-body">
-            <ul class="mb-0">
-              <li class="mb-2">Provide a valid SHA256 hash (64 hex characters), if the download consists of several files, use the hash of the archive</li>
-              <li class="mb-2">Download link should be to malshare or malwarebazaar (for now)</li>
-              <li class="mb-2">Choose the appropriate difficulty level, see explanation below</li>
+            <p class="small mb-3">Provide a valid SHA256 hash (64 hex characters) for the contained file, if the download consists of several files, use the hash of the archive</p>
+            <p class="small mb-3">The download link must be to malshare or malwarebazaar</p>
+            <p class="small mb-3">Choose the appropriate difficulty level, see explanation below</p>
             </ul>
           </div>
         </div>

@@ -2,49 +2,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import AnalysisTask, Difficulty, Course, CourseReference, Solution, SampleImage
-from django import forms
+from .models import AnalysisTask, Difficulty, Course, Solution, SampleImage
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.db.models import Count, Case, When, IntegerField
 from taggit.models import Tag
-
-
-class SolutionForm(forms.ModelForm):
-    class Meta:
-        model = Solution
-        fields = ['title', 'solution_type', 'url']
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Solution title'}),
-            'solution_type': forms.Select(attrs={'class': 'form-control'}),
-            'url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
-        }
-
-
-class AnalysisTaskForm(forms.ModelForm):
-    class Meta:
-        model = AnalysisTask
-        fields = ['sha256', 'download_link', 'description', 'goal', 'difficulty', 'tags', 'tools']
-        widgets = {
-            'sha256': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '64 character hex string'}),
-            'download_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Detailed description of the sample'}),
-            'goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Analysis goal or learning objective'}),
-            'difficulty': forms.Select(attrs={'class': 'form-control'}),
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Make all fields required
-        for field_name in self.fields:
-            self.fields[field_name].required = True
-        
-        # Exclude expert difficulty from choices
-        self.fields['difficulty'].choices = [
-            (value, label) for value, label in Difficulty.choices 
-            if value != Difficulty.EXPERT
-        ]
-
+from .forms import SolutionForm, AnalysisTaskForm
 
 def sample_list(request):
     q = request.GET.get("q", "")
