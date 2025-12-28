@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.db.models import Count, Case, When, IntegerField
 from taggit.models import Tag
+import re
 
 from ..models import AnalysisTask, Difficulty, SampleImage
 from ..forms import AnalysisTaskForm
@@ -113,11 +114,53 @@ def sample_detail(request, sha256, task_id):
     # Get solutions for this sample
     solutions = sample.solutions.select_related('author').all()
     
+    # Find first YouTube solution if sample doesn't have youtube_id
+    youtube_solution = None
+    if not sample.youtube_id:
+        for solution in solutions:
+            youtube_id = extract_youtube_id(solution.url)
+            if youtube_id:
+                youtube_solution = {
+                    'youtube_id': youtube_id,
+                    'title': solution.title,
+                    'author': solution.author
+                }
+                break
+    
     return render(request, "samples/detail.html", {
         "sample": sample,
         "user_has_liked": user_has_favorited,
         "solutions": solutions,
+        "youtube_solution": youtube_solution,
     })
+
+
+def extract_youtube_id(url):
+    """Extract YouTube video ID from various YouTube URL formats."""
+    if not url:
+        return None
+    
+    # Pattern 1: youtube.com/watch?v=VIDEO_ID
+    match = re.search(r'(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})', url)
+    if match:
+        return match.group(1)
+    
+    # Pattern 2: youtu.be/VIDEO_ID
+    match = re.search(r'(?:youtu\.be\/)([a-zA-Z0-9_-]{11})', url)
+    if match:
+        return match.group(1)
+    
+    # Pattern 3: youtube.com/embed/VIDEO_ID
+    match = re.search(r'(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})', url)
+    if match:
+        return match.group(1)
+    
+    # Pattern 4: youtube.com/v/VIDEO_ID
+    match = re.search(r'(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})', url)
+    if match:
+        return match.group(1)
+    
+    return None
 
 
 @login_required
