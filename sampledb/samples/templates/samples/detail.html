@@ -75,7 +75,7 @@
 
               <dt class="col-sm-3">Author</dt>
               <dd class="col-sm-9">
-                {{ sample.author.username }}
+                <a href="{% url 'user_profile' sample.author.username %}">{{ sample.author.username }}</a>
               </dd>
             </dl>
           </div>
@@ -147,7 +147,7 @@
                     <i class="fas fa-link text-primary"></i>
                   {% endif %}
                   <a href="{{ solution.url }}" target="_blank" class="ml-2">{{ solution.title }}</a>
-                  <span class="text-muted small">by {{ solution.author.username }}</span>
+                  <span class="text-muted small">by <a href="{% url 'user_profile' solution.author.username %}">{{ solution.author.username }}</a></span>
                   {% if user.is_authenticated and solution.author == user %}
                     <button class="btn btn-link btn-sm text-danger p-0 ml-2" 
                             onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256 }}', '{{ sample.id }}')"
