@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from .models import AnalysisTask, Difficulty, Course, Solution, SampleImage
 from django.core.paginator import Paginator
@@ -196,6 +196,7 @@ def delete_solution(request, sha256, task_id, solution_id):
 
 
 @login_required
+@permission_required('samples.add_analysistask', raise_exception=True)
 def submit_task(request):
     """Allow users to submit their own analysis task"""
     if request.method == 'POST':
