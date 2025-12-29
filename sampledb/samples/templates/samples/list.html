@@ -2,7 +2,7 @@
 
 {% load url_helpers %}  
 {% load cloudinary %}
-
+{% load user_tags %}
 {% block title %}Trainings Samples{% endblock %}
 
 {% block content %}
@@ -121,14 +121,7 @@ function toggleFavorites(form) {
                 </a>
               </td>
               <td>
-                <a href="/?difficulty={{ s.difficulty }}"
-                  class="badge
-                  {% if s.difficulty == 'easy' %}badge-info
-                  {% elif s.difficulty == 'medium' %}badge-warning
-                  {% elif s.difficulty == 'advanced' %}badge-danger
-                  {% else %}badge-dark{% endif %}">
-                  {{ s.difficulty }}
-                </a>
+                {% difficulty_badge s.difficulty s.difficulty %}
               </td>
               <td>
                 {% for tag in s.tags.all %}

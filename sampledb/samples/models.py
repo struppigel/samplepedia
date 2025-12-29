@@ -8,10 +8,10 @@ from cloudinary.models import CloudinaryField
 from django.core.validators import RegexValidator
 
 class Difficulty(models.TextChoices):
-    EASY = "easy", "Easy"
-    MEDIUM = "medium", "Medium"
-    ADVANCED = "advanced", "Advanced"
-    EXPERT = "expert", "Expert"
+    EASY = "easy", "easy"
+    MEDIUM = "medium", "medium"
+    ADVANCED = "advanced", "advanced"
+    EXPERT = "expert", "expert"
 
 
 class Course(models.Model):
