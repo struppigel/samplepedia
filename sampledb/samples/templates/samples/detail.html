@@ -23,6 +23,11 @@
           <div class="card-header">
             <h3 class="card-title">Metadata</h3>
             <div class="card-tools">
+              {% if user_can_edit %}
+                <a href="{% url 'edit_task' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-sm btn-secondary mr-2" title="Edit Task">
+                  <i class="fas fa-edit"></i>
+                </a>
+              {% endif %}
               {% favorite_button sample user_has_liked %}
             </div>
           </div>

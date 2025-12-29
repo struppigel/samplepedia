@@ -136,6 +136,13 @@ class AnalysisTask(models.Model):
     @property
     def favorite_count(self):
         return self.favorited_by.count()
+    
+    def user_can_edit(self, user):
+        """Check if a user has permission to edit this task"""
+        if not user.is_authenticated:
+            return False
+        is_contributor = user.groups.filter(name='contributor').exists()
+        return (user == (self.author) and is_contributor ) or user.is_staff
 
     def __str__(self):
         return self.sha256

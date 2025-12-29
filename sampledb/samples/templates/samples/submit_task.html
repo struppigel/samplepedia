@@ -1,13 +1,13 @@
 {% extends "samples/base.html" %}
 {% load cloudinary %}
 
-{% block title %}Submit Sample{% endblock %}
+{% block title %}{% if is_edit %}Edit{% else %}Submit{% endif %} Sample{% endblock %}
 
 {% block content %}
 
 <section class="content-header">
   <div class="container-fluid">
-    <h1>Submit Analysis Task</h1>
+    <h1>{% if is_edit %}Edit{% else %}Submit{% endif %} Analysis Task</h1>
   </div>
 </section>
 
@@ -117,7 +117,7 @@
                     </button>
                   </div>
                 </div>
-                <small class="form-text text-muted">Choose an image from existing samples</small>
+                <small class="form-text text-muted">Choose an image from gallery</small>
               </div>
 
               {% if form.non_field_errors %}
@@ -128,9 +128,9 @@
 
               <div class="form-group mb-0">
                 <button type="submit" class="btn btn-danger">
-                  <i class="fas fa-save"></i> Submit 
+                  <i class="fas fa-save"></i> {% if is_edit %}Update{% else %}Submit{% endif %}
                 </button>
-                <a href="{% url 'sample_list' %}" class="btn btn-secondary">
+                <a href="{% if is_edit %}{% url 'sample_detail' sha256=task.sha256 task_id=task.id %}{% else %}{% url 'sample_list' %}{% endif %}" class="btn btn-secondary">
                   <i class="fas fa-times"></i> Cancel
                 </a>
               </div>
@@ -227,6 +227,24 @@
   </style>
 
   <script>
+  // Pre-select current image in edit mode
+  {% if is_edit and current_image_id %}
+  document.addEventListener('DOMContentLoaded', function() {
+    const currentImageId = '{{ current_image_id }}';
+    if (currentImageId) {
+      document.getElementById('selected_image').value = currentImageId;
+      
+      // Find and show preview of current image
+      const imageCard = document.querySelector(`[onclick*="'${currentImageId}'"]`);
+      if (imageCard) {
+        const imgSrc = imageCard.querySelector('img').src;
+        document.getElementById('preview_img').src = imgSrc;
+        document.getElementById('selected_image_preview').style.display = 'block';
+      }
+    }
+  });
+  {% endif %}
+  
   function selectImage(imageUrl, taskId) {
     // Set hidden input value
     document.getElementById('selected_image').value = taskId;

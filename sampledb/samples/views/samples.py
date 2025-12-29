@@ -136,6 +136,7 @@ def sample_detail(request, sha256, task_id):
         "user_has_liked": user_has_favorited,
         "solutions": solutions,
         "youtube_solution": youtube_solution,
+        "user_can_edit": sample.user_can_edit(request.user),
     })
 
 
@@ -211,4 +212,70 @@ def submit_task(request):
     return render(request, 'samples/submit_task.html', {
         'form': form,
         'available_images': available_images,
+        'is_edit': False,
+    })
+
+
+@login_required
+def edit_task(request, sha256, task_id):
+    """Allow users to edit their own analysis task (or admins/contributors to edit any)"""
+    task = get_object_or_404(AnalysisTask, sha256=sha256, id=task_id)
+    
+    # Check permissions using model method
+    if not task.user_can_edit(request.user):
+        messages.error(request, 'You do not have permission to edit this task.')
+        return redirect('sample_detail', sha256=task.sha256, task_id=task.id)
+    
+    if request.method == 'POST':
+        form = AnalysisTaskForm(request.POST, instance=task)
+        if form.is_valid():
+            # Use atomic transaction
+            with transaction.atomic():
+                sample = form.save(commit=False)
+                
+                # Handle image selection
+                image_id = request.POST.get('image_id')
+                if image_id:
+                    try:
+                        sample_image = SampleImage.objects.get(id=image_id)
+                        sample.image = sample_image.image
+                    except SampleImage.DoesNotExist:
+                        pass
+                elif request.POST.get('clear_image'):
+                    sample.image = None
+                
+                sample.save()
+                
+                # Convert tags and tools to lowercase and save
+                if form.cleaned_data.get('tags'):
+                    tags = [tag.strip().lower() for tag in form.cleaned_data['tags'] if tag.strip()]
+                    sample.tags.set(tags)
+                
+                if form.cleaned_data.get('tools'):
+                    tools = [tool.strip().lower() for tool in form.cleaned_data['tools'] if tool.strip()]
+                    sample.tools.set(tools)
+            
+            messages.success(request, f'AnalysisTask {sample.sha256[:12]}... updated successfully!')
+            return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
+    else:
+        form = AnalysisTaskForm(instance=task)
+    
+    # Get available images from image library
+    available_images = SampleImage.objects.all()
+    
+    # Find current image if it exists
+    current_image_id = None
+    if task.image:
+        try:
+            current_image = SampleImage.objects.get(image=task.image)
+            current_image_id = current_image.id
+        except SampleImage.DoesNotExist:
+            pass
+    
+    return render(request, 'samples/submit_task.html', {
+        'form': form,
+        'available_images': available_images,
+        'is_edit': True,
+        'task': task,
+        'current_image_id': current_image_id,
     })
