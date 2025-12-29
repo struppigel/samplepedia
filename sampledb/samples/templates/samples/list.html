@@ -110,6 +110,8 @@ function toggleFavorites(form) {
           <tbody>
             {% for s in page_obj %}
             <tr>
+              
+              <!-- SHA256 and Link -->
               <td style="max-width: 200px; padding: 0.3rem 0.75rem;">
                 <a href="{% url 'sample_detail' s.sha256 s.id %}" class="d-flex align-items-center" style="min-width: 0;">
                   {% if s.image %}
@@ -120,6 +122,8 @@ function toggleFavorites(form) {
                   <code style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="{{ s.sha256 }}">{{ s.sha256 }}</code>
                 </a>
               </td>
+
+              <!-- Difficulty Badge -->
               <td>
                 {% difficulty_badge s.difficulty s.difficulty %}
               </td>
@@ -134,13 +138,15 @@ function toggleFavorites(form) {
                 {% endfor %}
               </td>
 
+              <!-- Goal -->
               <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 <a href="{% url 'sample_detail' s.sha256 s.id %}" class="text-muted">
                   {{ s.goal|truncatechars:80 }}
                 </a>
               </td>
 
-              <td style="text-align: center;">
+              <!-- Solutions -->
+               <td>
                 {% if s.solutions.count > 0 %}
                   <span class="text-success" title="{{ s.solutions.count }} solution{{ s.solutions.count|pluralize }}">
                     <i class="fas fa-check-circle"></i> {{ s.solutions.count }}
@@ -156,23 +162,12 @@ function toggleFavorites(form) {
                 {% endif %}
               </td>
 
+              <!-- Favorites -->
               <td style="text-align: center;">
-                <button class="btn btn-link p-0 favorite-btn" 
-                        data-sha256="{{ s.sha256 }}"
-                        data-task-id="{{ s.id }}"
-                        data-liked="{% if s.id in user_favorited_ids %}true{% else %}false{% endif %}"
-                        style="border: none; background: none; cursor: pointer;">
-                  {% if s.id in user_favorited_ids %}
-                    <span class="text-danger" title="{{ s.favorite_count }} favorite{{ s.favorite_count|pluralize }}">
-                      <i class="fas fa-heart"></i> <span class="favorite-count">{{ s.favorite_count }}</span>
-                    </span>
-                  {% else %}
-                    <span class="text-muted" title="{{ s.favorite_count }} favorite{{ s.favorite_count|pluralize }}">
-                      <i class="far fa-heart"></i> <span class="favorite-count">{{ s.favorite_count }}</span>
-                    </span>
-                  {% endif %}
-                </button>
+                {% favorite_button s user_favorited_ids %}
               </td>
+
+              <!-- Created Date -->
               <td style="text-align: center;">
                 <span class="text-muted" style="font-size: 0.9em;">{{ s.created_at|date:"d M Y" }}</span>
               </td>

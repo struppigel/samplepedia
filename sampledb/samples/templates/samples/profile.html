@@ -115,24 +115,28 @@
                     <tr>
                       <th>SHA256</th>
                       <th>Difficulty</th>
-                      <th>Goal</th>
                       <th>Tags</th>
-                      <th>Stats</th>
+                      <th>Goal</th>
+                      <th>Likes</th>
                       <th>Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {% for task in analysis_tasks %}
                       <tr>
+                        <!-- SHA256 and Link -->
                         <td>
                           <a href="{% url 'sample_detail' task.sha256 task.id %}">
                             <i class="fas fa-file-code"></i> {{ task.sha256|slice:":8" }}...
                           </a>
                         </td>
+                        
+                        <!-- Difficulty Badge -->
                         <td>
                           {% difficulty_badge task.difficulty task.difficulty %}
                         </td>
-                        <td>{{ task.goal|truncatechars:60 }}</td>
+
+                        <!-- Tags -->
                         <td>
                           {% for tag in task.tags.all|slice:":3" %}
                             <a href="/?tag={{ tag.slug }}" class="badge badge-tag badge-sm">{{ tag.name }}</a>
@@ -141,14 +145,16 @@
                             <span class="badge badge-secondary badge-sm">+{{ task.tags.count|add:"-3" }}</span>
                           {% endif %}
                         </td>
+
+                        <!-- Goal -->
+                        <td>{{ task.goal|truncatechars:60 }}</td>
+                        
+                        <!-- Stats: Favorites and Solutions -->
                         <td>
-                          <small>
-                            <i class="fas fa-heart text-danger"></i> {{ task.favorite_count }}
-                            {% if task.solutions.count > 0 %}
-                              | <i class="fas fa-check-circle text-success"></i> {{ task.solutions.count }}
-                            {% endif %}
-                          </small>
+                         {% favorite_button task user_favorited_ids %}
                         </td>
+
+                        <!-- Created Date -->
                         <td><small>{{ task.created_at|date:"M d, Y" }}</small></td>
                       </tr>
                     {% endfor %}

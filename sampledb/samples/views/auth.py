@@ -142,10 +142,18 @@ def user_profile(request, username):
     # Get user's submitted analysis tasks
     analysis_tasks = AnalysisTask.objects.filter(author=profile_user).order_by('-created_at')
     
+    # Get current user's favorited sample IDs for display
+    user_favorited_ids = set()
+    if request.user.is_authenticated:
+        user_favorited_ids = set(
+            request.user.favorite_samples.values_list('id', flat=True)
+        )
+    
     context = {
         'profile_user': profile_user,
         'solutions': solutions,
         'analysis_tasks': analysis_tasks,
+        'user_favorited_ids': user_favorited_ids,
     }
     
     return render(request, 'samples/profile.html', context)
