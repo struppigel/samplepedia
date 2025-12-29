@@ -89,29 +89,42 @@
       // Check if content overflows (more than one line)
       if (fullHeight > 30) {  // Roughly 1.6em in pixels
         const firstLineBottom = badges[0].getBoundingClientRect().bottom;
-        let lastVisibleBadge = null;
         let hiddenCount = 0;
         
-        // Hide all badges on the second line and beyond
+        // First pass: identify which badges overflow to second line
         badges.forEach(badge => {
           if (badge.getBoundingClientRect().top > firstLineBottom + 5) {
             badge.style.display = 'none';
             hiddenCount++;
-          } else {
-            lastVisibleBadge = badge;
           }
         });
         
-        if (hiddenCount > 0 && lastVisibleBadge) {
-          // Hide the last visible tag to make room for +more badge
-          lastVisibleBadge.style.display = 'none';
-          hiddenCount++; // Include the hidden tag in the count
-          
-          // Create and insert +more badge where the last tag was
+        if (hiddenCount > 0) {
+          // Create +more badge and append it at the end
           const moreBadge = document.createElement('span');
           moreBadge.className = 'badge badge-secondary tag-more-badge';
           moreBadge.textContent = '+' + hiddenCount + ' more';
-          lastVisibleBadge.insertAdjacentElement('beforebegin', moreBadge);
+          content.appendChild(moreBadge);
+          
+          // Check if the +more badge is on the first line
+          // If not, keep hiding badges from the end until it is
+          while (moreBadge.getBoundingClientRect().top > firstLineBottom + 5) {
+            // Find the last visible badge (excluding already hidden ones)
+            let lastVisibleBadge = null;
+            for (let i = badges.length - 1; i >= 0; i--) {
+              if (badges[i].style.display !== 'none') {
+                lastVisibleBadge = badges[i];
+                break;
+              }
+            }
+            
+            if (!lastVisibleBadge) break; // Safety check
+            
+            // Hide it and increment counter
+            lastVisibleBadge.style.display = 'none';
+            hiddenCount++;
+            moreBadge.textContent = '+' + hiddenCount + ' more';
+          }
           
           // Add hover listeners to expand/collapse
           moreBadge.addEventListener('mouseenter', function() {
