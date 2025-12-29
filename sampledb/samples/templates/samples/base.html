@@ -52,26 +52,29 @@
             <i class="fas fa-graduation-cap"></i> Courses
           </a>
         </li>
-        <li class="nav-item">
-          <a href="#" class="nav-link" id="darkToggle" title="Toggle Dark Mode">
-            <i class="fas fa-moon" id="darkIcon"></i>
-            <i class="fas fa-sun" id="lightIcon" style="display: none;"></i>
-            <span id="darkModeText" class="ml-1">Dark</span>
-          </a>
-        </li>
         {% if user.is_authenticated %}
-          <li class="nav-item">
-            <a href="{% url 'user_profile' user.username %}" class="nav-link" title="View Profile">
-              <i class="fas fa-user"></i> {{ user.username }}
+          <li class="nav-item dropdown">
+            <a class="nav-link" data-toggle="dropdown" href="#" title="User Menu">
+              <i class="fas fa-user"></i> {{ user.username }} <i class="fas fa-caret-down"></i>
             </a>
-          </li>
-          <li class="nav-item">
-            <form method="post" action="{% url 'logout' %}" style="margin: 0;">
-              {% csrf_token %}
-              <button type="submit" class="nav-link btn btn-link" style="border: none; background: none; cursor: pointer;" title="Logout">
-                <i class="fas fa-sign-out-alt"></i> Logout
-              </button>
-            </form>
+            <div class="dropdown-menu dropdown-menu-right">
+              <a href="{% url 'user_profile' user.username %}" class="dropdown-item">
+                <i class="fas fa-user"></i> Profile
+              </a>
+              <div class="dropdown-divider"></div>
+              <a href="#" class="dropdown-item" id="darkToggle" title="Toggle Dark Mode">
+                <i class="fas fa-moon" id="darkIcon"></i>
+                <i class="fas fa-sun" id="lightIcon" style="display: none;"></i>
+                <span id="darkModeText" class="ml-1">Dark Mode</span>
+              </a>
+              <div class="dropdown-divider"></div>
+              <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="dropdown-item" style="border: none; background: none; cursor: pointer; text-align: left; width: 100%;">
+                  <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+              </form>
+            </div>
           </li>
         {% else %}
           <li class="nav-item">
@@ -119,6 +122,19 @@
     </a>
   </div>
 </footer>
+
+<!-- Dropdown caret toggle script -->
+<script>
+$(document).ready(function() {
+  $('.dropdown').on('show.bs.dropdown', function() {
+    $(this).find('.fa-caret-down').removeClass('fa-caret-down').addClass('fa-caret-up');
+  });
+  
+  $('.dropdown').on('hide.bs.dropdown', function() {
+    $(this).find('.fa-caret-up').removeClass('fa-caret-up').addClass('fa-caret-down');
+  });
+});
+</script>
 
 </body>
 </html>
