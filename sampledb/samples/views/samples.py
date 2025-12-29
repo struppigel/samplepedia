@@ -279,3 +279,23 @@ def edit_task(request, sha256, task_id):
         'task': task,
         'current_image_id': current_image_id,
     })
+
+
+@login_required
+def delete_task(request, sha256, task_id):
+    """Allow users to delete their own analysis task (or admins/contributors to delete any)"""
+    task = get_object_or_404(AnalysisTask, sha256=sha256, id=task_id)
+    
+    # Check permissions using model method
+    if not task.user_can_edit(request.user):
+        messages.error(request, 'You do not have permission to delete this task.')
+        return redirect('sample_detail', sha256=task.sha256, task_id=task.id)
+    
+    if request.method == 'POST':
+        sha256_preview = task.sha256[:12]
+        task.delete()
+        messages.success(request, f'AnalysisTask {sha256_preview}... has been deleted successfully.')
+        return redirect('sample_list')
+    
+    # If not POST, redirect back to detail page
+    return redirect('sample_detail', sha256=task.sha256, task_id=task.id)

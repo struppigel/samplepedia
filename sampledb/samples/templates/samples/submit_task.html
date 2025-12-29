@@ -133,8 +133,20 @@
                 <a href="{% if is_edit %}{% url 'sample_detail' sha256=task.sha256 task_id=task.id %}{% else %}{% url 'sample_list' %}{% endif %}" class="btn btn-secondary">
                   <i class="fas fa-times"></i> Cancel
                 </a>
+                {% if is_edit %}
+                  <button type="button" class="btn btn-outline-danger float-right" onclick="confirmDelete()">
+                    <i class="fas fa-trash-alt"></i> Delete Task
+                  </button>
+                {% endif %}
               </div>
             </form>
+            
+            {% if is_edit %}
+            <!-- Hidden delete form -->
+            <form id="deleteForm" method="post" action="{% url 'delete_task' sha256=task.sha256 task_id=task.id %}" style="display: none;">
+              {% csrf_token %}
+            </form>
+            {% endif %}
           </div>
         </div>
 
@@ -271,6 +283,12 @@
     document.querySelectorAll('.image-select-card').forEach(card => {
       card.classList.remove('selected');
     });
+  }
+  
+  function confirmDelete() {
+    if (confirm('Are you sure you want to delete this analysis task? This action cannot be undone.')) {
+      document.getElementById('deleteForm').submit();
+    }
   }
   </script>
 </section>
