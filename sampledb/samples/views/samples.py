@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.db.models import Count, Case, When, IntegerField
+from django.db import transaction
 from taggit.models import Tag
 import re
 
@@ -173,29 +174,32 @@ def submit_task(request):
     if request.method == 'POST':
         form = AnalysisTaskForm(request.POST)
         if form.is_valid():
-            sample = form.save(commit=False)
-            sample.author = request.user
+            # Use atomic transaction to ensure tags/tools are saved before Discord notification
+            with transaction.atomic():
+                sample = form.save(commit=False)
+                sample.author = request.user
+                
+                # Handle image selection
+                image_id = request.POST.get('image_id')
+                if image_id:
+                    try:
+                        sample_image = SampleImage.objects.get(id=image_id)
+                        sample.image = sample_image.image
+                    except SampleImage.DoesNotExist:
+                        pass
+                
+                sample.save()
+                
+                # Convert tags and tools to lowercase and save (must happen in same transaction for Discord)
+                if form.cleaned_data.get('tags'):
+                    tags = [tag.strip().lower() for tag in form.cleaned_data['tags'] if tag.strip()]
+                    sample.tags.set(tags)
+                
+                if form.cleaned_data.get('tools'):
+                    tools = [tool.strip().lower() for tool in form.cleaned_data['tools'] if tool.strip()]
+                    sample.tools.set(tools)
             
-            # Handle image selection
-            image_id = request.POST.get('image_id')
-            if image_id:
-                try:
-                    sample_image = SampleImage.objects.get(id=image_id)
-                    sample.image = sample_image.image
-                except SampleImage.DoesNotExist:
-                    pass
-            
-            sample.save()
-            
-            # Convert tags and tools to lowercase
-            if form.cleaned_data.get('tags'):
-                tags = [tag.strip().lower() for tag in form.cleaned_data['tags'] if tag.strip()]
-                sample.tags.set(tags)
-            
-            if form.cleaned_data.get('tools'):
-                tools = [tool.strip().lower() for tool in form.cleaned_data['tools'] if tool.strip()]
-                sample.tools.set(tools)
-            
+            # Transaction committed, Discord notification will fire now with correct data
             messages.success(request, f'AnalysisTask {sample.sha256[:12]}... submitted successfully!')
             return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
     else:
