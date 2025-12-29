@@ -192,7 +192,7 @@
       {% endif %}
     </div>
 
-    <button onclick="history.back()" class="btn-back mt-2">
+    <button onclick="smartBack()" class="btn-back mt-2">
   ← Back to list
   </button>
 
@@ -200,6 +200,17 @@
 </section>
 
 <script>
+// Smart back navigation - avoid going back to submission form
+function smartBack() {
+  const referrer = document.referrer;
+  // If coming from submit or edit page, go directly to list
+  if (referrer && (referrer.includes('/submit/') || referrer.includes('/edit/'))) {
+    window.location.href = '/';
+  } else {
+    history.back();
+  }
+}
+
 // Copy SHA256 functionality
 document.getElementById('copySha256').addEventListener('click', function() {
   const sha256Text = document.getElementById('sha256Text').textContent;
