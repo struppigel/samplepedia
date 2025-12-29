@@ -311,6 +311,11 @@ a.badge:hover {
   user-select: none;
 }
 
+.spoiler.decrypting > .spoiler-text {
+  color: inherit;
+  user-select: none;
+}
+
 .spoiler::after {
   content: "Spoiler, click to reveal";
   position: absolute;
@@ -329,6 +334,7 @@ a.badge:hover {
   user-select: text;
 }
 
+.spoiler.decrypting::after,
 .spoiler.revealed::after {
   display: none;
 }
