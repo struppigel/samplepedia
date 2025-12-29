@@ -127,21 +127,15 @@ function toggleFavorites(form) {
               <td>
                 {% difficulty_badge s.difficulty s.difficulty %}
               </td>
+              
               <td>
-                {% for tag in s.tags.all %}
-                  <a href="/?tag={{ tag.name|urlencode }}" class="badge badge-tag">
-                    {{ tag.name }}
-                  </a>
-
-                {% empty %}
-                  <span class="text-muted">—</span>
-                {% endfor %}
+                {% include 'samples/_expandable_tag_list.html' with tags=s.tags.all max_width='300px' %}
               </td>
 
               <!-- Goal -->
-              <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <td style="max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 <a href="{% url 'sample_detail' s.sha256 s.id %}" class="text-muted">
-                  {{ s.goal|truncatechars:80 }}
+                  {{ s.goal }}
                 </a>
               </td>
 

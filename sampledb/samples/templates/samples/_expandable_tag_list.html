@@ -1,0 +1,164 @@
+{% comment %}
+  Reusable tag list component with overflow handling
+  Usage: {% include 'samples/_tag_list.html' with tags=s.tags.all max_width='200px' %}
+  Parameters:
+    - tags: QuerySet or list of tag objects
+    - max_width: Maximum width before truncation (default: 200px)
+{% endcomment %}
+
+{% with tag_list=tags|default:None width=max_width|default:'200px' %}
+  {% if tag_list %}
+    <div class="tag-list-wrapper" style="max-width: {{ width }};" data-initialized="false">
+      <div class="tag-list-content">
+        {% for tag in tag_list %}
+          <a href="/?tag={{ tag.name|urlencode }}" class="badge badge-tag" data-tag-index="{{ forloop.counter0 }}">
+            {{ tag.name }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+    
+    <style>
+    .tag-list-wrapper {
+      display: inline-block;
+      max-height: 1.6em;
+      overflow: hidden;
+      white-space: normal;
+      line-height: 1.6em;
+      position: relative;
+      transition: max-height 0.3s ease;
+    }
+    
+    .tag-list-wrapper.expanded {
+      max-height: 20em;
+      overflow: visible;
+      z-index: 100;
+    }
+    
+    .tag-list-wrapper .tag-list-content {
+      display: block;
+    }
+    
+    .tag-list-wrapper .badge {
+      white-space: nowrap;
+      margin-right: 2px;
+      margin-bottom: 2px;
+      display: inline-block;
+    }
+    
+    .tag-list-wrapper .badge-tag[style*="display: none"] {
+      display: none !important;
+    }
+    
+    .tag-list-wrapper.expanded .badge-tag[style*="display: none"] {
+      display: inline-block !important;
+    }
+    
+    .tag-more-badge {
+      display: inline-block;
+      cursor: pointer;
+    }
+    
+    .tag-list-wrapper.expanded .tag-more-badge {
+      display: none !important;
+    }
+    </style>
+    
+    <script>
+    function checkOverflow(wrapper) {
+      if (wrapper.getAttribute('data-initialized') === 'true') return;
+      
+      const content = wrapper.querySelector('.tag-list-content');
+      const badges = content.querySelectorAll('.badge-tag');
+      
+      if (badges.length === 0) return;
+      
+      // Remove any existing +more badge
+      const existingMoreBadge = content.querySelector('.tag-more-badge');
+      if (existingMoreBadge) {
+        existingMoreBadge.remove();
+      }
+      
+      // Temporarily expand to check full height
+      const originalMaxHeight = wrapper.style.maxHeight;
+      wrapper.style.maxHeight = 'none';
+      
+      const fullHeight = wrapper.scrollHeight;
+      wrapper.style.maxHeight = originalMaxHeight;
+      
+      // Check if content overflows (more than one line)
+      if (fullHeight > 30) {  // Roughly 1.6em in pixels
+        const firstLineBottom = badges[0].getBoundingClientRect().bottom;
+        let lastVisibleBadge = null;
+        let hiddenCount = 0;
+        
+        // Hide all badges on the second line and beyond
+        badges.forEach(badge => {
+          if (badge.getBoundingClientRect().top > firstLineBottom + 5) {
+            badge.style.display = 'none';
+            hiddenCount++;
+          } else {
+            lastVisibleBadge = badge;
+          }
+        });
+        
+        if (hiddenCount > 0 && lastVisibleBadge) {
+          // Hide the last visible tag to make room for +more badge
+          lastVisibleBadge.style.display = 'none';
+          hiddenCount++; // Include the hidden tag in the count
+          
+          // Create and insert +more badge where the last tag was
+          const moreBadge = document.createElement('span');
+          moreBadge.className = 'badge badge-secondary tag-more-badge';
+          moreBadge.textContent = '+' + hiddenCount + ' more';
+          lastVisibleBadge.insertAdjacentElement('beforebegin', moreBadge);
+          
+          // Add hover listeners to expand/collapse
+          moreBadge.addEventListener('mouseenter', function() {
+            wrapper.classList.add('expanded');
+          });
+          wrapper.addEventListener('mouseleave', function() {
+            wrapper.classList.remove('expanded');
+          });
+        }
+      }
+      
+      wrapper.setAttribute('data-initialized', 'true');
+    }
+    
+    // Check overflow on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.tag-list-wrapper').forEach(wrapper => {
+        // Small delay to ensure layout is complete
+        setTimeout(() => checkOverflow(wrapper), 100);
+      });
+    });
+    
+    // Recalculate on window resize
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
+        document.querySelectorAll('.tag-list-wrapper').forEach(wrapper => {
+          // Reset initialization and recalculate
+          wrapper.setAttribute('data-initialized', 'false');
+          
+          // Reset all badges to visible
+          wrapper.querySelectorAll('.badge-tag').forEach(badge => {
+            badge.style.display = '';
+          });
+          
+          // Remove existing +more badge
+          const moreBadge = wrapper.querySelector('.tag-more-badge');
+          if (moreBadge) moreBadge.remove();
+          
+          // Recalculate overflow
+          checkOverflow(wrapper);
+        });
+      }, 150);
+    });
+    </script>
+  {% else %}
+    <span class="text-muted">—</span>
+  {% endif %}
+{% endwith %}

@@ -160,12 +160,7 @@
 
                         <!-- Tags -->
                         <td>
-                          {% for tag in task.tags.all|slice:":3" %}
-                            <a href="/?tag={{ tag.slug }}" class="badge badge-tag badge-sm">{{ tag.name }}</a>
-                          {% endfor %}
-                          {% if task.tags.count > 3 %}
-                            <span class="badge badge-secondary badge-sm">+{{ task.tags.count|add:"-3" }}</span>
-                          {% endif %}
+                          {% include 'samples/_expandable_tag_list.html' with tags=task.tags.all max_width='300px' %}
                         </td>
 
                         <!-- Goal -->

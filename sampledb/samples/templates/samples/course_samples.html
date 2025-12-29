@@ -21,7 +21,7 @@
       <div class="card-header">
         <h3 class="card-title">Samples by Section</h3>
         <div class="card-tools">
-          <span class="badge badge-info">{{ sample_data|length }} sample{{ sample_data|length|pluralize }}</span>
+          <span class="badge badge-info mr-2">{{ sample_data|length }} sample{{ sample_data|length|pluralize }}</span>
         </div>
       </div>
 
@@ -41,7 +41,7 @@
             <tbody>
               {% for item in sample_data %}
               <tr>
-                <!-- Section -->
+                <!-- Section number -->
                 <td>
                   <span class="badge badge-secondary">{{ item.section }}</span>
                 </td>
@@ -62,13 +62,7 @@
 
                 <!-- Tags -->
                 <td>
-                  {% for tag in item.sample.tags.all %}
-                    <a href="/?tag={{ tag.name|urlencode }}" class="badge badge-tag">
-                      {{ tag.name }}
-                    </a>
-                  {% empty %}
-                    <span class="text-muted">—</span>
-                  {% endfor %}
+                  {% include 'samples/_expandable_tag_list.html' with tags=item.sample.tags.all max_width='300px' %}
                 </td>
 
                 <!-- Goal -->
