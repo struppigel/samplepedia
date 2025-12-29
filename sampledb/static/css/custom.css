@@ -1,0 +1,379 @@
+/* Custom theme to look like malwareanalysis-for-hedgehogs */
+:root {
+  --primary-red: #e63946;
+  --primary-red-alpha-10: rgba(230, 57, 70, 0.1);
+  --primary-red-alpha-20: rgba(230, 57, 70, 0.2);
+  --primary-red-alpha-25: rgba(230, 57, 70, 0.25);
+  --primary-red-alpha-30: rgba(230, 57, 70, 0.3);
+  --primary-red-alpha-40: rgba(230, 57, 70, 0.4);
+  --dark-bg: #1e1e1e;
+  --darker-bg: #141414;
+  --card-bg: #2a2a2a;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --accent-red: #ff4757;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Dark mode styles */
+.dark-mode {
+  background-color: var(--darker-bg) !important;
+  color: var(--text-primary);
+}
+
+.dark-mode .navbar-dark {
+  background-color: var(--dark-bg) !important;
+  border-bottom: 1px solid var(--primary-red-alpha-30);
+}
+
+.dark-mode .content-wrapper {
+  background-color: var(--darker-bg) !important;
+}
+
+.dark-mode .card {
+  background-color: var(--card-bg) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px;
+}
+
+.dark-mode .card-header {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  border-bottom: 1px solid var(--primary-red-alpha-30) !important;
+}
+
+/* Dark mode table styling */
+.dark-mode .table {
+  color: var(--text-primary) !important;
+  background-color: transparent !important;
+}
+
+.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.dark-mode .table-hover tbody tr:hover {
+  background-color: var(--primary-red-alpha-10) !important;
+}
+
+.dark-mode .table td, .dark-mode .table th {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Dark mode form inputs */
+.dark-mode .form-control {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-mode .form-control:focus {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--primary-red) !important;
+  box-shadow: 0 0 0 0.2rem var(--primary-red-alpha-25) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Fix for autofill and active input states */
+.dark-mode input.form-control:-webkit-autofill,
+.dark-mode input.form-control:-webkit-autofill:hover,
+.dark-mode input.form-control:-webkit-autofill:focus,
+.dark-mode input.form-control:-webkit-autofill:active,
+.dark-mode textarea.form-control:-webkit-autofill,
+.dark-mode textarea.form-control:-webkit-autofill:hover,
+.dark-mode textarea.form-control:-webkit-autofill:focus,
+.dark-mode textarea.form-control:-webkit-autofill:active,
+.dark-mode select.form-control:-webkit-autofill,
+.dark-mode select.form-control:-webkit-autofill:hover,
+.dark-mode select.form-control:-webkit-autofill:focus,
+.dark-mode select.form-control:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+  background-color: var(--card-bg) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--card-bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--card-bg) inset !important;
+  caret-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+}
+
+/* Additional fix for Firefox and other browsers */
+.dark-mode input.form-control:-moz-autofill,
+.dark-mode textarea.form-control:-moz-autofill,
+.dark-mode select.form-control:-moz-autofill {
+  background-color: var(--card-bg) !important;
+  color: #ffffff !important;
+  -moz-text-fill-color: #ffffff !important;
+}
+
+/* Ensure placeholder text is visible */
+.dark-mode .form-control::placeholder {
+  color: var(--text-secondary) !important;
+  opacity: 0.6 !important;
+}
+
+/* Dark mode select dropdowns - fix white text on white background */
+.dark-mode select.form-control option {
+  background-color: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Dark mode list groups */
+.dark-mode .list-group-item {
+  background-color: var(--card-bg) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-mode .list-group-item-action:hover {
+  background-color: var(--primary-red-alpha-10) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-mode .list-group-item h5 {
+  color: var(--text-primary) !important;
+}
+
+/* Dark mode pagination */
+.dark-mode .pagination .page-link {
+  background-color: var(--card-bg) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark-mode .pagination .page-link:hover {
+  background-color: var(--primary-red-alpha-20) !important;
+  color: var(--primary-red) !important;
+}
+
+.dark-mode .pagination .page-item.active .page-link {
+  background-color: var(--primary-red) !important;
+  border-color: var(--primary-red) !important;
+}
+
+/* Light mode - default Bootstrap/AdminLTE styling */
+.card {
+  border-radius: 8px;
+}
+
+/* Reduce card header padding for both themes */
+.card-header {
+  padding: 0.5rem 0.75rem !important;
+}
+
+.card-title {
+  margin-bottom: 0 !important;
+}
+
+/* Red accent for links and buttons (both themes) */
+a {
+  color: var(--primary-red);
+}
+
+a:hover {
+  color: var(--accent-red);
+}
+
+/* Keep text-muted links gray but red on hover */
+a.text-muted {
+  color: #6c757d !important;
+}
+
+a.text-muted:hover {
+  color: var(--accent-red) !important;
+}
+
+.btn-primary {
+  background-color: var(--primary-red) !important;
+  border-color: var(--primary-red) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-red) !important;
+  border-color: var(--accent-red) !important;
+}
+
+.btn-back {
+  color: var(--primary-red);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-back:hover {
+  color: #007bff;
+}
+
+.navbar-brand {
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+/* Badges with red accent (both themes) */
+.badge-success {
+  background-color: var(--primary-red) !important;
+}
+
+.badge-warning {
+  background-color: #ffa726 !important;
+}
+
+.badge-danger {
+  background-color: #ef5350 !important;
+}
+
+.badge-dark {
+  background-color: #111111 !important;
+}
+
+.badge-info {
+  background-color: #17a2b8 !important;
+}
+
+/* Badge hover effects */
+a.badge {
+  transition: filter 0.15s ease;
+}
+
+a.badge:hover {
+  filter: brightness(1.2);
+  text-decoration: none;
+}
+
+/* Align favorite hearts and counts */
+.favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.favorite-count {
+  display: inline-block;
+  min-width: 1.5rem;
+  text-align: left;
+}
+
+/* Tag colors - generates consistent color per tag */
+.badge-tag {
+  color: white !important;
+  text-decoration: none;
+}
+
+/* Alert info styling to match theme */
+.alert-info {
+  background-color: rgba(57, 69, 230, 0.1) !important;
+  border-color: rgba(57, 63, 230, 0.3) !important;
+  color: #333 !important;
+}
+
+.dark-mode .alert-info {
+  background-color: rgba(57, 92, 230, 0.437) !important;
+  border-color: rgba(57, 69, 230, 0.4) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Alert link styling for both themes */
+.alert-info .alert-link {
+  color: var(--primary-red) !important;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.alert-info .alert-link:hover {
+  color: var(--primary-blue) !important;
+  text-decoration: underline;
+}
+
+.dark-mode .alert-info .alert-link {
+  color: #ffffff !important;
+}
+
+.dark-mode .alert-info .alert-link:hover {
+  color: #000000 !important;
+}
+
+/* Spoiler styling (both themes) */
+.spoiler {
+  display: inline-block;
+  position: relative;
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: var(--primary-red-alpha-10);
+  cursor: pointer;
+  border: 1px solid var(--primary-red-alpha-30);
+}
+
+.spoiler > .spoiler-text {
+  color: transparent;
+  user-select: none;
+}
+
+.spoiler::after {
+  content: "Spoiler, click to reveal";
+  position: absolute;
+  inset: 0;
+  padding: 2px 6px;
+  color: var(--primary-red);
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.spoiler.revealed > .spoiler-text {
+  color: inherit;
+  user-select: text;
+}
+
+.spoiler.revealed::after {
+  display: none;
+}
+
+/* Light mode spoiler improvements */
+body:not(.dark-mode) .spoiler {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+body:not(.dark-mode) .spoiler::after {
+  background: #6c757d;
+  color: white;
+}
+
+/* Footer styling */
+.main-footer {
+  border-top: 1px solid var(--primary-red-alpha-30);
+  background-color: #343a40;
+}
+
+.dark-mode .main-footer {
+  border-top: 1px solid var(--primary-red-alpha-30);
+  background-color: var(--dark-bg);
+}
+
+.main-footer a {
+  transition: color 0.2s ease;
+}
+
+.main-footer .text-muted {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.main-footer .text-muted:hover {
+  color: var(--accent-red) !important;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+}
+
+/* Light mode form focus */
+.form-control:focus {
+  border-color: var(--primary-red) !important;
+  box-shadow: 0 0 0 0.2rem var(--primary-red-alpha-25) !important;
+}
