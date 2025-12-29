@@ -1,6 +1,7 @@
 {% extends "samples/base.html" %}
 {% load static %}
 {% load user_tags %}
+{% load comments %}
 
 {% block title %}{{ profile_user.username }}'s Profile - Samplepedia{% endblock %}
 
@@ -137,6 +138,7 @@
                       <th>Goal</th>
                       <th>Solutions</th>
                       <th>Likes</th>
+                      <th>Comments</th>
                       <th>Date</th>
                     </tr>
                   </thead>
@@ -178,6 +180,12 @@
                         <!-- Likes -->
                         <td>
                          {% favorite_button task user_favorited_ids %}
+                        </td>
+
+                        <!-- Comments -->
+                        <td style="text-align: center;">
+                          {% get_comment_count for task as comment_count %}
+                          <i class="fas fa-comment"></i> {{ comment_count }}
                         </td>
 
                         <!-- Created Date -->

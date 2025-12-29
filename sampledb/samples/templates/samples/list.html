@@ -3,6 +3,7 @@
 {% load url_helpers %}  
 {% load cloudinary %}
 {% load user_tags %}
+{% load comments %}
 {% block title %}Trainings Samples{% endblock %}
 
 {% block content %}
@@ -102,6 +103,9 @@ function toggleFavorites(form) {
               <th style="width: 80px; text-align: center; cursor: pointer;">
                 {% include 'samples/_sortable_column.html' with field='likes' minus_field='-likes' label='Likes' %}
               </th>
+              <th style="width: 80px; text-align: center; cursor: pointer;">
+                {% include 'samples/_sortable_column.html' with field='comments' minus_field='-comments' label='Comments' %}
+              </th>
               <th style="width: 100px; text-align: center; cursor: pointer;">
                 {% include 'samples/_sortable_column.html' with field='created' minus_field='-created' label='Created' %}
               </th>
@@ -147,6 +151,12 @@ function toggleFavorites(form) {
               <!-- Favorites -->
               <td style="text-align: center;">
                 {% favorite_button s user_favorited_ids %}
+              </td>
+
+              <!-- Comments -->
+              <td style="text-align: center;">
+              {% get_comment_count for s as comment_count %}
+              <i class="fas fa-comment"></i> {{ comment_count }}
               </td>
 
               <!-- Created Date -->

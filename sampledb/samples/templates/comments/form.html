@@ -1,0 +1,27 @@
+{% load comments %}
+
+<form action="{% comment_form_target %}" method="post" id="comment_form">
+  {% csrf_token %}
+  
+  {% for field in form %}
+    {% if field.is_hidden %}
+      {{ field }}
+    {% endif %}
+  {% endfor %}
+  
+  <div class="form-group mb-3">
+    <textarea name="comment" id="id_comment" class="form-control" rows="4" placeholder="Write your comment here..." required>{{ form.comment.value|default:"" }}</textarea>
+  </div>
+  
+  {% if form.errors %}
+    <div class="alert alert-danger">
+      {% for error in form.comment.errors %}
+        <p class="mb-0">{{ error }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+  
+  <button type="submit" class="btn btn-primary">
+    <i class="fas fa-comment"></i> Post Comment
+  </button>
+</form>

@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from django.urls import reverse
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from cloudinary.models import CloudinaryField
@@ -143,6 +144,10 @@ class AnalysisTask(models.Model):
             return False
         is_contributor = user.groups.filter(name='contributor').exists()
         return (user == (self.author) and is_contributor ) or user.is_staff
+    
+    def get_absolute_url(self):
+        """Return the URL to the detail page for this task"""
+        return reverse('sample_detail', kwargs={'sha256': self.sha256, 'task_id': self.id})
 
     def __str__(self):
         return self.sha256

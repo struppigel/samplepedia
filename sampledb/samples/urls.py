@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -19,4 +19,7 @@ urlpatterns = [
     path("verify-email/<uidb64>/<token>/", views.verify_email, name="verify_email"),
     path("resend-verification/", views.resend_verification, name="resend_verification"),
     path("profile/<str:username>/", views.user_profile, name="user_profile"),
+    path("comments/<int:comment_id>/edit/", views.edit_comment, name="comments-xtd-edit"),
+    path("comments/<int:comment_id>/delete/", views.delete_comment, name="comments-delete"),
+    path(r'comments/', include('django_comments_xtd.urls'))
 ]

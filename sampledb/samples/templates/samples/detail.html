@@ -1,5 +1,7 @@
 {% extends "samples/base.html" %}
 {% load user_tags %}
+{% load comments %}
+{% load comments_xtd %}
 {% block title %}{{ sample.sha256 }}{% endblock %}
 
 {% block content %}
@@ -192,9 +194,43 @@
       {% endif %}
     </div>
 
+    
     <button onclick="smartBack()" class="btn-back mt-2">
   ← Back to list
   </button>
+
+    <!-- Comments Section -->
+    <div class="row mt-3">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Comments</h3>
+            {% if user.is_authenticated %}
+            <div class="card-tools" style="margin-right: 0.1rem;">
+              <button onclick="toggleCommentForm()" class="btn btn-danger btn-sm" id="addCommentBtn">
+                <i class="fas fa-plus"></i> <!-- Add comment button -->
+              </button>
+            </div>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            {% if user.is_authenticated %}
+              {% render_comment_list for sample %}
+              <div id="commentFormSection" style="display: none;">
+                <hr class="my-4">
+                <h5 class="mb-3">Add a Comment</h5>
+                {% render_comment_form for sample %}
+              </div>
+            {% else %}
+              <p class="text-muted">
+                Please <a href="{% url 'login' %}?next={{ request.path }}">login</a> to view and post comments.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
 
   </div>
 </section>
@@ -203,11 +239,27 @@
 // Smart back navigation - avoid going back to submission form
 function smartBack() {
   const referrer = document.referrer;
-  // If coming from submit or edit page, go directly to list
-  if (referrer && (referrer.includes('/submit/') || referrer.includes('/edit/'))) {
+  // If coming from submit analysis task, submit solution or analysis task edit page, go directly to list
+  if (referrer && (referrer.includes('/submit/') || referrer.includes('/edit/') || referrer.includes('/sample/'))) {
     window.location.href = '/';
   } else {
     history.back();
+  }
+}
+
+// Toggle comment form visibility
+function toggleCommentForm() {
+  const formSection = document.getElementById('commentFormSection');
+  const btn = document.getElementById('addCommentBtn');
+  
+  if (formSection.style.display === 'none') {
+    formSection.style.display = 'block';
+    btn.innerHTML = '<i class="fas fa-minus"></i>';
+    // Scroll to the form
+    formSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    formSection.style.display = 'none';
+    btn.innerHTML = '<i class="fas fa-plus"></i>';
   }
 }
 

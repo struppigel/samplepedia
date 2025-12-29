@@ -1,0 +1,54 @@
+{% load comments %}
+{% load i18n %}
+
+{% if comment_list %}
+  <div class="comment-list mb-4">
+    {% for comment in comment_list %}
+      <div class="comment mb-3" style="border-left: 3px solid #007bff; padding-left: 15px;">
+        <div class="comment-header mb-2 clearfix">
+          <strong>{{ comment.user_name }}</strong>
+          <span class="text-muted small">
+            · {{ comment.submit_date|timesince }} ago
+          </span>
+          {% comment %}
+            Show edit button: Only comment author can edit their own comment
+            Show delete button: Comment author OR staff member OR task author can delete
+          {% endcomment %}
+          {% if user.is_authenticated %}
+            <span class="float-right">
+              {% if comment.user and comment.user.id == user.id %}
+                <button class="btn btn-link btn-sm text-muted p-0" onclick="editComment({{ comment.id }})" title="Edit comment" style="text-decoration: none;">
+                  <i class="fas fa-edit"></i>
+                </button>
+              {% endif %}
+              {% if comment.user and comment.user.id == user.id or user.is_staff or sample.author.id == user.id %}
+                <button class="btn btn-link btn-sm text-danger p-0 ml-1" onclick="deleteComment({{ comment.id }}, '{{ request.path }}')" title="Delete comment" style="text-decoration: none;">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              {% endif %}
+            </span>
+          {% endif %}
+        </div>
+        <div class="comment-body mb-2" id="comment-body-{{ comment.id }}">
+          {{ comment.comment|linebreaks }}
+        </div>
+        <div class="comment-edit-form" id="edit-form-{{ comment.id }}" style="display: none;">
+          <form method="post" action="{% url 'comments-xtd-edit' comment.id %}">
+            {% csrf_token %}
+            <div class="form-group mb-2">
+              <textarea name="comment" class="form-control" rows="3" required>{{ comment.comment }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">
+              <i class="fas fa-save"></i> Save
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEdit({{ comment.id }})">
+              Cancel
+            </button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-muted mb-4">No comments yet. Be the first to comment!</p>
+{% endif %}

@@ -42,11 +42,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'cloudinary_storage',
     'cloudinary',
     'taggit',
     'samples',
     "anymail",
+    'django_comments_xtd',
+    'django_comments',
 ]
 
 MIDDLEWARE = [
@@ -197,3 +200,19 @@ BASE_URL = config('BASE_URL', default='http://localhost:8000')
 # Allow embedding only from my platform
 CSP_FRAME_ANCESTORS = ["'self'", "https://malwareanalysis-for-hedgehogs.learnworlds.com"]
 X_FRAME_OPTIONS = None
+
+# Django Sites Framework (required for django-comments-xtd)
+SITE_ID = 1
+
+# Django Comments XTD Configuration
+COMMENTS_APP = 'django_comments_xtd'
+COMMENTS_XTD_MAX_THREAD_LEVEL = 2  # Allow 2 levels of nested replies
+COMMENTS_XTD_CONFIRM_EMAIL = False  # Disable email confirmation for comments
+COMMENTS_XTD_FORM_CLASS = 'samples.forms.AuthenticatedCommentForm'  # Use custom form to hide name/email
+COMMENTS_XTD_APP_MODEL_OPTIONS = {
+    'samples.analysistask': {
+        'allow_flagging': False,
+        'allow_feedback': False,
+        'show_feedback': False,
+    }
+}

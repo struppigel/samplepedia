@@ -12,6 +12,7 @@ from .auth import (
     user_profile
 )
 from .pages import impressum, privacy_policy
+from .comments import edit_comment, delete_comment
 
 __all__ = [
     # Samples
@@ -38,4 +39,7 @@ __all__ = [
     # Pages
     'impressum',
     'privacy_policy',
+    # Comments
+    'edit_comment',
+    'delete_comment',
 ]

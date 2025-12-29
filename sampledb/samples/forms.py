@@ -2,6 +2,43 @@ from .models import AnalysisTask, Difficulty, Solution
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django_comments_xtd.forms import XtdCommentForm
+
+
+# Custom comment form for authenticated users
+class AuthenticatedCommentForm(XtdCommentForm):
+    """
+    Custom comment form for authenticated users that hides name and email fields
+    since they are auto-populated from the logged-in user.
+    """
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Hide name and email fields for authenticated users
+        if 'name' in self.fields:
+            self.fields['name'].widget = forms.HiddenInput()
+            self.fields['name'].required = False
+        
+        if 'email' in self.fields:
+            self.fields['email'].widget = forms.HiddenInput()
+            self.fields['email'].required = False
+        
+        if 'url' in self.fields:
+            self.fields['url'].widget = forms.HiddenInput()
+            self.fields['url'].required = False
+    
+    def get_comment_create_data(self, site_id=None):
+        """Override to ensure name and email come from user"""
+        data = super().get_comment_create_data(site_id=site_id)
+        
+        # If user is authenticated, use their info
+        if hasattr(self, 'user') and self.user and self.user.is_authenticated:
+            data['user_name'] = self.user.username
+            data['user_email'] = self.user.email
+            data['user'] = self.user
+        
+        return data
 
 # For submitting analysis solutions to an analysis task
 class SolutionForm(forms.ModelForm):

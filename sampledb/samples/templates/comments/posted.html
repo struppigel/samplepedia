@@ -1,0 +1,38 @@
+{% extends "samples/base.html" %}
+
+{% block title %}Comment Posted{% endblock %}
+
+{% block content %}
+<section class="content-header">
+  <div class="container-fluid">
+    <h1>Comment Posted</h1>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-8 offset-md-2">
+        <div class="card">
+          <div class="card-body text-center">
+            <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+            <h4 class="mt-3">Your comment has been posted!</h4>
+            <p class="text-muted">Thank you for contributing to the discussion.</p>
+            <a href="{{ comment.content_object.get_absolute_url }}" class="btn btn-primary mt-3">
+              <i class="fas fa-arrow-left"></i> Back to Analysis Task
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// Auto-redirect after 2 seconds
+setTimeout(function() {
+  window.location.href = "{{ comment.content_object.get_absolute_url }}";
+}, 2000);
+</script>
+
+{% endblock %}
