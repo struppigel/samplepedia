@@ -116,15 +116,7 @@
               <ul class="list-unstyled mb-0">
                 {% for solution in solutions %}
                 <li class="{% if not forloop.last %}mb-2{% else %}mb-0{% endif %}">
-                  {% if solution.solution_type == 'blog' %}
-                    <i class="fas fa-blog text-primary"></i>
-                  {% elif solution.solution_type == 'paper' %}
-                    <i class="fas fa-file-alt text-success"></i>
-                  {% elif solution.solution_type == 'video' %}
-                    <i class="fas fa-video text-danger"></i>
-                  {% else %}
-                    <i class="fas fa-link text-primary"></i>
-                  {% endif %}
+                  <i class="fas {{ solution.solution_type|solution_icon }}"></i>
                   <a href="{{ solution.url }}" target="_blank" class="ml-2">{{ solution.title }}</a>
                   <span class="text-muted small">by <a href="{% url 'user_profile' solution.author.username %}">{{ solution.author.username }}</a></span>
                   {% if user.is_authenticated and solution.author == user %}

@@ -146,20 +146,8 @@ function toggleFavorites(form) {
               </td>
 
               <!-- Solutions -->
-               <td>
-                {% if s.solutions.count > 0 %}
-                  <span class="text-success" title="{{ s.solutions.count }} solution{{ s.solutions.count|pluralize }}">
-                    <i class="fas fa-check-circle"></i> {{ s.solutions.count }}
-                  </span>
-                {% endif %}
-                {% if s.youtube_id %}
-                  <a href="https://www.youtube.com/watch?v={{ s.youtube_id }}" target="_blank" title="Watch video tutorial" class="ml-1">
-                    <i class="fab fa-youtube text-danger"></i>
-                  </a>
-                {% endif %}
-                {% if not s.solutions.count and not s.youtube_id %}
-                  <span class="text-muted">—</span>
-                {% endif %}
+               <td style="text-align: center;">
+                {% solution_icons s %}
               </td>
 
               <!-- Favorites -->

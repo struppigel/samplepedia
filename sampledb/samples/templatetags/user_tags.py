@@ -52,3 +52,38 @@ def is_in(value, container):
     Usage: {% if task.id|is_in:user_favorited_ids %}
     """
     return value in container
+
+@register.filter
+def solution_icon(solution_type):
+    """
+    Return the Font Awesome icon and color classes for a solution type.
+    Returns a string like "fa-book text-info" ready to use in class attribute.
+    
+    For unknown solution types, returns a generic link icon as fallback.
+    """
+    icons = {
+        'blog': 'fa-book text-info',
+        'paper': 'fa-file-alt text-secondary',
+        'video': 'fa-video text-danger',
+    }
+    return icons.get(solution_type, 'fa-link text-primary')
+
+@register.inclusion_tag('samples/_solution_icons.html')
+def solution_icons(task):
+    """
+    Display solution type icons for an analysis task.
+    Shows one icon per solution type (blog, paper, video).
+    """
+    solutions = task.solutions.all()
+    has_blog = solutions.filter(solution_type='blog').exists()
+    has_paper = solutions.filter(solution_type='paper').exists()
+    has_video = solutions.filter(solution_type='video').exists()
+    total_count = solutions.count()
+    
+    return {
+        'has_blog': has_blog,
+        'has_paper': has_paper,
+        'has_video': has_video,
+        'has_any': has_blog or has_paper or has_video,
+        'total_count': total_count
+    }

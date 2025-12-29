@@ -117,6 +117,7 @@
                       <th>Difficulty</th>
                       <th>Tags</th>
                       <th>Goal</th>
+                      <th>Solutions</th>
                       <th>Likes</th>
                       <th>Date</th>
                     </tr>
@@ -149,7 +150,12 @@
                         <!-- Goal -->
                         <td>{{ task.goal|truncatechars:60 }}</td>
                         
-                        <!-- Stats: Favorites and Solutions -->
+                        <!-- Solution Icons -->
+                        <td style="text-align: center;">
+                          {% solution_icons task %}
+                        </td>
+
+                        <!-- Likes -->
                         <td>
                          {% favorite_button task user_favorited_ids %}
                         </td>
