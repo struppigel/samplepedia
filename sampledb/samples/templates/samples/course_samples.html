@@ -49,7 +49,7 @@
                 <!-- Lecture Title -->
                 <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ item.lecture_title }}">
                   <a href="{% url 'sample_detail' item.sample.sha256 item.sample.id %}" class="text-muted">
-                    <small>{{ item.lecture_title|truncatechars:40 }}</small>
+                    {{ item.lecture_title|truncatechars:40 }}
                   </a>
                 </td>
 
@@ -74,7 +74,7 @@
                 <!-- Goal -->
                 <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   <a href="{% url 'sample_detail' item.sample.sha256 item.sample.id %}" class="text-muted">
-                    <small>{{ item.sample.goal|truncatechars:80 }}</small>
+                    {{ item.sample.goal|truncatechars:80 }}
                   </a>
                 </td>
 
