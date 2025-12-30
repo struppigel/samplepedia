@@ -13,6 +13,11 @@ from ..forms import AnalysisTaskForm
 
 
 def sample_list(request):
+    # Show landing page to non-authenticated users (unless they want to browse)
+    browse = request.GET.get("browse", "")
+    if not request.user.is_authenticated and not browse:
+        return render(request, "samples/landing.html")
+    
     q = request.GET.get("q", "")
     tag = request.GET.get("tag")
     difficulty = request.GET.get("difficulty")

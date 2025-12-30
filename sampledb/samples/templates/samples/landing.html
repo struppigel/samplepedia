@@ -1,0 +1,50 @@
+{% extends "samples/base.html" %}
+{% load static %}
+
+{% block title %}Welcome to Samplepedia{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-12 text-center">
+                <h1 class="m-0">Welcome to Samplepedia</h1>
+                <p class="lead">Your searchable resource for malware analysis training samples and solutions</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Hero Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card card-primary">
+                    <div class="card-body text-center py-5">
+                        <h2 class="mb-4">Self-Guided Malware Analysis Training</h2>
+                        <p class="lead mb-4">
+                            Samplepedia is a searchable collection of malware analysis training samples designed for security researchers, 
+                            students, and professionals who want to improve their analysis skills through self-paced learning.
+                            Educators can easily find samples for their trainings that match their particular goals.
+                            Learners can submit samples or solutions and compare approaches with others in the community.
+                        </p>
+                        <div class="mt-4">
+                            <a href="{% url 'register' %}" class="btn btn-primary btn-lg mr-2">
+                                <i class="fas fa-user-plus"></i> Register
+                            </a>
+                            <a href="?browse=true" class="btn btn-success btn-lg mr-2">
+                                <i class="fas fa-list"></i> Browse Samples
+                            </a>
+                            <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-sign-in-alt"></i> Sign In
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+       
+    </div>
+</section>
+{% endblock %}
