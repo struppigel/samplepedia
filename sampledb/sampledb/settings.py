@@ -33,6 +33,50 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv(
 # CSRF trusted origins for Railway
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:8000,http://127.0.0.1:8000', cast=Csv())
 
+# Cloudflare Proxy Configuration
+# Get real client IP from Cloudflare headers
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# SSL/HTTPS settings for production (when behind Cloudflare)
+if not DEBUG:
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# django-ipware configuration for Cloudflare
+IPWARE_META_PRECEDENCE_ORDER = (
+    'HTTP_CF_CONNECTING_IP',  # Cloudflare
+    'HTTP_X_FORWARDED_FOR',   # Standard proxy header
+    'HTTP_X_REAL_IP',         # Nginx
+    'REMOTE_ADDR',            # Fallback
+)
+
+# Cloudflare IP ranges (trusted proxies)
+# These are Cloudflare's IPv4 ranges as of 2024
+# Update periodically from: https://www.cloudflare.com/ips/
+IPWARE_TRUSTED_PROXY_LIST = [
+    '173.245.48.0/20',
+    '103.21.244.0/22',
+    '103.22.200.0/22',
+    '103.31.4.0/22',
+    '141.101.64.0/18',
+    '108.162.192.0/18',
+    '190.93.240.0/20',
+    '188.114.96.0/20',
+    '197.234.240.0/22',
+    '198.41.128.0/17',
+    '162.158.0.0/15',
+    '104.16.0.0/13',
+    '104.24.0.0/14',
+    '172.64.0.0/13',
+    '131.0.72.0/22',
+]
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -50,6 +94,7 @@ INSTALLED_APPS = [
     "anymail",
     'django_comments_xtd',
     'django_comments',
+    'ipware',
 ]
 
 MIDDLEWARE = [
