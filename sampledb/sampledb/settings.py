@@ -57,7 +57,7 @@ IPWARE_META_PRECEDENCE_ORDER = (
 )
 
 # Cloudflare IP ranges (trusted proxies)
-# These are Cloudflare's IPv4 ranges as of 2024
+# These are Cloudflare's IPv4 ranges as of 2025
 # Update periodically from: https://www.cloudflare.com/ips/
 IPWARE_TRUSTED_PROXY_LIST = [
     '173.245.48.0/20',
