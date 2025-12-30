@@ -1,8 +1,9 @@
 from .models import AnalysisTask, Difficulty, Solution
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django_comments_xtd.forms import XtdCommentForm
+from turnstile.fields import TurnstileField
 
 
 # Custom comment form for authenticated users
@@ -77,12 +78,26 @@ class AnalysisTaskForm(forms.ModelForm):
         ]
 
 
-# User Registration Form with Email Field
-class UserRegistrationForm(UserCreationForm):
+# Custom authentication form with Turnstile CAPTCHA
+class TurnstileAuthenticationForm(AuthenticationForm):
+    """
+    Custom login form that adds Cloudflare Turnstile CAPTCHA protection
+    to prevent automated login attempts.
+    """
+    turnstile = TurnstileField(label="")
+
+
+# User Registration Form with Turnstile CAPTCHA
+class TurnstileUserRegistrationForm(UserCreationForm):
+    """
+    Custom registration form with Turnstile CAPTCHA protection
+    to prevent automated account creation.
+    """
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'your@email.com'})
     )
+    turnstile = TurnstileField(label="")
 
     class Meta:
         model = User
@@ -102,3 +117,27 @@ class UserRegistrationForm(UserCreationForm):
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("This email address is already registered.")
         return email
+
+
+# Password Reset Form with Turnstile CAPTCHA
+class TurnstilePasswordResetForm(forms.Form):
+    """
+    Custom password reset form with Turnstile CAPTCHA protection.
+    """
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'your@email.com'})
+    )
+    turnstile = TurnstileField(label="")
+
+
+# Resend Verification Form with Turnstile CAPTCHA
+class TurnstileResendVerificationForm(forms.Form):
+    """
+    Custom resend verification form with Turnstile CAPTCHA protection.
+    """
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'your@email.com'})
+    )
+    turnstile = TurnstileField(label="")

@@ -80,6 +80,7 @@ IPWARE_TRUSTED_PROXY_LIST = [
 # Application definition
 
 INSTALLED_APPS = [
+    'samples',  # Must be before django.contrib.admin to override templates
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -90,11 +91,11 @@ INSTALLED_APPS = [
     'cloudinary_storage',
     'cloudinary',
     'taggit',
-    'samples',
     "anymail",
     'django_comments_xtd',
     'django_comments',
     'ipware',
+    'turnstile',
 ]
 
 MIDDLEWARE = [
@@ -257,6 +258,9 @@ IMPRESSUM_ADDRESS_LINE2 = config('IMPRESSUM_ADDRESS_LINE2', default='your-city-z
 IMPRESSUM_PHONE = config('IMPRESSUM_PHONE', default='your-phone-number')
 IMPRESSUM_EMAIL = config('IMPRESSUM_EMAIL', default='your-email-address')
 
+# Community
+DISCORD_INVITE_URL = config('DISCORD_INVITE_URL', default='your-discord-invite-link')
+
 # Django Comments XTD Configuration
 COMMENTS_APP = 'django_comments_xtd'
 COMMENTS_XTD_MAX_THREAD_LEVEL = 2  # Allow 2 levels of nested replies
@@ -269,3 +273,8 @@ COMMENTS_XTD_APP_MODEL_OPTIONS = {
         'show_feedback': False,
     }
 }
+
+# Cloudflare Turnstile Configuration
+TURNSTILE_SITEKEY = config('TURNSTILE_SITEKEY', default='')
+TURNSTILE_SECRET = config('TURNSTILE_SECRET', default='')
+SILENCED_SYSTEM_CHECKS = ['turnstile.E001'] if not TURNSTILE_SITEKEY else []

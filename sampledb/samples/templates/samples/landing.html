@@ -9,7 +9,7 @@
         <div class="row mb-2">
             <div class="col-sm-12 text-center">
                 <h1 class="m-0">Welcome to Samplepedia</h1>
-                <p class="lead">Your searchable resource for malware analysis training samples and solutions</p>
+                <p class="lead">Free, searchable resource for malware analysis trainings samples and solutions</p>
             </div>
         </div>
     </div>
@@ -17,16 +17,34 @@
 
 <section class="content">
     <div class="container-fluid">
+        <!-- Development Warning -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Development Notice</h5>
+                    <p class="mb-0">
+                        This site is currently in active development and publicly available for testing purposes only. 
+                        You may encounter bugs or incomplete features. 
+                        Please provide feedback or report issues on our <a href="{{ settings.DISCORD_INVITE_URL }}" target="_blank" class="alert-link"><i class="fab fa-discord"></i> Discord server</a>. 
+                        Thank you for your patience!
+                    </p>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Hero Section -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card card-primary">
                     <div class="card-body text-center py-5">
-                        <h2 class="mb-4">Self-Guided Malware Analysis Training</h2>
+                        <h2 class="mb-4">Malware Analysis Trainings Samples</h2>
                         <p class="lead mb-4">
-                            Samplepedia is a searchable collection of malware analysis training samples designed for security researchers, 
+                            Samplepedia is a searchable collection of malware analysis training samples for security researchers, 
                             students, and professionals who want to improve their analysis skills through self-paced learning.
-                            Educators can easily find samples for their trainings that match their particular goals.
+                            Educators can find samples for their trainings that match their particular goals.
                             Learners can submit samples or solutions and compare approaches with others in the community.
                         </p>
                         <div class="mt-4">
@@ -40,6 +58,26 @@
                                 <i class="fas fa-sign-in-alt"></i> Sign In
                             </a>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Why Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-lightbulb"></i> Why Samplepedia?</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">
+                            I created this application because I often need to find samples that can teach very specific things. 
+                            At best I remember that there was a sample some years ago that did exactly what I need, but I can never find it again.
+                            Or worse -- I started to watch my own Youtube videos to figure out what I did there. 
+                            Furthermore, I cannot count the number of times people ask me where they can find easy samples to practice malware analysis.
+                            This should hopefully solve this problem.
+                        </p>
                     </div>
                 </div>
             </div>

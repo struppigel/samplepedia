@@ -65,6 +65,7 @@
     </style>
     
     <script>
+    (function() {
     function checkOverflow(wrapper) {
       if (wrapper.getAttribute('data-initialized') === 'true') return;
       
@@ -170,6 +171,7 @@
         });
       }, 150);
     });
+    })();
     </script>
   {% else %}
     <span class="text-muted">—</span>

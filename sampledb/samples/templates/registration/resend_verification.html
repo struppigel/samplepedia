@@ -37,28 +37,61 @@
               {% csrf_token %}
               
               <div class="form-group">
-                <label for="email">Email Address:</label>
-                <input 
-                  type="email" 
-                  name="email" 
-                  id="email" 
-                  class="form-control" 
-                  placeholder="your@email.com" 
-                  required 
-                  autofocus
-                >
+                <label for="{{ form.email.id_for_label }}">Email Address:</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                  <div class="text-danger">{{ form.email.errors }}</div>
+                {% endif %}
                 <small class="form-text text-muted">
                   Enter the email address you used to register.
                 </small>
               </div>
 
-              <button type="submit" class="btn btn-primary">
+              <div class="form-group">
+                {{ form.turnstile }}
+                {% if form.turnstile.errors %}
+                  <div class="text-danger">{{ form.turnstile.errors }}</div>
+                {% endif %}
+              </div>
+
+              <button type="submit" id="resend-button" class="btn btn-primary" disabled>
                 <i class="fas fa-paper-plane"></i> Resend Verification Email
               </button>
               <a href="{% url 'login' %}" class="btn btn-secondary">
                 <i class="fas fa-sign-in-alt"></i> Back to Login
               </a>
             </form>
+            
+            <script>
+              // Enable resend button after Turnstile challenge succeeds
+              function enableResendButton() {
+                document.getElementById('resend-button').disabled = false;
+              }
+              
+              // Add callback attribute to Turnstile widget
+              document.addEventListener('DOMContentLoaded', function() {
+                const turnstileWidget = document.querySelector('.cf-turnstile');
+                if (turnstileWidget) {
+                  turnstileWidget.setAttribute('data-callback', 'enableResendButton');
+                  
+                  // Also check if already solved
+                  const observer = new MutationObserver(function(mutations) {
+                    const response = turnstileWidget.querySelector('input[name="cf-turnstile-response"]');
+                    if (response && response.value) {
+                      enableResendButton();
+                      observer.disconnect();
+                    }
+                  });
+                  observer.observe(turnstileWidget, { childList: true, subtree: true });
+                  
+                  // Check immediately
+                  const response = turnstileWidget.querySelector('input[name="cf-turnstile-response"]');
+                  if (response && response.value) {
+                    enableResendButton();
+                  }
+                }
+              });
+            </script>
 
             <div class="callout callout-info mt-4">
               <h5><i class="icon fas fa-info"></i> Note</h5>

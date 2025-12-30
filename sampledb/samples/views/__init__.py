@@ -9,7 +9,9 @@ from .auth import (
     verification_sent, 
     verify_email, 
     resend_verification,
-    user_profile
+    user_profile,
+    login_view,
+    password_reset_request
 )
 from .pages import impressum, privacy_policy
 from .comments import edit_comment, delete_comment
@@ -36,6 +38,8 @@ __all__ = [
     'verify_email',
     'resend_verification',
     'user_profile',
+    'login_view',
+    'password_reset_request',
     # Pages
     'impressum',
     'privacy_policy',

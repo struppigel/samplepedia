@@ -10,5 +10,6 @@ def impressum_settings(request):
             'IMPRESSUM_ADDRESS_LINE2': settings.IMPRESSUM_ADDRESS_LINE2,
             'IMPRESSUM_PHONE': settings.IMPRESSUM_PHONE,
             'IMPRESSUM_EMAIL': settings.IMPRESSUM_EMAIL,
+            'DISCORD_INVITE_URL': settings.DISCORD_INVITE_URL,
         }
     }

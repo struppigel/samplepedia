@@ -23,6 +23,8 @@
   <!-- Custom theme CSS -->
   <link rel="stylesheet" href="{% static 'css/custom.css' %}">
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="{% static 'myhegebatlogo_white.png' %}">
   
 </head>
 
@@ -117,7 +119,7 @@
     <span class="text-muted">|</span>
     <a href="/privacy/" class="text-muted mx-2">Privacy Policy</a>
     <span class="text-muted">|</span>
-    <a href="https://discord.gg/xEkHFNKX" class="text-muted mx-2" target="_blank" rel="noopener">
+    <a href="{{ settings.DISCORD_INVITE_URL }}" class="text-muted mx-2" target="_blank" rel="noopener">
       <i class="fab fa-discord"></i> Discord
     </a>
   </div>
