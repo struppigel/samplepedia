@@ -1,1 +1,517 @@
-{% include "samples/under_construction.html" with page_title="Privacy Policy" %}
+{% extends "samples/base.html" %}
+{% load static %}
+
+{% block title %}Datenschutzerklärung - Samplepedia{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Datenschutzerklärung</h1>
+            </div>
+            <div class="col-sm-6">
+                <div class="float-right">
+                    <button class="btn btn-sm btn-outline-secondary" id="langToggle">
+                        <span id="langDe">🇩🇪 Deutsch</span>
+                        <span id="langEn" style="display: none;">🇬🇧 English</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-body">
+                <!-- German Content -->
+                <div id="content-de">
+                <h2>1. Datenschutz auf einen Blick</h2>
+                
+                <h3>Allgemeine Hinweise</h3>
+                <p>
+                    Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können. Ausführliche Informationen zum Thema Datenschutz entnehmen Sie unserer unter diesem Text aufgeführten Datenschutzerklärung.
+                </p>
+
+                <h3>Datenerfassung auf dieser Website</h3>
+                
+                <h4>Wer ist verantwortlich für die Datenerfassung auf dieser Website?</h4>
+                <p>
+                    Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Dessen Kontaktdaten können Sie dem Abschnitt „Hinweis zur Verantwortlichen Stelle" in dieser Datenschutzerklärung entnehmen.
+                </p>
+
+                <h4>Wie erfassen wir Ihre Daten?</h4>
+                <p>
+                    Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen. Hierbei kann es sich z. B. um Daten handeln, die Sie in ein Kontaktformular eingeben.
+                </p>
+                <p>
+                    Andere Daten werden automatisch oder nach Ihrer Einwilligung beim Besuch der Website durch unsere IT-Systeme erfasst. Das sind vor allem technische Daten (z. B. Internetbrowser, Betriebssystem oder Uhrzeit des Seitenaufrufs). Die Erfassung dieser Daten erfolgt automatisch, sobald Sie diese Website betreten.
+                </p>
+
+                <h4>Wofür nutzen wir Ihre Daten?</h4>
+                <p>
+                    Ein Teil der Daten wird erhoben, um eine fehlerfreie Bereitstellung der Website zu gewährleisten. Andere Daten können zur Analyse Ihres Nutzerverhaltens verwendet werden. Sofern über die Website Verträge geschlossen oder angebahnt werden können, werden die übermittelten Daten auch für Vertragsangebote, Bestellungen oder sonstige Auftragsanfragen verarbeitet.
+                </p>
+
+                <h4>Welche Rechte haben Sie bezüglich Ihrer Daten?</h4>
+                <p>
+                    Sie haben jederzeit das Recht, unentgeltlich Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben außerdem ein Recht, die Berichtigung oder Löschung dieser Daten zu verlangen. Wenn Sie eine Einwilligung zur Datenverarbeitung erteilt haben, können Sie diese Einwilligung jederzeit für die Zukunft widerrufen. Außerdem haben Sie das Recht, unter bestimmten Umständen die Einschränkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen. Des Weiteren steht Ihnen ein Beschwerderecht bei der zuständigen Aufsichtsbehörde zu. Hierzu sowie zu weiteren Fragen zum Thema Datenschutz können Sie sich jederzeit an uns wenden.
+                </p>
+
+                <h3>Analyse-Tools und Tools von Drittanbietern</h3>
+                <p>
+                    Beim Besuch dieser Website kann Ihr Surf-Verhalten statistisch ausgewertet werden. Das geschieht vor allem mit sogenannten Analyseprogrammen. Detaillierte Informationen zu diesen Analyseprogrammen finden Sie in der folgenden Datenschutzerklärung.
+                </p>
+
+                <h2>2. Hosting</h2>
+                
+                <h3>Externes Hosting</h3>
+                <p>
+                    Diese Website wird extern gehostet. Die personenbezogenen Daten, die auf dieser Website erfasst werden, werden auf den Servern des Hosters / der Hoster gespeichert. Hierbei kann es sich v. a. um IP-Adressen, Kontaktanfragen, Meta- und Kommunikationsdaten, Vertragsdaten, Kontaktdaten, Namen, Websitezugriffe und sonstige Daten, die über eine Website generiert werden, handeln.
+                </p>
+                <p>
+                    Das externe Hosting erfolgt zum Zwecke der Vertragserfüllung gegenüber unseren potenziellen und bestehenden Kunden (Art. 6 Abs. 1 lit. b DSGVO) und im Interesse einer sicheren, schnellen und effizienten Bereitstellung unseres Online-Angebots durch einen professionellen Anbieter (Art. 6 Abs. 1 lit. f DSGVO). Sofern eine entsprechende Einwilligung abgefragt wurde, erfolgt die Verarbeitung ausschließlich auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO und § 25 Abs. 1 TDDDG, soweit die Einwilligung die Speicherung von Cookies oder den Zugriff auf Informationen im Endgerät des Nutzers (z. B. Device-Fingerprinting) im Sinne des TDDDG umfasst. Die Einwilligung ist jederzeit widerrufbar.
+                </p>
+                <p>
+                    Unser(e) Hoster wird bzw. werden Ihre Daten nur insoweit verarbeiten, wie dies zur Erfüllung seiner Leistungspflichten erforderlich ist und unsere Weisungen in Bezug auf diese Daten befolgen.
+                </p>
+
+                <h4>Railway (Hosting von Samplepedia)</h4>
+                <p>
+                    Wir hosten Samplepedia auf der Railway-Plattform. Anbieter ist Railway Corp., San Francisco, CA, USA.
+                </p>
+                <p>
+                    Railway verarbeitet die technischen Daten, die beim Betrieb der Anwendung anfallen (z.B. IP-Adressen, Log-Dateien, technische Anfragen). Die Datenverarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) sowie Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem zuverlässigen und sicheren Hosting).
+                </p>
+                <p>
+                    Railway nutzt für die Übertragung personenbezogener Daten Standardvertragsklauseln gemäß Art. 46 DSGVO.
+                    Wir haben mit Railway einen Data Processing Agreement (DPA) gemäß Art. 28 DSGVO abgeschlossen.
+                </p>
+                <p>
+                    Details zur Datenverarbeitung durch Railway: <a href="https://railway.com/legal/privacy" target="_blank">https://railway.com/legal/privacy</a>
+                </p>
+
+                <h2>3. Allgemeine Hinweise und Pflichtinformationen</h2>
+
+                <h3>3.1 Datenschutz</h3>
+                <p>
+                    Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend den gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.
+                </p>
+                <p>
+                    Wenn Sie diese Website benutzen, werden verschiedene personenbezogene Daten erhoben. Personenbezogene Daten sind Daten, mit denen Sie persönlich identifiziert werden können. Die vorliegende Datenschutzerklärung erläutert, welche Daten wir erheben und wofür wir sie nutzen. Sie erläutert auch, wie und zu welchem Zweck das geschieht.
+                </p>
+                <p>
+                    Wir weisen darauf hin, dass die Datenübertragung im Internet (z. B. bei der Kommunikation per E-Mail) Sicherheitslücken aufweisen kann. Ein lückenloser Schutz der Daten vor dem Zugriff durch Dritte ist nicht möglich.
+                </p>
+
+                <h3>3.2 Hinweis zur verantwortlichen Stelle</h3>
+                <p>
+                    Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:
+                </p>
+                <p>
+                    {{ settings.IMPRESSUM_NAME }}<br>
+                    {{ settings.IMPRESSUM_ADDRESS_LINE1 }}<br>
+                    {{ settings.IMPRESSUM_ADDRESS_LINE2 }}<br>
+                    Telefon: {{ settings.IMPRESSUM_PHONE }}<br>
+                    E-Mail: <a href="mailto:{{ settings.IMPRESSUM_EMAIL }}">{{ settings.IMPRESSUM_EMAIL }}</a>
+                </p>
+                <p>
+                    Verantwortliche Stelle ist die natürliche oder juristische Person, die allein oder gemeinsam mit anderen über die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten (z. B. Namen, E-Mail-Adressen o. Ä.) entscheidet.
+                </p>
+
+                <h3>3.3 Speicherdauer</h3>
+                <p>
+                    Soweit innerhalb dieser Datenschutzerklärung keine speziellere Speicherdauer genannt wurde, verbleiben Ihre personenbezogenen Daten bei uns, bis der Zweck für die Datenverarbeitung entfällt. Wenn Sie ein berechtigtes Löschersuchen geltend machen oder eine Einwilligung zur Datenverarbeitung widerrufen, werden Ihre Daten gelöscht, sofern wir keine anderen rechtlich zulässigen Gründe für die Speicherung Ihrer personenbezogenen Daten haben (z. B. steuer- oder handelsrechtliche Aufbewahrungsfristen); im letztgenannten Fall erfolgt die Löschung nach Fortfall dieser Gründe.
+                </p>
+
+                <h3>3.4 Allgemeine Hinweise zu den Rechtsgrundlagen der Datenverarbeitung auf dieser Website</h3>
+                <p>
+                    Sofern Sie in die Datenverarbeitung eingewilligt haben, verarbeiten wir Ihre personenbezogenen Daten auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO bzw. Art. 9 Abs. 2 lit. a DSGVO, sofern besondere Datenkategorien nach Art. 9 Abs. 1 DSGVO verarbeitet werden. Im Falle einer ausdrücklichen Einwilligung in die Übertragung personenbezogener Daten in Drittstaaten erfolgt die Datenverarbeitung außerdem auf Grundlage von Art. 49 Abs. 1 lit. a DSGVO. Sofern Sie in die Speicherung von Cookies oder in den Zugriff auf Informationen in Ihr Endgerät (z. B. via Device-Fingerprinting) eingewilligt haben, erfolgt die Datenverarbeitung zusätzlich auf Grundlage von § 25 Abs. 1 TDDDG. Die Einwilligung ist jederzeit widerrufbar. Sind Ihre Daten zur Vertragserfüllung oder zur Durchführung vorvertraglicher Maßnahmen erforderlich, verarbeiten wir Ihre Daten auf Grundlage des Art. 6 Abs. 1 lit. b DSGVO. Des Weiteren verarbeiten wir Ihre Daten, sofern diese zur Erfüllung einer rechtlichen Verpflichtung erforderlich sind auf Grundlage von Art. 6 Abs. 1 lit. c DSGVO. Die Datenverarbeitung kann ferner auf Grundlage unseres berechtigten Interesses nach Art. 6 Abs. 1 lit. f DSGVO erfolgen. Über die jeweils im Einzelfall einschlägigen Rechtsgrundlagen wird in den folgenden Absätzen dieser Datenschutzerklärung informiert.
+                </p>
+
+                <h3>3.5 Empfänger von personenbezogenen Daten</h3>
+                <p>
+                    Im Rahmen unserer Geschäftstätigkeit arbeiten wir mit verschiedenen externen Stellen zusammen. Dabei ist teilweise auch eine Übermittlung von personenbezogenen Daten an diese externen Stellen erforderlich. Wir geben personenbezogene Daten nur dann an externe Stellen weiter, wenn dies im Rahmen einer Vertragserfüllung erforderlich ist, wenn wir gesetzlich hierzu verpflichtet sind (z. B. Weitergabe von Daten an Steuerbehörden), wenn wir ein berechtigtes Interesse nach Art. 6 Abs. 1 lit. f DSGVO an der Weitergabe haben oder wenn eine sonstige Rechtsgrundlage die Datenweitergabe erlaubt. Beim Einsatz von Auftragsverarbeitern geben wir personenbezogene Daten unserer Kunden nur auf Grundlage eines gültigen Vertrags über Auftragsverarbeitung weiter. Im Falle einer gemeinsamen Verarbeitung wird ein Vertrag über gemeinsame Verarbeitung geschlossen.
+                </p>
+
+                <h3>3.6 Widerruf Ihrer Einwilligung zur Datenverarbeitung</h3>
+                <p>
+                    Viele Datenverarbeitungsvorgänge sind nur mit Ihrer ausdrücklichen Einwilligung möglich. Sie können eine bereits erteilte Einwilligung jederzeit widerrufen. Die Rechtmäßigkeit der bis zum Widerruf erfolgten Datenverarbeitung bleibt vom Widerruf unberührt.
+                </p>
+
+                <h3>3.7 Widerspruchsrecht gegen die Datenerhebung in besonderen Fällen sowie gegen Direktwerbung (Art. 21 DSGVO)</h3>
+                <p>
+                    <strong>WENN DIE DATENVERARBEITUNG AUF GRUNDLAGE VON ART. 6 ABS. 1 LIT. E ODER F DSGVO ERFOLGT, HABEN SIE JEDERZEIT DAS RECHT, AUS GRÜNDEN, DIE SICH AUS IHRER BESONDEREN SITUATION ERGEBEN, GEGEN DIE VERARBEITUNG IHRER PERSONENBEZOGENEN DATEN WIDERSPRUCH EINZULEGEN; DIES GILT AUCH FÜR EIN AUF DIESE BESTIMMUNGEN GESTÜTZTES PROFILING. DIE JEWEILIGE RECHTSGRUNDLAGE, AUF DENEN EINE VERARBEITUNG BERUHT, ENTNEHMEN SIE DIESER DATENSCHUTZERKLÄRUNG. WENN SIE WIDERSPRUCH EINLEGEN, WERDEN WIR IHRE BETROFFENEN PERSONENBEZOGENEN DATEN NICHT MEHR VERARBEITEN, ES SEI DENN, WIR KÖNNEN ZWINGENDE SCHUTZWÜRDIGE GRÜNDE FÜR DIE VERARBEITUNG NACHWEISEN, DIE IHRE INTERESSEN, RECHTE UND FREIHEITEN ÜBERWIEGEN ODER DIE VERARBEITUNG DIENT DER GELTENDMACHUNG, AUSÜBUNG ODER VERTEIDIGUNG VON RECHTSANSPRÜCHEN (WIDERSPRUCH NACH ART. 21 ABS. 1 DSGVO).</strong>
+                </p>
+                <p>
+                    <strong>WERDEN IHRE PERSONENBEZOGENEN DATEN VERARBEITET, UM DIREKTWERBUNG ZU BETREIBEN, SO HABEN SIE DAS RECHT, JEDERZEIT WIDERSPRUCH GEGEN DIE VERARBEITUNG SIE BETREFFENDER PERSONENBEZOGENER DATEN ZUM ZWECKE DERARTIGER WERBUNG EINZULEGEN; DIES GILT AUCH FÜR DAS PROFILING, SOWEIT ES MIT SOLCHER DIREKTWERBUNG IN VERBINDUNG STEHT. WENN SIE WIDERSPRECHEN, WERDEN IHRE PERSONENBEZOGENEN DATEN ANSCHLIESSEND NICHT MEHR ZUM ZWECKE DER DIREKTWERBUNG VERWENDET (WIDERSPRUCH NACH ART. 21 ABS. 2 DSGVO).</strong>
+                </p>
+
+                <h3>3.8 Beschwerderecht bei der zuständigen Aufsichtsbehörde</h3>
+                <p>
+                    Im Falle von Verstößen gegen die DSGVO steht den Betroffenen ein Beschwerderecht bei einer Aufsichtsbehörde, insbesondere in dem Mitgliedstaat ihres gewöhnlichen Aufenthalts, ihres Arbeitsplatzes oder des Orts des mutmaßlichen Verstoßes zu. Das Beschwerderecht besteht unbeschadet anderweitiger verwaltungsrechtlicher oder gerichtlicher Rechtsbehelfe.
+                </p>
+
+                <h3>3.9 Recht auf Datenübertragbarkeit</h3>
+                <p>
+                    Sie haben das Recht, Daten, die wir auf Grundlage Ihrer Einwilligung oder in Erfüllung eines Vertrags automatisiert verarbeiten, an sich oder an einen Dritten in einem gängigen, maschinenlesbaren Format aushändigen zu lassen. Sofern Sie die direkte Übertragung der Daten an einen anderen Verantwortlichen verlangen, erfolgt dies nur, soweit es technisch machbar ist.
+                </p>
+
+                <h3>3.10 Auskunft, Berichtigung und Löschung</h3>
+                <p>
+                    Sie haben im Rahmen der geltenden gesetzlichen Bestimmungen jederzeit das Recht auf unentgeltliche Auskunft über Ihre gespeicherten personenbezogenen Daten, deren Herkunft und Empfänger und den Zweck der Datenverarbeitung und ggf. ein Recht auf Berichtigung oder Löschung dieser Daten. Hierzu sowie zu weiteren Fragen zum Thema personenbezogene Daten können Sie sich jederzeit an uns wenden.
+                </p>
+
+                <h3>3.11 Recht auf Einschränkung der Verarbeitung</h3>
+                <p>
+                    Sie haben das Recht, die Einschränkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen. Hierzu können Sie sich jederzeit an uns wenden. Das Recht auf Einschränkung der Verarbeitung besteht in folgenden Fällen:
+                </p>
+                <ul>
+                    <li>Wenn Sie die Richtigkeit Ihrer bei uns gespeicherten personenbezogenen Daten bestreiten, benötigen wir in der Regel Zeit, um dies zu überprüfen. Für die Dauer der Prüfung haben Sie das Recht, die Einschränkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen.</li>
+                    <li>Wenn die Verarbeitung Ihrer personenbezogenen Daten unrechtmäßig geschah/geschieht, können Sie statt der Löschung die Einschränkung der Datenverarbeitung verlangen.</li>
+                    <li>Wenn wir Ihre personenbezogenen Daten nicht mehr benötigen, Sie sie jedoch zur Ausübung, Verteidigung oder Geltendmachung von Rechtsansprüchen benötigen, haben Sie das Recht, statt der Löschung die Einschränkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen.</li>
+                    <li>Wenn Sie einen Widerspruch nach Art. 21 Abs. 1 DSGVO eingelegt haben, muss eine Abwägung zwischen Ihren und unseren Interessen vorgenommen werden. Solange noch nicht feststeht, wessen Interessen überwiegen, haben Sie das Recht, die Einschränkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen.</li>
+                </ul>
+                <p>
+                    Wenn Sie die Verarbeitung Ihrer personenbezogenen Daten eingeschränkt haben, dürfen diese Daten – von ihrer Speicherung abgesehen – nur mit Ihrer Einwilligung oder zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen oder zum Schutz der Rechte einer anderen natürlichen oder juristischen Person oder aus Gründen eines wichtigen öffentlichen Interesses der Europäischen Union oder eines Mitgliedstaats verarbeitet werden.
+                </p>
+
+                <h2>4. Datenerfassung auf dieser Website</h2>
+                <p>Die folgenden Daten werden erfasst:</p>
+                <ul>
+                    <li>E-Mail-Adresse (bei Registrierung)</li>
+                    <li>IP-Adresse (automatisch erfasst)</li>
+                    <li>Webbrowsertyp und -version (automatisch erfasst)</li>
+                    <li>Betriebssystem (automatisch erfasst)</li>
+                    <li>Eine Liste von URLs, beginnend mit einer verweisenden Website, Ihre Aktivitäten auf dieser Website und die Website, zu der Sie wechseln (automatisch erfasst)</li>
+                    <li>Cookie-Informationen</li>
+                </ul>
+
+                <h2>5. Datennutzung</h2>
+                <ul>
+                    <li>Alle von Ihnen übermittelten personenbezogenen Daten werden so lange gespeichert, wie Sie die auf der Website bereitgestellten Dienste und Systeme nutzen. Daten, die Sie über ein von uns bereitgestelltes Kommunikationssystem übermitteln, können länger, bis zu einem Jahr, gespeichert werden.</li>
+                    <li>Sofern wir nicht gesetzlich dazu verpflichtet oder berechtigt sind, werden Ihre Daten nicht an Dritte weitergegeben. Dies gilt auch für unsere verbundenen Unternehmen und/oder andere Unternehmen unserer Gruppe.</li>
+                    <li>Alle personenbezogenen Daten werden gemäß den Grundsätzen der DSGVO sicher gespeichert.</li>
+                    <li>Wir benötigen möglicherweise von Zeit zu Zeit einige oder alle der oben genannten Daten, um Ihnen den bestmöglichen Service und die bestmögliche Erfahrung bei der Nutzung unserer Website zu bieten. Insbesondere können Daten von uns aus folgenden Gründen verwendet werden:
+                        <ul>
+                            <li>Interne Aufzeichnungen</li>
+                            <li>Verbesserung unserer Produkte/Dienstleistungen</li>
+                            <li>Übermittlung von Werbematerialien per E-Mail, die für Sie von Interesse sein könnten</li>
+                            <li>Kontaktaufnahme zu Marktforschungszwecken per E-Mail, Telefon, Fax oder Post. Diese Informationen können zur Anpassung oder Aktualisierung der Website verwendet werden.</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h2>6. Dienste von Drittanbietern</h2>
+
+                <h3>Mailgun (E-Mail-Versand)</h3>
+                <p>
+                    Für den Versand transaktionaler E-Mails (z.B. Registrierungsbestätigungen, Bestellbestätigungen) nutzen wir den Dienst Mailgun. Anbieter ist die Mailgun Technologies, Inc., 112 E Pecan St #1135, San Antonio, TX 78205, USA.
+                </p>
+                <p>
+                    Beim Versand von E-Mails über Mailgun werden Ihre E-Mail-Adresse sowie weitere für den Versand erforderliche Daten (z.B. Name, Nachrichteninhalt) an Mailgun übermittelt. Mailgun kann dabei auch Ihre IP-Adresse erfassen.
+                </p>
+                <p>
+                    Die Datenverarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Vertragsabwicklung) sowie Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem zuverlässigen E-Mail-Versand).
+                </p>
+                <p>
+                    Mailgun hält die EU-Datenschutz-Grundverordnung ein und nutzt für die Übertragung personenbezogener Daten aus der EU Standardvertragsklauseln. Zudem ist Mailgun nach dem EU-US Data Privacy Framework zertifiziert.
+                </p>
+                <p>
+                    Details entnehmen Sie der Datenschutzerklärung von Mailgun: <a href="https://www.mailgun.com/de/rechtliches/datenschutzerklaerung/" target="_blank">https://www.mailgun.com/de/rechtliches/datenschutzerklaerung/</a>
+                </p>
+
+                <h2>7. Änderungen der Geschäftseigentümerschaft und -kontrolle</h2>
+                <ul>
+                    <li>Wir können unser Geschäft von Zeit zu Zeit erweitern oder reduzieren. Dies kann den Verkauf bestimmter Geschäftsbereiche oder die Übertragung der Kontrolle über bestimmte Geschäftsbereiche an Dritte beinhalten. Von Nutzern bereitgestellte Daten werden, sofern sie für einen übertragenen Bereich relevant sind, zusammen mit diesem Bereich übertragen, und der neue Eigentümer oder die neue kontrollierende Partei ist gemäß den Bedingungen dieser Richtlinie berechtigt, die Daten für die von Ihnen bereitgestellten Zwecke zu verwenden.</li>
+                    <li>Falls von Nutzern übermittelte Daten auf diese Weise übertragen werden, werden Sie vorab kontaktiert und über die Änderungen informiert. Bei der Kontaktaufnahme haben Sie die Wahl, Ihre Daten löschen oder dem neuen Eigentümer oder Verantwortlichen vorenthalten zu lassen.</li>
+                </ul>
+
+                <h2>8. Kontrolle des Zugriffs auf Ihre Daten</h2>
+                <p>
+                    Wenn Sie Daten übermitteln müssen, haben Sie die Möglichkeit, unsere Verwendung dieser Daten einzuschränken. Dies kann Folgendes umfassen:
+                </p>
+                <ul>
+                    <li>Nutzung der Daten für Direktmarketingzwecke; und</li>
+                    <li>Weitergabe der Daten an Dritte.</li>
+                </ul>
+
+                <h2>9. Ihr Recht, Informationen zurückzuhalten</h2>
+                <ul>
+                    <li>Sie können auf bestimmte Bereiche der Website zugreifen, ohne Daten anzugeben. Für die Nutzung aller auf der Website verfügbaren Dienste und Systeme müssen Sie jedoch möglicherweise Kontoinformationen oder andere Daten angeben.</li>
+                    <li>Sie können die Verwendung von Cookies in Ihrem Internetbrowser einschränken.</li>
+                </ul>
+
+                <h2>10. Zugriff auf Ihre eigenen Daten</h2>
+                <ul>
+                    <li>Sie können jederzeit auf Ihr Konto zugreifen, um die Daten einzusehen oder zu ändern. Wenn sich Ihre Umstände ändern, müssen Sie Ihre Daten möglicherweise ändern oder aktualisieren. Zusätzliche Daten zu Ihren Marketingpräferenzen können ebenfalls gespeichert werden und Sie können diese jederzeit ändern.</li>
+                    <li>Sie haben das Recht, gegen Zahlung einer geringen Gebühr eine Kopie Ihrer personenbezogenen Daten anzufordern.</li>
+                </ul>
+
+                <h2>11. Sicherheit</h2>
+                <p>
+                    Die Datensicherheit hat für uns einen hohen Stellenwert und zum Schutz Ihrer Daten haben wir geeignete physische, elektronische und verwaltungstechnische Verfahren eingerichtet, um die online erfassten Daten zu schützen und zu sichern.
+                </p>
+
+                <h2>12. Änderungen dieser Richtlinie</h2>
+                <p>
+                    Wir behalten uns das Recht vor, diese Datenschutzrichtlinie nach eigenem Ermessen oder gesetzlicher Vorschrift zu ändern. Änderungen werden umgehend auf der Website veröffentlicht. Mit der ersten Nutzung der Website nach den Änderungen akzeptieren Sie die Bedingungen der Richtlinie.
+                </p>
+
+                <p class="mt-4">
+                    <small>
+                        Quelle: <a href="https://www.e-recht24.de" target="_blank">https://www.e-recht24.de</a>
+                    </small>
+                </p>
+                </div>
+
+                <!-- English Content -->
+                <div id="content-en" style="display: none;">
+                <h2>1. Data Protection at a Glance</h2>
+                
+                <h3>General Information</h3>
+                <p>
+                    The following notes provide a simple overview of what happens to your personal data when you visit this website. Personal data is any data that can be used to identify you personally. For detailed information on data protection, please refer to our privacy policy below.
+                </p>
+
+                <h3>Data Collection on this Website</h3>
+                
+                <h4>Who is responsible for data collection on this website?</h4>
+                <p>
+                    Data processing on this website is carried out by the website operator. You can find their contact details in the section "Information about the responsible party" in this privacy policy.
+                </p>
+
+                <h4>How do we collect your data?</h4>
+                <p>
+                    Your data is collected, on the one hand, by you providing it to us. This could be, for example, data that you enter in a contact form.
+                </p>
+                <p>
+                    Other data is collected automatically or with your consent when you visit the website through our IT systems. This is primarily technical data (e.g., internet browser, operating system, or time of page access). This data is collected automatically as soon as you enter this website.
+                </p>
+
+                <h4>What do we use your data for?</h4>
+                <p>
+                    Some of the data is collected to ensure error-free provision of the website. Other data may be used to analyze your user behavior. If contracts can be concluded or initiated via the website, the transmitted data will also be processed for contract offers, orders, or other inquiries.
+                </p>
+
+                <h4>What rights do you have regarding your data?</h4>
+                <p>
+                    You have the right to receive information about the origin, recipient, and purpose of your stored personal data free of charge at any time. You also have the right to request the correction or deletion of this data. If you have given consent to data processing, you can revoke this consent at any time for the future. You also have the right to request the restriction of the processing of your personal data under certain circumstances. Furthermore, you have the right to lodge a complaint with the competent supervisory authority. You can contact us at any time regarding this and other questions about data protection.
+                </p>
+
+                <h3>Analysis Tools and Third-Party Tools</h3>
+                <p>
+                    When visiting this website, your surfing behavior can be statistically evaluated. This is done primarily with so-called analysis programs. Detailed information on these analysis programs can be found in the following privacy policy.
+                </p>
+
+                <h2>2. Hosting</h2>
+                
+                <h3>External Hosting</h3>
+                <p>
+                    This website is hosted externally. The personal data collected on this website is stored on the servers of the host(s). This may primarily include IP addresses, contact requests, metadata and communication data, contract data, contact details, names, website accesses, and other data generated via a website.
+                </p>
+                <p>
+                    External hosting is carried out for the purpose of contract fulfillment towards our potential and existing customers (Art. 6 para. 1 lit. b GDPR) and in the interest of secure, fast, and efficient provision of our online offering by a professional provider (Art. 6 para. 1 lit. f GDPR). If appropriate consent has been requested, processing is carried out exclusively on the basis of Art. 6 para. 1 lit. a GDPR and § 25 para. 1 TDDDG, insofar as the consent includes the storage of cookies or access to information in the user's end device (e.g., device fingerprinting) within the meaning of the TDDDG. Consent can be revoked at any time.
+                </p>
+                <p>
+                    Our host(s) will only process your data to the extent necessary to fulfill their performance obligations and follow our instructions regarding this data.
+                </p>
+
+                <h4>Railway (Hosting of Samplepedia)</h4>
+                <p>
+                    We host Samplepedia on the Railway platform. Provider is Railway Corp., San Francisco, CA, USA.
+                </p>
+                <p>
+                    Railway processes the technical data that occurs during the operation of the application (e.g., IP addresses, log files, technical requests). Data processing is based on Art. 6 para. 1 lit. b GDPR (contract fulfillment) and Art. 6 para. 1 lit. f GDPR (legitimate interest in reliable and secure hosting).
+                </p>
+                <p>
+                    Railway uses standard contractual clauses in accordance with Art. 46 GDPR for the transfer of personal data.
+                    We have concluded a Data Processing Agreement (DPA) with Railway in accordance with Art. 28 GDPR.
+                </p>
+                <p>
+                    Details on data processing by Railway: <a href="https://railway.com/legal/privacy" target="_blank">https://railway.com/legal/privacy</a>
+                </p>
+
+                <h2>3. General Information and Mandatory Information</h2>
+
+                <h3>3.1 Data Protection</h3>
+                <p>
+                    The operators of these pages take the protection of your personal data very seriously. We treat your personal data confidentially and in accordance with statutory data protection regulations and this privacy policy.
+                </p>
+                <p>
+                    When you use this website, various personal data is collected. Personal data is data that can be used to identify you personally. This privacy policy explains what data we collect and what we use it for. It also explains how and for what purpose this is done.
+                </p>
+                <p>
+                    We point out that data transmission over the internet (e.g., when communicating via email) can have security vulnerabilities. Complete protection of data from access by third parties is not possible.
+                </p>
+
+                <h3>3.2 Information about the Responsible Party</h3>
+                <p>
+                    The responsible party for data processing on this website is:
+                </p>
+                <p>
+                    {{ settings.IMPRESSUM_NAME }}<br>
+                    {{ settings.IMPRESSUM_ADDRESS_LINE1 }}<br>
+                    {{ settings.IMPRESSUM_ADDRESS_LINE2 }}<br>
+                    Phone: {{ settings.IMPRESSUM_PHONE }}<br>
+                    Email: <a href="mailto:{{ settings.IMPRESSUM_EMAIL }}">{{ settings.IMPRESSUM_EMAIL }}</a>
+                </p>
+                <p>
+                    The responsible party is the natural or legal person who alone or jointly with others determines the purposes and means of processing personal data (e.g., names, email addresses, etc.).
+                </p>
+
+                <h3>3.3 Storage Duration</h3>
+                <p>
+                    Unless a more specific storage period has been stated within this privacy policy, your personal data will remain with us until the purpose for data processing no longer applies. If you assert a legitimate deletion request or revoke consent to data processing, your data will be deleted unless we have other legally permissible reasons for storing your personal data (e.g., tax or commercial retention periods); in the latter case, deletion will occur after these reasons cease to apply.
+                </p>
+
+                <h3>3.4 General Information on the Legal Basis of Data Processing on this Website</h3>
+                <p>
+                    If you have consented to data processing, we process your personal data on the basis of Art. 6 para. 1 lit. a GDPR or Art. 9 para. 2 lit. a GDPR, insofar as special categories of data are processed according to Art. 9 para. 1 GDPR. In the case of explicit consent to the transfer of personal data to third countries, data processing is also based on Art. 49 para. 1 lit. a GDPR. If you have consented to the storage of cookies or access to information in your end device (e.g., via device fingerprinting), data processing is additionally based on § 25 para. 1 TDDDG. Consent can be revoked at any time. If your data is necessary for contract fulfillment or for the implementation of pre-contractual measures, we process your data on the basis of Art. 6 para. 1 lit. b GDPR. Furthermore, we process your data if this is necessary to fulfill a legal obligation on the basis of Art. 6 para. 1 lit. c GDPR. Data processing may also be based on our legitimate interest according to Art. 6 para. 1 lit. f GDPR. Information on the relevant legal basis in each individual case is provided in the following paragraphs of this privacy policy.
+                </p>
+
+                <h3>3.5 Recipients of Personal Data</h3>
+                <p>
+                    As part of our business activities, we work with various external parties. In some cases, this also requires the transmission of personal data to these external parties. We only pass on personal data to external parties if this is necessary as part of contract fulfillment, if we are legally obliged to do so (e.g., transfer of data to tax authorities), if we have a legitimate interest in the transfer according to Art. 6 para. 1 lit. f GDPR, or if another legal basis permits the data transfer. When using processors, we only pass on personal data from our customers on the basis of a valid contract for order processing. In the case of joint processing, a joint processing agreement is concluded.
+                </p>
+
+                <h3>3.6 Revocation of Your Consent to Data Processing</h3>
+                <p>
+                    Many data processing operations are only possible with your express consent. You can revoke consent you have already given at any time. The lawfulness of data processing carried out until the revocation remains unaffected by the revocation.
+                </p>
+
+                <h3>3.7 Right to Object to Data Collection in Special Cases and to Direct Advertising (Art. 21 GDPR)</h3>
+                <p>
+                    <strong>IF DATA PROCESSING IS BASED ON ART. 6 PARA. 1 LIT. E OR F GDPR, YOU HAVE THE RIGHT TO OBJECT TO THE PROCESSING OF YOUR PERSONAL DATA AT ANY TIME FOR REASONS ARISING FROM YOUR PARTICULAR SITUATION; THIS ALSO APPLIES TO PROFILING BASED ON THESE PROVISIONS. THE RESPECTIVE LEGAL BASIS ON WHICH PROCESSING IS BASED CAN BE FOUND IN THIS PRIVACY POLICY. IF YOU OBJECT, WE WILL NO LONGER PROCESS YOUR PERSONAL DATA UNLESS WE CAN DEMONSTRATE COMPELLING LEGITIMATE GROUNDS FOR THE PROCESSING THAT OVERRIDE YOUR INTERESTS, RIGHTS, AND FREEDOMS, OR THE PROCESSING SERVES THE ASSERTION, EXERCISE, OR DEFENSE OF LEGAL CLAIMS (OBJECTION PURSUANT TO ART. 21 PARA. 1 GDPR).</strong>
+                </p>
+                <p>
+                    <strong>IF YOUR PERSONAL DATA IS PROCESSED FOR DIRECT MARKETING PURPOSES, YOU HAVE THE RIGHT TO OBJECT AT ANY TIME TO THE PROCESSING OF PERSONAL DATA CONCERNING YOU FOR THE PURPOSE OF SUCH MARKETING; THIS ALSO APPLIES TO PROFILING INSOFAR AS IT IS RELATED TO SUCH DIRECT MARKETING. IF YOU OBJECT, YOUR PERSONAL DATA WILL SUBSEQUENTLY NO LONGER BE USED FOR DIRECT MARKETING PURPOSES (OBJECTION PURSUANT TO ART. 21 PARA. 2 GDPR).</strong>
+                </p>
+
+                <h3>3.8 Right to Lodge a Complaint with the Competent Supervisory Authority</h3>
+                <p>
+                    In the event of violations of the GDPR, those affected have the right to lodge a complaint with a supervisory authority, particularly in the member state of their habitual residence, their workplace, or the place of the alleged violation. The right to lodge a complaint exists without prejudice to other administrative or judicial remedies.
+                </p>
+
+                <h3>3.9 Right to Data Portability</h3>
+                <p>
+                    You have the right to have data that we process automatically based on your consent or in fulfillment of a contract handed over to you or to a third party in a common, machine-readable format. If you request the direct transfer of data to another controller, this will only be done to the extent that it is technically feasible.
+                </p>
+
+                <h3>3.10 Information, Correction, and Deletion</h3>
+                <p>
+                    Within the scope of applicable legal provisions, you have the right to free information about your stored personal data, its origin and recipient, and the purpose of data processing at any time, and, if applicable, the right to correction or deletion of this data. You can contact us at any time regarding this and other questions about personal data.
+                </p>
+
+                <h3>3.11 Right to Restriction of Processing</h3>
+                <p>
+                    You have the right to request the restriction of the processing of your personal data. You can contact us at any time regarding this. The right to restriction of processing exists in the following cases:
+                </p>
+                <ul>
+                    <li>If you dispute the accuracy of your personal data stored by us, we usually need time to verify this. For the duration of the review, you have the right to request the restriction of the processing of your personal data.</li>
+                    <li>If the processing of your personal data happened/is happening unlawfully, you can request the restriction of data processing instead of deletion.</li>
+                    <li>If we no longer need your personal data, but you need it to exercise, defend, or assert legal claims, you have the right to request the restriction of the processing of your personal data instead of deletion.</li>
+                    <li>If you have lodged an objection pursuant to Art. 21 para. 1 GDPR, a balance must be struck between your interests and ours. As long as it has not yet been determined whose interests prevail, you have the right to request the restriction of the processing of your personal data.</li>
+                </ul>
+                <p>
+                    If you have restricted the processing of your personal data, this data may only be processed—apart from being stored—with your consent or for the assertion, exercise, or defense of legal claims or for the protection of the rights of another natural or legal person or for reasons of important public interest of the European Union or a member state.
+                </p>
+
+                <h2>4. Data Collection on this Website</h2>
+                <p>The following data is collected:</p>
+                <ul>
+                    <li>Name</li>
+                    <li>Contact details such as email addresses</li>
+                    <li>IP address (automatically collected)</li>
+                    <li>Web browser type and version (automatically collected)</li>
+                    <li>Operating system (automatically collected)</li>
+                    <li>A list of URLs, starting with a referring website, your activities on this website, and the website you navigate to (automatically collected)</li>
+                    <li>Cookie information</li>
+                </ul>
+
+                <h2>5. Data Usage</h2>
+                <ul>
+                    <li>All personal data submitted by you will be stored as long as you use the services and systems provided on the website. Data that you transmit via a communication system provided by us may be stored longer, up to one year.</li>
+                    <li>Unless we are legally obliged or entitled to do so, your data will not be passed on to third parties. This also applies to our affiliated companies and/or other companies in our group.</li>
+                    <li>All personal data is stored securely in accordance with the principles of the GDPR.</li>
+                    <li>From time to time, we may need some or all of the above data to provide you with the best possible service and experience when using our website. In particular, data may be used by us for the following reasons:
+                        <ul>
+                            <li>Internal records</li>
+                            <li>Improvement of our products/services</li>
+                            <li>Transmission of promotional materials by email that may be of interest to you</li>
+                            <li>Contact for market research purposes by email, telephone, fax, or mail. This information may be used to customize or update the website.</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h2>6. Third-Party Services</h2>
+
+                <h3>Mailgun (Email Delivery)</h3>
+                <p>
+                    For sending transactional emails (e.g., registration confirmations, order confirmations), we use the Mailgun service. Provider is Mailgun Technologies, Inc., 112 E Pecan St #1135, San Antonio, TX 78205, USA.
+                </p>
+                <p>
+                    When sending emails via Mailgun, your email address and other data required for sending (e.g., name, message content) are transmitted to Mailgun. Mailgun may also record your IP address.
+                </p>
+                <p>
+                    Data processing is based on Art. 6 para. 1 lit. b GDPR (contract fulfillment) and Art. 6 para. 1 lit. f GDPR (legitimate interest in reliable email delivery).
+                </p>
+                <p>
+                    Mailgun complies with the EU General Data Protection Regulation and uses standard contractual clauses for the transfer of personal data from the EU. In addition, Mailgun is certified under the EU-US Data Privacy Framework.
+                </p>
+                <p>
+                    For details, see Mailgun's privacy policy: <a href="https://www.mailgun.com/de/rechtliches/datenschutzerklaerung/" target="_blank">https://www.mailgun.com/de/rechtliches/datenschutzerklaerung/</a>
+                </p>
+
+                <h2>7. Changes in Business Ownership and Control</h2>
+                <ul>
+                    <li>From time to time, we may expand or reduce our business. This may include the sale of certain business areas or the transfer of control over certain business areas to third parties. Data provided by users will be transferred together with that area, if relevant to a transferred area, and the new owner or controlling party is entitled to use the data for the purposes you provided in accordance with the terms of this policy.</li>
+                    <li>If data submitted by users is transferred in this way, you will be contacted in advance and informed of the changes. When contacted, you have the choice to delete your data or withhold it from the new owner or controller.</li>
+                </ul>
+
+                <h2>8. Controlling Access to Your Data</h2>
+                <p>
+                    If you need to submit data, you have the option to restrict our use of this data. This may include:
+                </p>
+                <ul>
+                    <li>Use of data for direct marketing purposes; and</li>
+                    <li>Sharing data with third parties.</li>
+                </ul>
+
+                <h2>9. Your Right to Withhold Information</h2>
+                <ul>
+                    <li>You can access certain areas of the website without providing data. However, to use all services and systems available on the website, you may need to provide account information or other data.</li>
+                    <li>You can restrict the use of cookies in your internet browser.</li>
+                </ul>
+
+                <h2>10. Access to Your Own Data</h2>
+                <ul>
+                    <li>You can access your account at any time to view or change the data. If your circumstances change, you may need to change or update your data. Additional data about your marketing preferences may also be stored, and you can change these at any time.</li>
+                    <li>You have the right to request a copy of your personal data for a small fee.</li>
+                </ul>
+
+                <h2>11. Security</h2>
+                <p>
+                    Data security is of high importance to us, and to protect your data, we have established appropriate physical, electronic, and administrative procedures to protect and secure the data collected online.
+                </p>
+
+                <h2>12. Changes to this Policy</h2>
+                <p>
+                    We reserve the right to change this privacy policy at our discretion or as required by law. Changes will be published on the website immediately. By using the website for the first time after changes, you accept the terms of the policy.
+                </p>
+
+                <p class="mt-4">
+                    <small>
+                        Source: <a href="https://www.e-recht24.de" target="_blank">https://www.e-recht24.de</a>
+                    </small>
+                </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="{% static 'js/impressum-lang-toggle.js' %}"></script>
+{% endblock %}

@@ -76,6 +76,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'samples.context_processors.impressum_settings',
             ],
             'libraries':{
             'custom_templatetag': 'samples.templatetags.url_helpers',
@@ -203,6 +204,13 @@ X_FRAME_OPTIONS = None
 
 # Django Sites Framework (required for django-comments-xtd)
 SITE_ID = 1
+
+# Impressum/Contact Details
+IMPRESSUM_NAME = config('IMPRESSUM_NAME', default='your-name-here')
+IMPRESSUM_ADDRESS_LINE1 = config('IMPRESSUM_ADDRESS_LINE1', default='your-street-address')
+IMPRESSUM_ADDRESS_LINE2 = config('IMPRESSUM_ADDRESS_LINE2', default='your-city-zip-country')
+IMPRESSUM_PHONE = config('IMPRESSUM_PHONE', default='your-phone-number')
+IMPRESSUM_EMAIL = config('IMPRESSUM_EMAIL', default='your-email-address')
 
 # Django Comments XTD Configuration
 COMMENTS_APP = 'django_comments_xtd'
