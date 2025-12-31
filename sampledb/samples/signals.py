@@ -4,7 +4,8 @@ Django signals for the samples app.
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import transaction
-from .models import AnalysisTask
+from django_comments.signals import comment_was_posted
+from .models import AnalysisTask, Notification
 from .discord_utils import send_sample_notification
 import logging
 
@@ -35,3 +36,43 @@ def _send_notification(instance):
     except Exception as e:
         # Don't fail if Discord notification fails
         logger.error(f"Failed to send Discord notification for sample {instance.sha256}: {e}")
+
+
+@receiver(comment_was_posted)
+def notify_on_comment(sender, comment, request, **kwargs):
+    """
+    Send a notification when a comment is posted on an analysis task.
+    Notifies the task author (unless they commented on their own task).
+    
+    Args:
+        sender: The comment model class
+        comment: The comment instance that was posted
+        request: The HTTP request object
+        **kwargs: Additional keyword arguments
+    """
+    # Get the object that was commented on
+    content_object = comment.content_object
+    
+    # Only process comments on AnalysisTask objects
+    if not isinstance(content_object, AnalysisTask):
+        return
+    
+    # Don't notify if user comments on their own task
+    if comment.user == content_object.author:
+        return
+    
+    # Check if user is authenticated
+    if not comment.user:
+        return
+    
+    # Create notification
+    Notification.objects.create(
+        recipient=content_object.author,
+        actor=comment.user,
+        verb='commented',
+        target=content_object,
+        description=f"{comment.user.username} commented on your sample",
+        data={'sha256': content_object.sha256[:12]}
+    )
+    
+    logger.info(f"Comment notification sent to {content_object.author.username} for sample {content_object.sha256}")

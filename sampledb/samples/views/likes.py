@@ -66,15 +66,15 @@ def toggle_like(request, sha256, task_id):
             
             if other_likers.count() == 0:
                 # Only this user liked it
-                description = f"{request.user.username} liked your task"
+                description = f"{request.user.username} liked your sample"
             elif other_likers.count() == 1:
                 # Two people total
                 other_user = other_likers.first()
-                description = f"{request.user.username} and {other_user.username} liked your task"
+                description = f"{request.user.username} and {other_user.username} liked your sample"
             else:
                 # Multiple people
                 count = other_likers.count()
-                description = f"{request.user.username} and {count} others liked your task"
+                description = f"{request.user.username} and {count} others liked your sample"
             
             existing_notification.description = description
             existing_notification.actor = request.user  # Update to most recent liker
@@ -88,7 +88,7 @@ def toggle_like(request, sha256, task_id):
                 actor=request.user,
                 verb='liked',
                 target=sample,
-                description=f"{request.user.username} liked your task",
+                description=f"{request.user.username} liked your sample",
                 data={'sha256': sample.sha256[:12]}
             )
     

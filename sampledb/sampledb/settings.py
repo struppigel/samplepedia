@@ -270,8 +270,8 @@ COMMENTS_XTD_FORM_CLASS = 'samples.forms.AuthenticatedCommentForm'  # Use custom
 COMMENTS_XTD_APP_MODEL_OPTIONS = {
     'samples.analysistask': {
         'allow_flagging': False,
-        'allow_feedback': False,
-        'show_feedback': False,
+        'allow_feedback': True,  # Enable reply functionality
+        'show_feedback': True,
     }
 }
 
