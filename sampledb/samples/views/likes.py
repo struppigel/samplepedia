@@ -1,8 +1,9 @@
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-from notifications.signals import notify
+from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 
-from ..models import AnalysisTask
+from ..models import AnalysisTask, Notification
 
 
 def toggle_like(request, sha256, task_id):
@@ -34,11 +35,13 @@ def toggle_like(request, sha256, task_id):
         sample.favorited_by.remove(request.user)
         user_has_favorited = False
         
-        # Delete all like notifications for this user and task
-        sample.author.notifications.filter(
+        # Delete all like notifications for this task
+        content_type = ContentType.objects.get_for_model(AnalysisTask)
+        Notification.objects.filter(
+            recipient=sample.author,
             verb='liked',
-            action_object_object_id=str(sample.id),
-            action_object_content_type__model='analysistask'
+            target_content_type=content_type,
+            target_object_id=sample.id
         ).delete()
         
     else:
@@ -47,10 +50,12 @@ def toggle_like(request, sha256, task_id):
         user_has_favorited = True
         
         # Check if there's already a like notification for this task
-        existing_notification = sample.author.notifications.filter(
+        content_type = ContentType.objects.get_for_model(AnalysisTask)
+        existing_notification = Notification.objects.filter(
+            recipient=sample.author,
             verb='liked',
-            action_object_object_id=str(sample.id),
-            action_object_content_type__model='analysistask',
+            target_content_type=content_type,
+            target_object_id=sample.id,
             unread=True
         ).first()
         
@@ -74,14 +79,15 @@ def toggle_like(request, sha256, task_id):
             existing_notification.description = description
             existing_notification.actor = request.user  # Update to most recent liker
             existing_notification.data = {'sha256': sample.sha256[:12]}
+            existing_notification.timestamp = timezone.now()
             existing_notification.save()
         else:
             # Create new notification
-            notify.send(
-                sender=request.user,
+            Notification.objects.create(
                 recipient=sample.author,
+                actor=request.user,
                 verb='liked',
-                action_object=sample,
+                target=sample,
                 description=f"{request.user.username} liked your task",
                 data={'sha256': sample.sha256[:12]}
             )

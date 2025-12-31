@@ -3,10 +3,137 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from django.urls import reverse
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from cloudinary.models import CloudinaryField
 from django.core.validators import RegexValidator
+
+
+class NotificationQuerySet(models.QuerySet):
+    """Custom queryset for Notification model"""
+    
+    def unread(self):
+        """Return only unread notifications"""
+        return self.filter(unread=True)
+    
+    def read(self):
+        """Return only read notifications"""
+        return self.filter(unread=False)
+    
+    def mark_all_as_read(self, recipient=None):
+        """Mark all notifications as read"""
+        qs = self.unread()
+        if recipient:
+            qs = qs.filter(recipient=recipient)
+        return qs.update(unread=False)
+    
+    def mark_all_as_unread(self, recipient=None):
+        """Mark all notifications as unread"""
+        qs = self.read()
+        if recipient:
+            qs = qs.filter(recipient=recipient)
+        return qs.update(unread=True)
+
+
+class Notification(models.Model):
+    """
+    Custom notification model for tracking user notifications.
+    Supports likes, comments, solutions, and other activities.
+    """
+    
+    recipient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+        verbose_name="Recipient"
+    )
+    
+    actor = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='sent_notifications',
+        verbose_name="Actor",
+        help_text="The user who triggered this notification"
+    )
+    
+    verb = models.CharField(
+        max_length=50,
+        verbose_name="Verb",
+        help_text="Action type: liked, commented, added_solution, etc."
+    )
+    
+    # GenericForeignKey for the target object (what was acted upon)
+    target_content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        related_name='notification_targets'
+    )
+    target_object_id = models.PositiveIntegerField()
+    target = GenericForeignKey('target_content_type', 'target_object_id')
+    
+    # Optional: GenericForeignKey for the action object (additional context)
+    action_content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        related_name='notification_actions',
+        null=True,
+        blank=True
+    )
+    action_object_id = models.PositiveIntegerField(null=True, blank=True)
+    action_object = GenericForeignKey('action_content_type', 'action_object_id')
+    
+    description = models.TextField(
+        verbose_name="Description",
+        help_text="Human-readable description of the notification"
+    )
+    
+    unread = models.BooleanField(
+        default=True,
+        verbose_name="Unread",
+        db_index=True
+    )
+    
+    data = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="Extra data",
+        help_text="Additional JSON data (e.g., sha256, URLs)"
+    )
+    
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Timestamp",
+        db_index=True
+    )
+    
+    objects = NotificationQuerySet.as_manager()
+    
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['recipient', 'unread']),
+            models.Index(fields=['-timestamp']),
+        ]
+        verbose_name = "Notification"
+        verbose_name_plural = "Notifications"
+    
+    def __str__(self):
+        return f"{self.actor.username} {self.verb} → {self.recipient.username}"
+    
+    def mark_as_read(self):
+        """Mark this notification as read"""
+        if self.unread:
+            self.unread = False
+            self.save(update_fields=['unread'])
+    
+    def mark_as_unread(self):
+        """Mark this notification as unread"""
+        if not self.unread:
+            self.unread = True
+            self.save(update_fields=['unread'])
+
 
 class Difficulty(models.TextChoices):
     EASY = "easy", "easy"

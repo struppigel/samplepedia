@@ -1,4 +1,5 @@
 from django.conf import settings
+from .models import Notification
 
 
 def impressum_settings(request):
@@ -15,11 +16,14 @@ def impressum_settings(request):
     }
 
 
-def notifications_processor(request):
+def notification_count(request):
     """Make notification count available in all templates."""
     if request.user.is_authenticated:
         return {
-            'unread_notifications_count': request.user.notifications.unread().count()
+            'unread_notifications_count': Notification.objects.filter(
+                recipient=request.user,
+                unread=True
+            ).count()
         }
     return {
         'unread_notifications_count': 0

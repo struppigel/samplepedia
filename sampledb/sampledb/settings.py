@@ -94,7 +94,6 @@ INSTALLED_APPS = [
     "anymail",
     'django_comments_xtd',
     'django_comments',
-    'notifications',  # django-notifications-hq
     'ipware',
     'turnstile',
 ]
@@ -124,7 +123,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'samples.context_processors.impressum_settings',
-                'samples.context_processors.notifications_processor',
+                'samples.context_processors.notification_count',
             ],
             'libraries':{
             'custom_templatetag': 'samples.templatetags.url_helpers',

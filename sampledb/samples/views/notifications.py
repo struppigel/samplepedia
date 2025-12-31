@@ -1,13 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from notifications.models import Notification
+from ..models import Notification
 
 
 @login_required
 def notification_list(request):
     """Display all notifications for the logged-in user"""
-    notifications = request.user.notifications.all()
+    notifications = Notification.objects.filter(recipient=request.user)
     
     return render(request, 'samples/notifications.html', {
         'notifications': notifications,
@@ -17,7 +17,10 @@ def notification_list(request):
 @login_required
 def notification_dropdown(request):
     """AJAX endpoint to fetch recent notifications for dropdown"""
-    notifications = request.user.notifications.unread()[:5]
+    notifications = Notification.objects.filter(
+        recipient=request.user,
+        unread=True
+    )[:5]
     
     notifications_data = [{
         'id': n.id,
@@ -29,7 +32,7 @@ def notification_dropdown(request):
     
     return JsonResponse({
         'notifications': notifications_data,
-        'unread_count': request.user.notifications.unread().count()
+        'unread_count': Notification.objects.filter(recipient=request.user, unread=True).count()
     })
 
 
@@ -45,8 +48,8 @@ def mark_notification_read(request, notification_id):
     notification.mark_as_read()
     
     # Redirect to the task detail page
-    if notification.action_object:
-        return redirect(notification.action_object.get_absolute_url())
+    if notification.target:
+        return redirect(notification.target.get_absolute_url())
     
     return redirect('notification_list')
 
@@ -55,7 +58,7 @@ def mark_notification_read(request, notification_id):
 def mark_all_read(request):
     """Mark all notifications as read"""
     if request.method == 'POST':
-        request.user.notifications.mark_all_as_read()
+        Notification.objects.filter(recipient=request.user).mark_all_as_read()
     return redirect('notification_list')
 
 
@@ -77,5 +80,5 @@ def delete_notification(request, notification_id):
 def unread_count(request):
     """AJAX endpoint for polling unread notification count"""
     return JsonResponse({
-        'unread_count': request.user.notifications.unread().count()
+        'unread_count': Notification.objects.filter(recipient=request.user, unread=True).count()
     })
