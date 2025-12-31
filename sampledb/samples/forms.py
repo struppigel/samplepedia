@@ -78,8 +78,8 @@ class AnalysisTaskForm(forms.ModelForm):
         model = AnalysisTask
         fields = ['sha256', 'download_link', 'description', 'goal', 'difficulty', 'tags', 'tools']
         widgets = {
-            'sha256': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '64 character hex string'}),
-            'download_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://bazaar.abuse.ch/... or https://malshare.com/...'}),
+            'sha256': forms.TextInput(attrs={'class': 'form-control sha256-readonly-field', 'placeholder': 'Auto-filled from download link', 'readonly': 'readonly'}),
+            'download_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://bazaar.abuse.ch/... or https://malshare.com/...', 'id': 'id_download_link'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Detailed description of the sample, will be in spoiler tags'}),
             'goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Analysis goal(s)'}),
             'difficulty': forms.Select(attrs={'class': 'form-control'}),

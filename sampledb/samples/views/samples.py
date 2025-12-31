@@ -130,6 +130,9 @@ def sample_detail(request, sha256, task_id):
             request.user.liked_solutions.values_list('id', flat=True)
         )
     
+    # Count reference solutions (by task author) for delete permission check
+    reference_solution_count = solutions.filter(author=sample.author).count()
+    
     # Find first YouTube solution if sample doesn't have youtube_id
     youtube_solution = None
     if not sample.youtube_id:
@@ -150,6 +153,7 @@ def sample_detail(request, sha256, task_id):
         "youtube_solution": youtube_solution,
         "user_can_edit": sample.user_can_edit(request.user),
         "user_liked_solution_ids": user_liked_solution_ids,
+        "reference_solution_count": reference_solution_count,
     })
 
 

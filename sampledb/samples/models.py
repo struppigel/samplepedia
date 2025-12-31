@@ -269,8 +269,7 @@ class AnalysisTask(models.Model):
         """Check if a user has permission to edit this task"""
         if not user.is_authenticated:
             return False
-        is_contributor = user.groups.filter(name='contributor').exists()
-        return (user == (self.author) and is_contributor ) or user.is_staff
+        return user == self.author or user.is_staff
     
     def get_absolute_url(self):
         """Return the URL to the detail page for this task"""

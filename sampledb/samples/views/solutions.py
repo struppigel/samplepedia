@@ -73,6 +73,21 @@ def delete_solution(request, sha256, task_id, solution_id):
         return redirect('sample_detail', sha256=sha256, task_id=task_id)
     
     if request.method == 'POST':
+        # Check if this is a reference solution (author is task author)
+        is_reference_solution = solution.author == sample.author
+        
+        # For non-staff users, prevent deleting the last reference solution
+        if is_reference_solution and not request.user.is_staff:
+            # Count reference solutions for this task
+            reference_solution_count = Solution.objects.filter(
+                analysis_task=sample,
+                author=sample.author
+            ).count()
+            
+            if reference_solution_count <= 1:
+                messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
+                return redirect('sample_detail', sha256=sha256, task_id=task_id)
+        
         solution.delete()
         messages.success(request, 'Solution deleted successfully.')
         return redirect('sample_detail', sha256=sha256, task_id=task_id)

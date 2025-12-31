@@ -32,6 +32,7 @@
                     {{ form.sha256.errors }}
                   </div>
                 {% else %}
+                  <small class="form-text text-muted">Auto-filled from download link</small>
                 {% endif %}
               </div>
 
@@ -281,6 +282,30 @@
     border-color: #e63946;
     box-shadow: 0 0 10px rgba(230, 57, 70, 0.5);
   }
+  
+  /* Styling for readonly SHA256 field */
+  .sha256-readonly-field {
+    background-color: #f8f9fa !important;
+    cursor: not-allowed;
+  }
+  
+  /* Dark mode styling for readonly SHA256 field */
+  .dark-mode .sha256-readonly-field {
+    background-color: #482d2d !important;
+    color: #c0a0a0 !important;
+  }
+  
+  /* When SHA256 is successfully extracted */
+  .sha256-readonly-field.is-valid {
+    background-color: #d4edda !important;
+    border-color: #2872a7 !important;
+  }
+  
+  .dark-mode .sha256-readonly-field.is-valid {
+    background-color: #1e3c46 !important;
+    border-color: #2887a7 !important;
+    color: #9ae6e0 !important;
+  }
   </style>
 
   <script>
@@ -335,6 +360,48 @@
       document.getElementById('deleteForm').submit();
     }
   }
+  
+  // Auto-fill SHA256 from download link
+  document.addEventListener('DOMContentLoaded', function() {
+    const downloadLinkInput = document.getElementById('id_download_link');
+    const sha256Input = document.getElementById('id_sha256');
+    
+    if (downloadLinkInput && sha256Input) {
+      downloadLinkInput.addEventListener('input', function() {
+        const url = this.value.trim();
+        let sha256 = '';
+        
+        // Extract SHA256 from MalShare URL
+        // Pattern: https://malshare.com/sample.php?action=detail&hash=SHA256
+        const malshareMatch = url.match(/[?&]hash=([a-fA-F0-9]{64})/);
+        if (malshareMatch) {
+          sha256 = malshareMatch[1].toLowerCase();
+        }
+        
+        // Extract SHA256 from MalwareBazaar URL
+        // Pattern: https://bazaar.abuse.ch/sample/SHA256/
+        const bazaarMatch = url.match(/\/sample\/([a-fA-F0-9]{64})/);
+        if (bazaarMatch) {
+          sha256 = bazaarMatch[1].toLowerCase();
+        }
+        
+        // Update SHA256 field
+        if (sha256) {
+          sha256Input.value = sha256;
+          sha256Input.classList.remove('is-invalid');
+          sha256Input.classList.add('is-valid');
+        } else if (url) {
+          sha256Input.value = '';
+          sha256Input.classList.remove('is-valid');
+        }
+      });
+      
+      // Trigger extraction on page load if download link already has value (edit mode)
+      if (downloadLinkInput.value) {
+        downloadLinkInput.dispatchEvent(new Event('input'));
+      }
+    }
+  });
   </script>
 </section>
 

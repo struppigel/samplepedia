@@ -152,12 +152,21 @@ body.dark-mode .solution-item:hover {
                   <div class="d-flex align-items-center" style="white-space: nowrap;">
                     {% solution_like_button solution user_liked_solution_ids %}
                     {% if user.is_authenticated and solution.author == user %}
-                      <button class="btn btn-link btn-sm text-danger p-0 ml-2" 
-                              onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256 }}', '{{ sample.id }}')"
-                              style="border: none; background: none; cursor: pointer;"
-                              title="Delete this solution">
-                        <i class="fas fa-trash-alt"></i>
-                      </button>
+                      {% comment %}Hide delete button for non-staff if it's the last reference solution{% endcomment %}
+                      {% if user.is_staff or solution.author != sample.author or reference_solution_count > 1 %}
+                        <button class="btn btn-link btn-sm text-danger p-0 ml-2" 
+                                onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256 }}', '{{ sample.id }}')"
+                                style="border: none; background: none; cursor: pointer;"
+                                title="Delete this solution">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      {% else %}
+                        <span class="btn btn-link btn-sm text-muted p-0 ml-2"
+                              style="border: none; background: none; cursor: not-allowed;"
+                              title="Cannot delete the last reference solution">
+                          <i class="fas fa-lock"></i>
+                        </span>
+                      {% endif %}
                     {% endif %}
                   </div>
                 </li>
