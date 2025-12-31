@@ -7,7 +7,7 @@
 
 <section class="content-header">
   <div class="container-fluid">
-    <h1>{% if is_edit %}Edit{% else %}Submit{% endif %} Sample and Analysis Task</h1>
+    <h1>{% if is_edit %}Edit{% else %}Submit{% endif %} Sample</h1>
   </div>
 </section>
 
@@ -120,6 +120,48 @@
                 <small class="form-text text-muted">Choose an image from gallery</small>
               </div>
 
+              <hr class="my-4">
+              <h5 class="mb-3">Reference Solution{% if not user.is_staff %} <span class="text-danger">*</span>{% else %} (Optional){% endif %}</h5>
+              <p class="small text-muted mb-3">
+                {% if not user.is_staff %}
+                  You must provide one reference solution when submitting an analysis task. This helps ensure quality content.
+                {% else %}
+                  You may optionally provide a reference solution when submitting an analysis task.
+                {% endif %}
+              </p>
+              
+              <div class="form-group">
+                <label for="{{ form.reference_solution_title.id_for_label }}">Solution Title{% if not user.is_staff %} <span class="text-danger">*</span>{% endif %}</label>
+                {{ form.reference_solution_title }}
+                {% if form.reference_solution_title.errors %}
+                  <div class="text-danger small">
+                    {{ form.reference_solution_title.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.reference_solution_type.id_for_label }}">Solution Type{% if not user.is_staff %} <span class="text-danger">*</span>{% endif %}</label>
+                {{ form.reference_solution_type }}
+                {% if form.reference_solution_type.errors %}
+                  <div class="text-danger small">
+                    {{ form.reference_solution_type.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.reference_solution_url.id_for_label }}">Solution URL{% if not user.is_staff %} <span class="text-danger">*</span>{% endif %}</label>
+                {{ form.reference_solution_url }}
+                {% if form.reference_solution_url.errors %}
+                  <div class="text-danger small">
+                    {{ form.reference_solution_url.errors }}
+                  </div>
+                {% else %}
+                  <small class="form-text text-muted">Provide a link to your writeup, video, or paper</small>
+                {% endif %}
+              </div>
+
               {% if form.non_field_errors %}
                 <div class="alert alert-danger">
                   {{ form.non_field_errors }}
@@ -161,6 +203,9 @@
             <p class="small mb-3">Provide a valid SHA256 hash (64 hex characters) for the contained file, if the download consists of several files, use the hash of the archive</p>
             <p class="small mb-3">The download link must be to malshare or malwarebazaar</p>
             <p class="small mb-3">Choose the appropriate difficulty level, see explanation below</p>
+            {% if not user.is_staff %}
+            <p class="small mb-0"><strong class="text-danger">Required:</strong> You must provide one reference solution (your own writeup, video, or analysis) when submitting a task</p>
+            {% endif %}
             </ul>
           </div>
         </div>

@@ -8,7 +8,7 @@ from django.db import transaction
 from taggit.models import Tag
 import re
 
-from ..models import AnalysisTask, Difficulty, SampleImage
+from ..models import AnalysisTask, Difficulty, SampleImage, Solution
 from ..forms import AnalysisTaskForm
 
 
@@ -182,7 +182,6 @@ def extract_youtube_id(url):
 
 
 @login_required
-@permission_required('samples.add_analysistask', raise_exception=True)
 def submit_task(request):
     """Allow users to submit their own analysis task"""
     if request.method == 'POST':
@@ -212,6 +211,20 @@ def submit_task(request):
                 if form.cleaned_data.get('tools'):
                     tools = [tool.strip().lower() for tool in form.cleaned_data['tools'] if tool.strip()]
                     sample.tools.set(tools)
+                
+                # Create reference solution if provided (required for non-staff, optional for staff)
+                ref_title = form.cleaned_data.get('reference_solution_title')
+                ref_type = form.cleaned_data.get('reference_solution_type')
+                ref_url = form.cleaned_data.get('reference_solution_url')
+                
+                if ref_title and ref_type and ref_url:
+                    Solution.objects.create(
+                        analysis_task=sample,
+                        title=ref_title,
+                        solution_type=ref_type,
+                        url=ref_url,
+                        author=request.user
+                    )
             
             # Transaction committed, Discord notification will fire now with correct data
             messages.success(request, f'AnalysisTask {sample.sha256[:12]}... submitted successfully!')

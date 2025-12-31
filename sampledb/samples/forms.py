@@ -55,6 +55,25 @@ class SolutionForm(forms.ModelForm):
 
 # for submitting analysis tasks
 class AnalysisTaskForm(forms.ModelForm):
+    # Reference solution fields (required for non-staff users)
+    reference_solution_title = forms.CharField(
+        max_length=200,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Solution title'}),
+        label='Reference Solution Title'
+    )
+    reference_solution_type = forms.ChoiceField(
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Reference Solution Type'
+    )
+    reference_solution_url = forms.URLField(
+        max_length=500,
+        required=False,
+        widget=forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
+        label='Reference Solution URL'
+    )
+    
     class Meta:
         model = AnalysisTask
         fields = ['sha256', 'download_link', 'description', 'goal', 'difficulty', 'tags', 'tools']
@@ -64,6 +83,8 @@ class AnalysisTaskForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Detailed description of the sample, will be in spoiler tags'}),
             'goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Analysis goal(s)'}),
             'difficulty': forms.Select(attrs={'class': 'form-control'}),
+            'tags': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'comma-separated tags'}),
+            'tools': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'comma-separated tools'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -78,6 +99,16 @@ class AnalysisTaskForm(forms.ModelForm):
             (value, label) for value, label in Difficulty.choices 
             if value != Difficulty.EXPERT
         ]
+        
+        # Import SolutionType choices
+        from .models import SolutionType
+        self.fields['reference_solution_type'].choices = [('', '---------')] + list(SolutionType.choices)
+        
+        # Make reference solution fields required for non-staff users
+        if self.user and not self.user.is_staff:
+            self.fields['reference_solution_title'].required = True
+            self.fields['reference_solution_type'].required = True
+            self.fields['reference_solution_url'].required = True
     
     def clean_download_link(self):
         download_link = self.cleaned_data.get('download_link')
@@ -105,6 +136,24 @@ class AnalysisTaskForm(forms.ModelForm):
                 )
         
         return download_link
+    
+    def clean(self):
+        """Validate reference solution fields for non-staff users"""
+        cleaned_data = super().clean()
+        
+        # Check if user is non-staff
+        if self.user and not self.user.is_staff:
+            ref_title = cleaned_data.get('reference_solution_title')
+            ref_type = cleaned_data.get('reference_solution_type')
+            ref_url = cleaned_data.get('reference_solution_url')
+            
+            # All three must be provided for non-staff users
+            if not all([ref_title, ref_type, ref_url]):
+                raise forms.ValidationError(
+                    "You must provide a reference solution (title, type, and URL) when submitting an analysis task."
+                )
+        
+        return cleaned_data
 
 
 # Custom authentication form with Turnstile CAPTCHA
