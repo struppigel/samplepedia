@@ -210,7 +210,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Authentication settings
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
-LOGIN_URL = '/accounts/login/'
+LOGIN_URL = '/login/'
 
 # Email configuration
 # For development, use console backend (prints emails to terminal)

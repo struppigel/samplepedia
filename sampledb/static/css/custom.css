@@ -383,3 +383,89 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--primary-red) !important;
   box-shadow: 0 0 0 0.2rem var(--primary-red-alpha-25) !important;
 }
+
+/* Button overrides - red, blue, and gray throughout site */
+body .btn.btn-success,
+body a.btn.btn-success,
+body button.btn.btn-success {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: white !important;
+}
+
+body .btn.btn-success:hover,
+body .btn.btn-success:focus,
+body .btn.btn-success:active,
+body a.btn.btn-success:hover,
+body a.btn.btn-success:focus,
+body button.btn.btn-success:hover,
+body button.btn.btn-success:focus {
+  background-color: #5a6268 !important;
+  border-color: #545b62 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25) !important;
+}
+
+body .btn.btn-outline-primary,
+body a.btn.btn-outline-primary,
+body button.btn.btn-outline-primary {
+  background-color: transparent !important;
+  border-color: #007bff !important;
+  color: #007bff !important;
+}
+
+body .btn.btn-outline-primary:hover,
+body .btn.btn-outline-primary:focus,
+body .btn.btn-outline-primary:active,
+body a.btn.btn-outline-primary:hover,
+body a.btn.btn-outline-primary:focus,
+body button.btn.btn-outline-primary:hover,
+body button.btn.btn-outline-primary:focus {
+  background-color: #007bff !important;
+  border-color: #007bff !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Dark mode button overrides */
+body.dark-mode .btn.btn-success,
+body.dark-mode a.btn.btn-success,
+body.dark-mode button.btn.btn-success {
+  background-color: #495057 !important;
+  border-color: #495057 !important;
+  color: white !important;
+}
+
+body.dark-mode .btn.btn-success:hover,
+body.dark-mode .btn.btn-success:focus,
+body.dark-mode .btn.btn-success:active,
+body.dark-mode a.btn.btn-success:hover,
+body.dark-mode a.btn.btn-success:focus,
+body.dark-mode button.btn.btn-success:hover,
+body.dark-mode button.btn.btn-success:focus {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25) !important;
+}
+
+body.dark-mode .btn.btn-outline-primary,
+body.dark-mode a.btn.btn-outline-primary,
+body.dark-mode button.btn.btn-outline-primary {
+  background-color: transparent !important;
+  border-color: #4a9eff !important;
+  color: #4a9eff !important;
+}
+
+body.dark-mode .btn.btn-outline-primary:hover,
+body.dark-mode .btn.btn-outline-primary:focus,
+body.dark-mode .btn.btn-outline-primary:active,
+body.dark-mode a.btn.btn-outline-primary:hover,
+body.dark-mode a.btn.btn-outline-primary:focus,
+body.dark-mode button.btn.btn-outline-primary:hover,
+body.dark-mode button.btn.btn-outline-primary:focus {
+  background-color: #4a9eff !important;
+  border-color: #4a9eff !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(74, 158, 255, 0.25) !important;
+}
