@@ -218,13 +218,25 @@ def resend_verification(request):
 @login_required
 def user_profile(request, username):
     """Display user profile with their submitted solutions and analysis tasks"""
+    from django.core.paginator import Paginator
+    
     profile_user = get_object_or_404(User, username=username)
     
     # Get user's submitted solutions with related analysis tasks
-    solutions = Solution.objects.filter(author=profile_user).select_related('analysis_task').order_by('-created_at')
+    solutions_list = Solution.objects.filter(author=profile_user).select_related('analysis_task').order_by('-created_at')
     
     # Get user's submitted analysis tasks
-    analysis_tasks = AnalysisTask.objects.filter(author=profile_user).order_by('-created_at')
+    analysis_tasks_list = AnalysisTask.objects.filter(author=profile_user).order_by('-created_at')
+    
+    # Pagination for solutions
+    solutions_page = request.GET.get('solutions_page', 1)
+    solutions_paginator = Paginator(solutions_list, 10)  # 10 solutions per page
+    solutions = solutions_paginator.get_page(solutions_page)
+    
+    # Pagination for analysis tasks
+    tasks_page = request.GET.get('tasks_page', 1)
+    tasks_paginator = Paginator(analysis_tasks_list, 10)  # 10 tasks per page
+    analysis_tasks = tasks_paginator.get_page(tasks_page)
     
     # Get current user's favorited sample IDs for display
     user_favorited_ids = set()

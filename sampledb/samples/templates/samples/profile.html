@@ -2,6 +2,7 @@
 {% load static %}
 {% load user_tags %}
 {% load comments %}
+{% load url_helpers %}
 
 {% block title %}{{ profile_user.username }}'s Profile - Samplepedia{% endblock %}
 
@@ -60,7 +61,7 @@
       <div class="col-12">
         <div class="card mb-4">
           <div class="card-header">
-            <h3 class="card-title"><i class="fas fa-check-circle"></i> Submitted Solutions ({{ solutions.count }})</h3>
+            <h3 class="card-title"><i class="fas fa-check-circle"></i> Submitted Solutions ({{ solutions.paginator.count }})</h3>
           </div>
           <div class="card-body">
             {% if solutions %}
@@ -72,8 +73,11 @@
                       <th>Difficulty</th>
                       <th>Type</th>
                       <th>Title</th>
-                      <th>Date</th>
+                      <th>Created</th>
                       <th>Link</th>
+                      {% if user.is_authenticated and user.username == profile_user.username %}
+                      <th>Actions</th>
+                      {% endif %}
                     </tr>
                   </thead>
                   <tbody>
@@ -96,16 +100,24 @@
 
                         <!-- Solution Type -->
                         <td>
-                          <i class="fas {{ solution.solution_type|solution_icon }}"> </i> {{ solution.get_solution_type_display }}  
+                          <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}" class="text-dark">
+                            <i class="fas {{ solution.solution_type|solution_icon }}"> </i> {{ solution.get_solution_type_display }}
+                          </a>
                         </td>
 
                         <!-- Solution Title -->
                         <td>
-                          {{ solution.title|truncatechars:50 }}
+                          <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}" class="text-dark">
+                            {{ solution.title|truncatechars:50 }}
+                          </a>
                         </td>
 
                         <!-- Created Date -->
-                        <td>{{ solution.created_at|date:"M d, Y" }}</td>
+                        <td>
+                          <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}" class="text-muted">
+                            {{ solution.created_at|date:"d M Y" }}
+                          </a>
+                        </td>
                         
                         <!-- External Link -->
                         <td>
@@ -113,11 +125,49 @@
                             <i class="fas fa-external-link-alt"></i>
                           </a>
                         </td>
+                        
+                        <!-- Delete Action -->
+                        {% if user.is_authenticated and user.username == profile_user.username %}
+                        <td>
+                          <form method="post" action="{% url 'delete_solution' solution.analysis_task.sha256 solution.analysis_task.id solution.id %}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this solution?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Delete Solution">
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </form>
+                        </td>
+                        {% endif %}
                       </tr>
                     {% endfor %}
                   </tbody>
                 </table>
               </div>
+              
+              <!-- Pagination for Solutions -->
+              {% if solutions.has_other_pages %}
+              <div class="card-footer clearfix">
+                <span class="float-left text-muted">
+                  Page {{ solutions.number }} of {{ solutions.paginator.num_pages }}
+                </span>
+                <ul class="pagination pagination-sm m-0 float-right">
+                  {% if solutions.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="{% url_replace solutions_page=solutions.previous_page_number %}">
+                      «
+                    </a>
+                  </li>
+                  {% endif %}
+                  
+                  {% if solutions.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="{% url_replace solutions_page=solutions.next_page_number %}">
+                      »
+                    </a>
+                  </li>
+                  {% endif %}
+                </ul>
+              </div>
+              {% endif %}
             {% else %}
               <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> No solutions submitted yet.
@@ -133,7 +183,7 @@
       <div class="col-12">
         <div class="card mb-4">
           <div class="card-header">
-            <h3 class="card-title"><i class="fas fa-tasks"></i> Submitted Analysis Tasks ({{ analysis_tasks.count }})</h3>
+            <h3 class="card-title"><i class="fas fa-tasks"></i> Submitted Analysis Tasks ({{ analysis_tasks.paginator.count }})</h3>
           </div>
           <div class="card-body">
             {% if analysis_tasks %}
@@ -149,6 +199,9 @@
                       <th>Likes</th>
                       <th>Comments</th>
                       <th>Date</th>
+                      {% if user.is_authenticated and user.username == profile_user.username %}
+                      <th>Actions</th>
+                      {% endif %}
                     </tr>
                   </thead>
                   <tbody>
@@ -183,7 +236,9 @@
                         
                         <!-- Solution Icons -->
                         <td style="text-align: center;">
-                          {% solution_icons task %}
+                          <a href="{% url 'sample_detail' task.sha256 task.id %}" class="text-dark">
+                            {% solution_icons task %}
+                          </a>
                         </td>
 
                         <!-- Likes -->
@@ -194,16 +249,61 @@
                         <!-- Comments -->
                         <td style="text-align: center;">
                           {% get_comment_count for task as comment_count %}
-                          <i class="fas fa-comment"></i> {{ comment_count }}
+                          <a href="{% url 'sample_detail' task.sha256 task.id %}" class="text-dark">
+                            <i class="fas fa-comment"></i> {{ comment_count }}
+                          </a>
                         </td>
 
                         <!-- Created Date -->
-                        <td>{{ task.created_at|date:"M d, Y" }}</td>
-                      </tr>
+                        <td>
+                          <a href="{% url 'sample_detail' task.sha256 task.id %}" class="text-muted">
+                            {{ task.created_at|date:"d M Y" }}
+                          </a>
+                        </td>                        
+                        <!-- Actions -->
+                        {% if user.is_authenticated and user.username == profile_user.username %}
+                        <td>
+                          <a href="{% url 'edit_task' task.sha256 task.id %}" class="btn btn-sm btn-link text-primary p-0 mr-2" title="Edit Task">
+                            <i class="fas fa-edit"></i>
+                          </a>
+                          <form method="post" action="{% url 'delete_task' task.sha256 task.id %}" style="display: inline; margin: 0;" onsubmit="return confirm('Are you sure you want to delete this analysis task? All associated solutions and comments will also be deleted.');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Delete Task">
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </form>
+                        </td>
+                        {% endif %}                      </tr>
                     {% endfor %}
                   </tbody>
                 </table>
               </div>
+              
+              <!-- Pagination for Analysis Tasks -->
+              {% if analysis_tasks.has_other_pages %}
+              <div class="card-footer clearfix">
+                <span class="float-left text-muted">
+                  Page {{ analysis_tasks.number }} of {{ analysis_tasks.paginator.num_pages }}
+                </span>
+                <ul class="pagination pagination-sm m-0 float-right">
+                  {% if analysis_tasks.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="{% url_replace tasks_page=analysis_tasks.previous_page_number %}">
+                      «
+                    </a>
+                  </li>
+                  {% endif %}
+                  
+                  {% if analysis_tasks.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="{% url_replace tasks_page=analysis_tasks.next_page_number %}">
+                      »
+                    </a>
+                  </li>
+                  {% endif %}
+                </ul>
+              </div>
+              {% endif %}
             {% else %}
               <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> No analysis tasks submitted yet.
