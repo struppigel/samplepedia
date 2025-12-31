@@ -1,0 +1,86 @@
+{% extends "samples/base.html" %}
+{% load static %}
+
+{% block title %}Notifications - Samplepedia{% endblock %}
+
+{% block content %}
+<div class="content-header">
+  <div class="container">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">Notifications</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">All Notifications</h3>
+            <div class="card-tools">
+              {% if notifications %}
+                <form method="post" action="{% url 'mark_all_read' %}" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="fas fa-check"></i> Mark All Read
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+          <div class="card-body p-0">
+            {% if notifications %}
+              <div class="list-group list-group-flush">
+                {% for notification in notifications %}
+                  <div class="list-group-item {% if notification.unread %}bg-light{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="flex-grow-1">
+                        <a href="{% url 'mark_notification_read' notification.id %}" class="text-decoration-none">
+                          {% if notification.verb == 'liked' %}
+                            <i class="fas fa-heart text-danger mr-2"></i>
+                          {% elif notification.verb == 'commented' %}
+                            <i class="fas fa-comment text-info mr-2"></i>
+                          {% elif notification.verb == 'added_solution' %}
+                            <i class="fas fa-lightbulb text-warning mr-2"></i>
+                          {% endif %}
+                          <strong>{{ notification.description }}</strong>
+                          {% if notification.data.sha256 %}
+                            <span class="text-muted">[SHA256: {{ notification.data.sha256 }}...]</span>
+                          {% endif %}
+                        </a>
+                        <div class="small text-muted mt-1">
+                          <i class="far fa-clock"></i> {{ notification.timestamp|timesince }} ago
+                        </div>
+                      </div>
+                      <div class="ml-3">
+                        {% if notification.unread %}
+                          <span class="badge badge-primary">New</span>
+                        {% endif %}
+                        <form method="post" action="{% url 'delete_notification' notification.id %}" style="display: inline;" onsubmit="return confirm('Delete this notification?');">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-link text-danger p-0 ml-2" title="Delete">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center py-5">
+                <i class="far fa-bell fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No notifications yet</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

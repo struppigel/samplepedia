@@ -32,5 +32,12 @@ urlpatterns = [
     path("verify-email-change/<uidb64>/<token>/", views.verify_email_change, name="verify_email_change"),
     path("comments/<int:comment_id>/edit/", views.edit_comment, name="comments-xtd-edit"),
     path("comments/<int:comment_id>/delete/", views.delete_comment, name="comments-delete"),
-    path(r'comments/', include('django_comments_xtd.urls'))
+    path(r'comments/', include('django_comments_xtd.urls')),
+    # Notifications
+    path("notifications/", views.notification_list, name="notification_list"),
+    path("notifications/dropdown/", views.notification_dropdown, name="notification_dropdown"),
+    path("notifications/<int:notification_id>/read/", views.mark_notification_read, name="mark_notification_read"),
+    path("notifications/mark-all-read/", views.mark_all_read, name="mark_all_read"),
+    path("notifications/<int:notification_id>/delete/", views.delete_notification, name="delete_notification"),
+    path("notifications/unread-count/", views.unread_count, name="unread_count"),
 ]

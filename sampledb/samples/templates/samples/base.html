@@ -55,6 +55,34 @@
           </a>
         </li>
         {% if user.is_authenticated %}
+          <!-- Notifications Bell -->
+          <li class="nav-item dropdown">
+            <a class="nav-link" data-toggle="dropdown" href="#" title="Notifications" id="notificationBell">
+              <i class="far fa-bell"></i>
+              <span class="badge badge-danger navbar-badge" id="notificationBadge" style="{% if unread_notifications_count == 0 %}display: none;{% endif %}">
+                {{ unread_notifications_count }}
+              </span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right" id="notificationDropdown">
+              <span class="dropdown-item dropdown-header">
+                <span id="notificationCount">{{ unread_notifications_count }}</span> Notification<span id="notificationPlural">{% if unread_notifications_count != 1 %}s{% endif %}</span>
+              </span>
+              <div class="dropdown-divider"></div>
+              <div id="notificationList">
+                {% if unread_notifications_count > 0 %}
+                  <div class="dropdown-item text-center text-muted">
+                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                  </div>
+                {% else %}
+                  <div class="dropdown-item text-center text-muted">
+                    No new notifications
+                  </div>
+                {% endif %}
+              </div>
+              <div class="dropdown-divider"></div>
+              <a href="{% url 'notification_list' %}" class="dropdown-item dropdown-footer">See All Notifications</a>
+            </div>
+          </li>
           <li class="nav-item dropdown">
             <a class="nav-link" data-toggle="dropdown" href="#" title="User Menu">
               <i class="fas fa-user"></i> {{ user.username }} <i class="fas fa-caret-down"></i>
@@ -114,6 +142,9 @@
 <script src="{% static 'js/spoiler.js' %}"></script>
 <script src="{% static 'js/app.js' %}"></script>
 <script src="{% static 'js/comments.js' %}"></script>
+{% if user.is_authenticated %}
+<script src="{% static 'js/notifications.js' %}"></script>
+{% endif %}
 
 <!-- Footer -->
 <footer class="main-footer text-center py-3" style="font-size: 0.875rem;">

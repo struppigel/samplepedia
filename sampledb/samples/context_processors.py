@@ -13,3 +13,14 @@ def impressum_settings(request):
             'DISCORD_INVITE_URL': settings.DISCORD_INVITE_URL,
         }
     }
+
+
+def notifications_processor(request):
+    """Make notification count available in all templates."""
+    if request.user.is_authenticated:
+        return {
+            'unread_notifications_count': request.user.notifications.unread().count()
+        }
+    return {
+        'unread_notifications_count': 0
+    }
