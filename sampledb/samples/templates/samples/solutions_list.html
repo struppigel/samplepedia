@@ -41,7 +41,6 @@
           <thead>
             <tr>
               <th>Solution</th>
-              <th>Type</th>
               <th>SHA256</th>
               <th>Difficulty</th>
               <th>Tags</th>
@@ -56,15 +55,10 @@
             <tr>
               <!-- Solution Title with Link -->
               <td style="max-width: 400px;">
-                <a href="{{ solution.url }}" target="_blank" class="text-primary" rel="noopener noreferrer">
-                  <i class="fas fa-external-link-alt"></i> {{ solution.title }}
+                <i class="fas {{ solution.solution_type|solution_icon }} mr-2"></i>
+                <a href="{{ solution.url }}" target="_blank" class="text-muted" rel="noopener noreferrer" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
+                  {{ solution.title }}
                 </a>
-              </td>
-
-              <!-- Solution Type Icon -->
-              <td>
-                <i class="fas {{ solution.solution_type|solution_icon }}"></i>
-                {{ solution.get_solution_type_display }}
               </td>
 
               <!-- Related Sample -->
@@ -117,7 +111,7 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="9" class="text-center text-muted">
+              <td colspan="8" class="text-center text-muted">
                 No solutions found.
               </td>
             </tr>

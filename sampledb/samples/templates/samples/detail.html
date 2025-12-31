@@ -141,7 +141,7 @@ body.dark-mode .solution-item:hover {
                 <li class="solution-item {% if not forloop.last %}mb-1{% else %}mb-0{% endif %} d-flex align-items-center justify-content-between" style="padding: 0.5rem; margin-left: -0.5rem; margin-right: -0.5rem; border-radius: 4px;">
                   <div class="d-flex align-items-center flex-grow-1">
                     <i class="fas {{ solution.solution_type|solution_icon }}"></i>
-                    <a href="{{ solution.url }}" target="_blank" class="ml-2">{{ solution.title }}</a>
+                    <a href="{{ solution.url }}" target="_blank" class="ml-2" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">{{ solution.title }}</a>
                     <span class="text-muted small ml-2">by <a href="{% url 'user_profile' solution.author.username %}">{{ solution.author.username }}</a></span>
                   </div>
                   <div class="d-flex align-items-center" style="white-space: nowrap;">

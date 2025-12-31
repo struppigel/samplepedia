@@ -121,7 +121,7 @@
                         
                         <!-- External Link -->
                         <td>
-                          <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" title="View Solution">
+                          <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" title="View Solution" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
                             <i class="fas fa-external-link-alt"></i>
                           </a>
                         </td>
