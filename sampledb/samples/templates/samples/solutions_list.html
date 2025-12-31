@@ -44,7 +44,6 @@
               <th>SHA256</th>
               <th>Difficulty</th>
               <th>Tags</th>
-              <th>Goal</th>
               <th>Author</th>
               <th style="width: 80px; text-align: center;">Likes</th>
               <th style="width: 100px; text-align: center;">Posted</th>
@@ -54,9 +53,9 @@
             {% for solution in page_obj %}
             <tr>
               <!-- Solution Title with Link -->
-              <td style="max-width: 400px;">
+              <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 <i class="fas {{ solution.solution_type|solution_icon }} mr-2"></i>
-                <a href="{{ solution.url }}" target="_blank" class="text-muted" rel="noopener noreferrer" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
+                <a href="{{ solution.url }}" target="_blank" class="text-muted" rel="noopener noreferrer" title="{{ solution.title }}" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
                   {{ solution.title }}
                 </a>
               </td>
@@ -83,13 +82,6 @@
                 {% include 'samples/_expandable_tag_list.html' with tags=solution.analysis_task.tags.all max_width='200px' %}
               </td>
 
-              <!-- Goal -->
-              <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}" class="text-muted">
-                  {{ solution.analysis_task.goal }}
-                </a>
-              </td>
-
               <!-- Author -->
               <td>
                 <a href="{% url 'user_profile' solution.author.username %}" class="text-dark">
@@ -111,7 +103,7 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="8" class="text-center text-muted">
+              <td colspan="7" class="text-center text-muted">
                 No solutions found.
               </td>
             </tr>
