@@ -1,34 +1,42 @@
 // Dark mode toggle functionality
 const key = "adminlte-dark";
-const body = document.body;
-const toggle = document.getElementById("darkToggle");
-const darkIcon = document.getElementById("darkIcon");
-const lightIcon = document.getElementById("lightIcon");
-const darkModeText = document.getElementById("darkModeText");
 
 function updateIcon() {
+  const body = document.body;
+  const darkIcon = document.getElementById("darkIcon");
+  const lightIcon = document.getElementById("lightIcon");
+  const darkModeText = document.getElementById("darkModeText");
+  
+  if (!darkIcon || !lightIcon || !darkModeText) return;
+  
   if (body.classList.contains("dark-mode")) {
     darkIcon.style.display = "none";
     lightIcon.style.display = "inline-block";
-    if (darkModeText) darkModeText.textContent = "Light";
+    darkModeText.textContent = "Light";
   } else {
     darkIcon.style.display = "inline-block";
     lightIcon.style.display = "none";
-    if (darkModeText) darkModeText.textContent = "Dark";
+    darkModeText.textContent = "Dark";
   }
 }
 
-// Update icon on page load
-updateIcon();
+// Wait for DOM to be ready
+document.addEventListener("DOMContentLoaded", function() {
+  const body = document.body;
+  const toggle = document.getElementById("darkToggle");
+  
+  // Update icon on page load
+  updateIcon();
 
-if (toggle) {
-  toggle.onclick = function (e) {
-    e.preventDefault();
-    body.classList.toggle("dark-mode");
-    localStorage.setItem(
-      key,
-      body.classList.contains("dark-mode") ? "on" : "off"
-    );
-    updateIcon();
-  };
-}
+  if (toggle) {
+    toggle.onclick = function (e) {
+      e.preventDefault();
+      body.classList.toggle("dark-mode");
+      localStorage.setItem(
+        key,
+        body.classList.contains("dark-mode") ? "on" : "off"
+      );
+      updateIcon();
+    };
+  }
+});
