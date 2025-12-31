@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django_comments_xtd.forms import XtdCommentForm
 from turnstile.fields import TurnstileField
+from disposable_email_domains import blocklist
 
 
 # Custom comment form for authenticated users
@@ -112,10 +113,57 @@ class TurnstileUserRegistrationForm(UserCreationForm):
         self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Password'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirm password'})
 
+    def clean_username(self):
+        """Validate username against reserved names"""
+        username = self.cleaned_data.get('username')
+        
+        # List of reserved usernames (case-insensitive)
+        reserved_names = [
+            'samplepedia',
+            'adminuser',
+            'malwareanalysisforhedgehogs',
+            'malwareanalysis4hedgehogs',
+            'karstenhahn',
+            'khahn',
+            'gdata',
+            'administrator',
+            'admin',
+            'root',
+            'moderator',
+            'mod',
+            'support',
+            'help',
+            'system',
+            'official',
+            'staff',
+        ]
+        
+        # Check if username matches any reserved name (case-insensitive)
+        if username and username.lower() in reserved_names:
+            raise forms.ValidationError(
+                f"The username '{username}' is reserved and cannot be used. "
+                "Please choose a different username."
+            )
+        
+        return username
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
+        
+        # Check if email is already registered
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("This email address is already registered.")
+        
+        # Block disposable/temporary email domains
+        if email:
+            domain = email.split('@')[-1].lower()
+            
+            if domain in blocklist:
+                raise forms.ValidationError(
+                    "Temporary or disposable email addresses are not allowed. "
+                    "Please use a permanent email address."
+                )
+        
         return email
 
 
