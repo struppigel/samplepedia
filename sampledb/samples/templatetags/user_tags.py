@@ -87,3 +87,25 @@ def solution_icons(task):
         'has_any': has_blog or has_paper or has_video,
         'total_count': total_count
     }
+
+@register.inclusion_tag('samples/_solution_like_button.html')
+def solution_like_button(solution, is_liked_or_set):
+    """
+    Display a like button with count for a solution.
+    
+    Args:
+        solution: The Solution object
+        is_liked_or_set: Either a boolean indicating if liked, or a set of liked IDs to check against
+    """
+    # Determine if the solution is liked
+    if isinstance(is_liked_or_set, bool):
+        is_liked = is_liked_or_set
+    else:
+        # Assume it's a set of IDs
+        is_liked = solution.id in is_liked_or_set
+    
+    return {
+        'solution_id': solution.id,
+        'like_count': solution.like_count,
+        'is_liked': is_liked
+    }

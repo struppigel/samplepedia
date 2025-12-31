@@ -1,8 +1,8 @@
 # Import all views for backward compatibility with urls.py
 from .samples import sample_list, sample_detail, submit_task, edit_task, delete_task
-from .solutions import create_solution, delete_solution
+from .solutions import create_solution, delete_solution, solution_list
 from .courses import course_list, course_samples
-from .likes import toggle_like
+from .likes import toggle_like, toggle_solution_like
 from .auth import (
     register, 
     send_verification_email, 
@@ -38,11 +38,13 @@ __all__ = [
     # Solutions
     'create_solution',
     'delete_solution',
+    'solution_list',
     # Courses
     'course_list',
     'course_samples',
     # Likes
     'toggle_like',
+    'toggle_solution_like',
     # Auth
     'register',
     'send_verification_email',

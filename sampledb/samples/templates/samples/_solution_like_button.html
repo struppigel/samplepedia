@@ -1,0 +1,14 @@
+<button class="btn btn-link p-0 solution-like-btn" 
+        data-solution-id="{{ solution_id }}"
+        data-liked="{% if is_liked %}true{% else %}false{% endif %}"
+        style="border: none; background: none; cursor: pointer;">
+  {% if is_liked %}
+    <span class="text-danger" title="{{ like_count }} like{{ like_count|pluralize }}">
+      <i class="fas fa-heart"></i> <span class="like-count">{{ like_count }}</span>
+    </span>
+  {% else %}
+    <span class="text-muted" title="{{ like_count }} like{{ like_count|pluralize }}">
+      <i class="far fa-heart"></i> <span class="like-count">{{ like_count }}</span>
+    </span>
+  {% endif %}
+</button>

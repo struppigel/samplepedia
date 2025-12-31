@@ -22,13 +22,24 @@ def notification_dropdown(request):
         unread=True
     )[:5]
     
-    notifications_data = [{
-        'id': n.id,
-        'description': n.description,
-        'timestamp': n.timestamp.isoformat(),
-        'url': n.data.get('url', '#') if n.data else '#',
-        'sha256': n.data.get('sha256', '') if n.data else '',
-    } for n in notifications]
+    notifications_data = []
+    for n in notifications:
+        # Determine URL based on target type
+        url = '#'
+        if n.target:
+            if hasattr(n.target, 'get_absolute_url'):
+                url = n.target.get_absolute_url()
+            elif n.verb == 'liked_solution' and hasattr(n.target, 'analysis_task'):
+                # For solution notifications, link to the sample detail page
+                url = n.target.analysis_task.get_absolute_url()
+        
+        notifications_data.append({
+            'id': n.id,
+            'description': n.description,
+            'timestamp': n.timestamp.isoformat(),
+            'url': url,
+            'sha256': n.data.get('sha256', '') if n.data else '',
+        })
     
     return JsonResponse({
         'notifications': notifications_data,
@@ -47,9 +58,13 @@ def mark_notification_read(request, notification_id):
     
     notification.mark_as_read()
     
-    # Redirect to the task detail page
+    # Redirect to the appropriate page based on target type
     if notification.target:
-        return redirect(notification.target.get_absolute_url())
+        if hasattr(notification.target, 'get_absolute_url'):
+            return redirect(notification.target.get_absolute_url())
+        elif notification.verb == 'liked_solution' and hasattr(notification.target, 'analysis_task'):
+            # For solution notifications, redirect to the sample detail page
+            return redirect(notification.target.analysis_task.get_absolute_url())
     
     return redirect('notification_list')
 

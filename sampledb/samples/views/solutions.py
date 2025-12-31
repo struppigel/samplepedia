@@ -1,9 +1,41 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.paginator import Paginator
 
-from ..models import AnalysisTask, Solution
+from ..models import AnalysisTask, Solution, SolutionType
 from ..forms import SolutionForm
+
+
+def solution_list(request):
+    """List all solutions with optional filtering by solution type"""
+    solution_type = request.GET.get("solution_type", "")
+    
+    # Get all solutions ordered by most recent first
+    solutions = Solution.objects.select_related('analysis_task', 'author').all()
+    
+    # Filter by solution type if specified
+    if solution_type:
+        solutions = solutions.filter(solution_type=solution_type)
+    
+    # Paginate the results (25 per page)
+    paginator = Paginator(solutions, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    
+    # Get user's liked solution IDs for display
+    user_liked_solution_ids = set()
+    if request.user.is_authenticated:
+        user_liked_solution_ids = set(
+            request.user.liked_solutions.values_list('id', flat=True)
+        )
+    
+    return render(request, 'samples/solutions_list.html', {
+        'page_obj': page_obj,
+        'selected_type': solution_type,
+        'solution_types': SolutionType.choices,
+        'user_liked_solution_ids': user_liked_solution_ids,
+    })
 
 
 @login_required

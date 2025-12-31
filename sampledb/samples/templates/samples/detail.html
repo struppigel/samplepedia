@@ -6,6 +6,22 @@
 
 {% block content %}
 
+<style>
+.solution-item:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+body.dark-mode .solution-item:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+.solution-item:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  transition: background-color 0.2s ease;
+}
+body.dark-mode .solution-item:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+</style>
+
 <section class="content-header">
   <div class="container-fluid">
     <h1>Sample</h1>
@@ -59,7 +75,7 @@
                 {% endfor %}
               </dd>
 
-              <dt class="col-sm-3">Author</dt>
+              <dt class="col-sm-3">Submitter</dt>
               <dd class="col-sm-9">
                 <a href="{% url 'user_profile' sample.author.username %}">{{ sample.author.username }}</a>
               </dd>
@@ -122,18 +138,23 @@
             {% if solutions %}
               <ul class="list-unstyled mb-0">
                 {% for solution in solutions %}
-                <li class="{% if not forloop.last %}mb-2{% else %}mb-0{% endif %}">
-                  <i class="fas {{ solution.solution_type|solution_icon }}"></i>
-                  <a href="{{ solution.url }}" target="_blank" class="ml-2">{{ solution.title }}</a>
-                  <span class="text-muted small">by <a href="{% url 'user_profile' solution.author.username %}">{{ solution.author.username }}</a></span>
-                  {% if user.is_authenticated and solution.author == user %}
-                    <button class="btn btn-link btn-sm text-danger p-0 ml-2" 
-                            onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256 }}', '{{ sample.id }}')"
-                            style="border: none; background: none; cursor: pointer;"
-                            title="Delete this solution">
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  {% endif %}
+                <li class="solution-item {% if not forloop.last %}mb-1{% else %}mb-0{% endif %} d-flex align-items-center justify-content-between" style="padding: 0.5rem; margin-left: -0.5rem; margin-right: -0.5rem; border-radius: 4px;">
+                  <div class="d-flex align-items-center flex-grow-1">
+                    <i class="fas {{ solution.solution_type|solution_icon }}"></i>
+                    <a href="{{ solution.url }}" target="_blank" class="ml-2">{{ solution.title }}</a>
+                    <span class="text-muted small ml-2">by <a href="{% url 'user_profile' solution.author.username %}">{{ solution.author.username }}</a></span>
+                  </div>
+                  <div class="d-flex align-items-center" style="white-space: nowrap;">
+                    {% solution_like_button solution user_liked_solution_ids %}
+                    {% if user.is_authenticated and solution.author == user %}
+                      <button class="btn btn-link btn-sm text-danger p-0 ml-2" 
+                              onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256 }}', '{{ sample.id }}')"
+                              style="border: none; background: none; cursor: pointer;"
+                              title="Delete this solution">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    {% endif %}
+                  </div>
                 </li>
                 {% endfor %}
               </ul>

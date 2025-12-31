@@ -123,6 +123,13 @@ def sample_detail(request, sha256, task_id):
     # Get solutions for this sample
     solutions = sample.solutions.select_related('author').all()
     
+    # Get user's liked solution IDs
+    user_liked_solution_ids = set()
+    if request.user.is_authenticated:
+        user_liked_solution_ids = set(
+            request.user.liked_solutions.values_list('id', flat=True)
+        )
+    
     # Find first YouTube solution if sample doesn't have youtube_id
     youtube_solution = None
     if not sample.youtube_id:
@@ -142,6 +149,7 @@ def sample_detail(request, sha256, task_id):
         "solutions": solutions,
         "youtube_solution": youtube_solution,
         "user_can_edit": sample.user_can_edit(request.user),
+        "user_liked_solution_ids": user_liked_solution_ids,
     })
 
 

@@ -324,7 +324,18 @@ class Solution(models.Model):
         verbose_name="Author"
     )
     
+    liked_by = models.ManyToManyField(
+        User,
+        related_name='liked_solutions',
+        blank=True,
+        verbose_name="Liked by"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
+    
+    @property
+    def like_count(self):
+        return self.liked_by.count()
     
     class Meta:
         unique_together = ['title', 'analysis_task']

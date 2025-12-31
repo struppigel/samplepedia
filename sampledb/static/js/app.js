@@ -32,15 +32,21 @@ function getCookie(name) {
   return cookieValue;
 }
 
-// Consolidated favorite button functionality (works for both list and detail views)
-document.querySelectorAll('.favorite-btn').forEach(button => {
+// Consolidated like/favorite button functionality
+document.querySelectorAll('.favorite-btn, .solution-like-btn').forEach(button => {
   button.addEventListener('click', function(e) {
     e.preventDefault();
-    const sha256 = this.dataset.sha256;
-    const taskId = this.dataset.taskId;
     
-    // Send AJAX request to toggle favorite
-    fetch(`/sample/${sha256}/${taskId}/like/`, {
+    // Determine button type and construct URL
+    const isSolution = this.classList.contains('solution-like-btn');
+    const url = isSolution 
+      ? `/solution/${this.dataset.solutionId}/like/`
+      : `/sample/${this.dataset.sha256}/${this.dataset.taskId}/like/`;
+    const countClass = isSolution ? '.like-count' : '.favorite-count';
+    const labelText = isSolution ? 'like' : 'favorite';
+    
+    // Send AJAX request to toggle like/favorite
+    fetch(url, {
       method: 'POST',
       headers: {
         'X-CSRFToken': getCookie('csrftoken'),
@@ -58,7 +64,7 @@ document.querySelectorAll('.favorite-btn').forEach(button => {
       // Update button appearance
       const span = this.querySelector('span');
       const icon = this.querySelector('i');
-      const countSpan = this.querySelector('.favorite-count');
+      const countSpan = this.querySelector(countClass);
       
       if (data.liked) {
         span.classList.remove('text-muted');
@@ -75,7 +81,7 @@ document.querySelectorAll('.favorite-btn').forEach(button => {
       // Update count and dataset
       countSpan.textContent = data.like_count;
       this.dataset.liked = data.liked;
-      span.title = `${data.like_count} favorite${data.like_count !== 1 ? 's' : ''}`;
+      span.title = `${data.like_count} ${labelText}${data.like_count !== 1 ? 's' : ''}`;
     })
     .catch(error => console.error('Error:', error));
   });
