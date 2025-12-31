@@ -60,13 +60,14 @@ class AnalysisTaskForm(forms.ModelForm):
         fields = ['sha256', 'download_link', 'description', 'goal', 'difficulty', 'tags', 'tools']
         widgets = {
             'sha256': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '64 character hex string'}),
-            'download_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
+            'download_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://bazaar.abuse.ch/... or https://malshare.com/...'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Detailed description of the sample, will be in spoiler tags'}),
             'goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Analysis goal(s)'}),
             'difficulty': forms.Select(attrs={'class': 'form-control'}),
         }
     
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         # Make all fields required
         for field_name in self.fields:
@@ -77,6 +78,33 @@ class AnalysisTaskForm(forms.ModelForm):
             (value, label) for value, label in Difficulty.choices 
             if value != Difficulty.EXPERT
         ]
+    
+    def clean_download_link(self):
+        download_link = self.cleaned_data.get('download_link')
+        
+        # Admins can add any URL
+        if self.user and (self.user.is_staff or self.user.is_superuser):
+            return download_link
+        
+        # Non-admins must use supported sources
+        if download_link:
+            allowed_domains = [
+                'bazaar.abuse.ch',
+                'malshare.com',
+            ]
+            
+            from urllib.parse import urlparse
+            parsed_url = urlparse(download_link)
+            domain = parsed_url.netloc.lower()
+            
+            # Check if domain matches any allowed domain
+            if not any(domain == allowed or domain.endswith('.' + allowed) for allowed in allowed_domains):
+                raise forms.ValidationError(
+                    "Only MalwareBazaar (bazaar.abuse.ch) and MalShare (malshare.com) URLs are currently supported. "
+                    "Please use one of these sources for the download link."
+                )
+        
+        return download_link
 
 
 # Custom authentication form with Turnstile CAPTCHA

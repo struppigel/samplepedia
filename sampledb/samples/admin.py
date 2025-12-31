@@ -28,6 +28,9 @@ class AnalysisTaskAdmin(admin.ModelAdmin):
     filter_horizontal = ("course_references",)
     autocomplete_fields = ["author"]
     readonly_fields = ("created_at",)
+    
+    def get_changeform_initial_data(self, request):
+        return {"author": request.user}
 
 
 @admin.register(Solution)
