@@ -186,6 +186,8 @@
                     <li>Zeitpunkt des Webseitenbesuchs (automatisch erfasst)</li>
                     <li>Webbrowsertyp und -version (automatisch erfasst)</li>
                     <li>Betriebssystem (automatisch erfasst)</li>
+                    <li>Geräte-Informationen wie Bildschirmauflösung und installierte Plugins (automatisch erfasst)</li>
+                    <li>Interaktionsdaten wie Mausbewegungen, Tastatureingaben und Touch-Events (automatisch erfasst für Bot-Erkennung)</li>
                     <li>Eine Liste von URLs, beginnend mit einer verweisenden Website, Ihre Aktivitäten auf dieser Website und die Website, zu der Sie wechseln (automatisch erfasst)</li>
                     <li>Übertragene Datenmenge (automatisch erfasst)</li>
                     <li>Sicherheitsfingerabdrücke und Leistungsdaten (automatisch erfasst)</li>
@@ -201,8 +203,12 @@
                         <ul>
                             <li>Interne Aufzeichnungen</li>
                             <li>Verbesserung unserer Produkte/Dienstleistungen</li>
-                            <li>Übermittlung von Werbematerialien per E-Mail, die für Sie von Interesse sein könnten</li>
-                            <li>Kontaktaufnahme zu Marktforschungszwecken per E-Mail, Telefon, Fax oder Post. Diese Informationen können zur Anpassung oder Aktualisierung der Website verwendet werden.</li>
+                            <li>Gewährleistung der technischen Verfügbarkeit und Stabilität der Website (Hosting durch Railway)</li>
+                            <li>Schutz vor Cyberangriffen, DDoS-Attacken und missbräuchlicher Nutzung (Cloudflare CDN und Sicherheitsdienste)</li>
+                            <li>Optimierung der Ladezeiten und Performance der Website (Cloudflare Content Delivery Network)</li>
+                            <li>Unterscheidung zwischen menschlichen Nutzern und Bots zur Spam-Prävention (Cloudflare Turnstile)</li>
+                            <li>Versand transaktionaler E-Mails für Kontoverwaltung und Dienstbenachrichtigungen (Mailgun)</li>
+                            <li>Sicherstellung der IT-Sicherheit und Integrität unserer Dienste</li>
                         </ul>
                     </li>
                 </ul>
@@ -287,6 +293,64 @@
                     <li>Datenschutzerklärung: <a href="https://www.cloudflare.com/de-de/privacypolicy/" target="_blank">https://www.cloudflare.com/de-de/privacypolicy/</a></li>
                     <li>DSGVO-Informationen: <a href="https://www.cloudflare.com/de-de/trust-hub/gdpr/" target="_blank">https://www.cloudflare.com/de-de/trust-hub/gdpr/</a></li>
                     <li>EU-Standardvertragsklauseln: <a href="https://www.cloudflare.com/cloudflare_customer_SCCs-German.pdf" target="_blank">https://www.cloudflare.com/cloudflare_customer_SCCs-German.pdf</a></li>
+                </ul>
+
+                <h3>Cloudflare Turnstile (Bot-Schutz)</h3>
+                <p>
+                    Auf dieser Website verwenden wir Cloudflare Turnstile zum Schutz vor automatisierten Zugriffen (Bots) und Spam. Anbieter ist Cloudflare Germany GmbH, Rosental 7, c/o Mindspace, 80331 München, Deutschland.
+                </p>
+
+                <h4>Was ist Cloudflare Turnstile?</h4>
+                <p>
+                    Cloudflare Turnstile ist eine datenschutzfreundliche Alternative zu herkömmlichen CAPTCHAs. Turnstile überprüft im Hintergrund, ob ein Website-Besucher ein Mensch oder ein Bot ist, ohne dass Nutzer visuelle Aufgaben lösen müssen.
+                </p>
+
+                <h4>Welche Daten werden verarbeitet?</h4>
+                <p>
+                    Bei der Verwendung von Turnstile werden folgende Daten an Cloudflare übermittelt:
+                </p>
+                <ul>
+                    <li>IP-Adresse (anonymisiert)</li>
+                    <li>Browser-Informationen (User Agent, Browserversion)</li>
+                    <li>Geräte-Informationen (Bildschirmauflösung, installierte Plugins)</li>
+                    <li>Interaktionsdaten (Mausbewegungen, Tastatureingaben, Touch-Events)</li>
+                    <li>Zeitstempel der Überprüfung</li>
+                    <li>Referrer-URL</li>
+                </ul>
+
+                <h4>Zu welchem Zweck werden die Daten verarbeitet?</h4>
+                <p>Der Einsatz von Cloudflare Turnstile dient folgenden Zwecken:</p>
+                <ul>
+                    <li>Unterscheidung zwischen menschlichen Nutzern und automatisierten Bots</li>
+                    <li>Schutz vor Spam und missbräuchlicher Nutzung (z.B. bei Registrierungen, Kommentaren, Formularen)</li>
+                    <li>Verhinderung automatisierter Angriffe auf die Website</li>
+                    <li>Sicherstellung der Integrität und Verfügbarkeit unserer Dienste</li>
+                </ul>
+
+                <h4>Rechtsgrundlage</h4>
+                <p>
+                    Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse). Unser berechtigtes Interesse liegt im Schutz unserer Website vor missbräuchlicher automatisierter Nutzung und der Gewährleistung der IT-Sicherheit.
+                </p>
+
+                <h4>Datenübermittlung in Drittländer</h4>
+                <p>
+                    Cloudflare ist ein US-amerikanisches Unternehmen. Die Datenübermittlung erfolgt auf Grundlage der EU-Standardvertragsklauseln (SCCs) gemäß Art. 46 DSGVO. Cloudflare ist zudem nach dem EU-US Data Privacy Framework zertifiziert.
+                </p>
+
+                <h4>Speicherdauer</h4>
+                <p>
+                    Die im Rahmen der Turnstile-Überprüfung erhobenen Daten werden von Cloudflare für maximal 30 Tage gespeichert und anschließend automatisch gelöscht.
+                </p>
+
+                <h4>Widerspruchsrecht</h4>
+                <p>
+                    Sie haben das Recht, der Verarbeitung Ihrer Daten durch Cloudflare Turnstile zu widersprechen. Dies können Sie durch die Deaktivierung von JavaScript in Ihrem Browser erreichen. Bitte beachten Sie, dass dies die Nutzung bestimmter Funktionen unserer Website (z.B. Registrierung, Kommentarfunktion) einschränken oder unmöglich machen kann.
+                </p>
+
+                <h4>Weitere Informationen zu Cloudflare Turnstile:</h4>
+                <ul>
+                    <li>Datenschutzerklärung: <a href="https://www.cloudflare.com/de-de/privacypolicy/" target="_blank">https://www.cloudflare.com/de-de/privacypolicy/</a></li>
+                    <li>Turnstile-Dokumentation: <a href="https://developers.cloudflare.com/turnstile/" target="_blank">https://developers.cloudflare.com/turnstile/</a></li>
                 </ul>
 
                 <h2>7. Änderungen der Geschäftseigentümerschaft und -kontrolle</h2>
@@ -494,6 +558,8 @@
                     <li>Time of website visit (automatically collected)</li>
                     <li>Web browser type and version (automatically collected)</li>
                     <li>Operating system (automatically collected)</li>
+                    <li>Device information such as screen resolution and installed plugins (automatically collected)</li>
+                    <li>Interaction data such as mouse movements, keyboard inputs, and touch events (automatically collected for bot detection)</li>
                     <li>A list of URLs, starting with a referring website, your activities on this website, and the website you navigate to (automatically collected)</li>
                     <li>Amount of data transferred (automatically collected)</li>
                     <li>Security fingerprints and performance data (automatically collected)</li>
@@ -509,8 +575,12 @@
                         <ul>
                             <li>Internal records</li>
                             <li>Improvement of our products/services</li>
-                            <li>Transmission of promotional materials by email that may be of interest to you</li>
-                            <li>Contact for market research purposes by email, telephone, fax, or mail. This information may be used to customize or update the website.</li>
+                            <li>Ensuring technical availability and stability of the website (hosting via Railway)</li>
+                            <li>Protection against cyber attacks, DDoS attacks, and abusive use (Cloudflare CDN and security services)</li>
+                            <li>Optimization of loading times and website performance (Cloudflare Content Delivery Network)</li>
+                            <li>Distinguishing between human users and bots for spam prevention (Cloudflare Turnstile)</li>
+                            <li>Sending transactional emails for account management and service notifications (Mailgun)</li>
+                            <li>Ensuring IT security and integrity of our services</li>
                         </ul>
                     </li>
                 </ul>
@@ -595,6 +665,64 @@
                     <li>Privacy Policy: <a href="https://www.cloudflare.com/privacypolicy/" target="_blank">https://www.cloudflare.com/privacypolicy/</a></li>
                     <li>GDPR Information: <a href="https://www.cloudflare.com/trust-hub/gdpr/" target="_blank">https://www.cloudflare.com/trust-hub/gdpr/</a></li>
                     <li>EU Standard Contractual Clauses: <a href="https://www.cloudflare.com/cloudflare_customer_SCCs.pdf" target="_blank">https://www.cloudflare.com/cloudflare_customer_SCCs.pdf</a></li>
+                </ul>
+
+                <h3>Cloudflare Turnstile (Bot Protection)</h3>
+                <p>
+                    On this website, we use Cloudflare Turnstile to protect against automated access (bots) and spam. Provider is Cloudflare Germany GmbH, Rosental 7, c/o Mindspace, 80331 Munich, Germany.
+                </p>
+
+                <h4>What is Cloudflare Turnstile?</h4>
+                <p>
+                    Cloudflare Turnstile is a privacy-friendly alternative to traditional CAPTCHAs. Turnstile verifies in the background whether a website visitor is a human or a bot, without requiring users to solve visual challenges.
+                </p>
+
+                <h4>What data is processed?</h4>
+                <p>
+                    When using Turnstile, the following data is transmitted to Cloudflare:
+                </p>
+                <ul>
+                    <li>IP address (anonymized)</li>
+                    <li>Browser information (User Agent, browser version)</li>
+                    <li>Device information (screen resolution, installed plugins)</li>
+                    <li>Interaction data (mouse movements, keyboard inputs, touch events)</li>
+                    <li>Verification timestamp</li>
+                    <li>Referrer URL</li>
+                </ul>
+
+                <h4>For what purpose is the data processed?</h4>
+                <p>The use of Cloudflare Turnstile serves the following purposes:</p>
+                <ul>
+                    <li>Distinguishing between human users and automated bots</li>
+                    <li>Protection against spam and abusive use (e.g., in registrations, comments, forms)</li>
+                    <li>Prevention of automated attacks on the website</li>
+                    <li>Ensuring the integrity and availability of our services</li>
+                </ul>
+
+                <h4>Legal Basis</h4>
+                <p>
+                    Processing is based on Art. 6 para. 1 lit. f GDPR (legitimate interest). Our legitimate interest lies in protecting our website from abusive automated use and ensuring IT security.
+                </p>
+
+                <h4>Data Transfer to Third Countries</h4>
+                <p>
+                    Cloudflare is a US company. Data transfer is based on EU Standard Contractual Clauses (SCCs) in accordance with Art. 46 GDPR. Cloudflare is also certified under the EU-US Data Privacy Framework.
+                </p>
+
+                <h4>Storage Duration</h4>
+                <p>
+                    The data collected during Turnstile verification is stored by Cloudflare for a maximum of 30 days and then automatically deleted.
+                </p>
+
+                <h4>Right to Object</h4>
+                <p>
+                    You have the right to object to the processing of your data by Cloudflare Turnstile. You can do this by disabling JavaScript in your browser. Please note that this may limit or prevent the use of certain functions on our website (e.g., registration, comment function).
+                </p>
+
+                <h4>Further Information on Cloudflare Turnstile:</h4>
+                <ul>
+                    <li>Privacy Policy: <a href="https://www.cloudflare.com/privacypolicy/" target="_blank">https://www.cloudflare.com/privacypolicy/</a></li>
+                    <li>Turnstile Documentation: <a href="https://developers.cloudflare.com/turnstile/" target="_blank">https://developers.cloudflare.com/turnstile/</a></li>
                 </ul>
 
                 <h2>7. Changes in Business Ownership and Control</h2>
