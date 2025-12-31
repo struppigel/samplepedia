@@ -1,6 +1,6 @@
 # Import all views for backward compatibility with urls.py
 from .samples import sample_list, sample_detail, submit_task, edit_task, delete_task
-from .solutions import create_solution, delete_solution, solution_list
+from .solutions import create_solution, edit_solution, delete_solution, solution_list
 from .courses import course_list, course_samples
 from .likes import toggle_like, toggle_solution_like
 from .auth import (
@@ -15,7 +15,8 @@ from .auth import (
     profile_settings,
     change_password,
     change_email,
-    verify_email_change
+    verify_email_change,
+    ranking
 )
 from .pages import impressum, privacy_policy
 from .comments import edit_comment, delete_comment
@@ -37,6 +38,7 @@ __all__ = [
     'delete_task',
     # Solutions
     'create_solution',
+    'edit_solution',
     'delete_solution',
     'solution_list',
     # Courses
@@ -58,6 +60,7 @@ __all__ = [
     'change_password',
     'change_email',
     'verify_email_change',
+    'ranking',
     # Pages
     'impressum',
     'privacy_policy',

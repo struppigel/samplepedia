@@ -151,9 +151,18 @@ body.dark-mode .solution-item:hover {
                   </div>
                   <div class="d-flex align-items-center" style="white-space: nowrap;">
                     {% solution_like_button solution user_liked_solution_ids %}
-                    {% if user.is_authenticated and solution.author == user %}
-                      {% comment %}Hide delete button for non-staff if it's the last reference solution{% endcomment %}
-                      {% if user.is_staff or solution.author != sample.author or reference_solution_count > 1 %}
+                    {% if user.is_authenticated %}
+                      {% if solution.author == user or user.is_staff %}
+                        <a href="{% url 'edit_solution' sample.sha256 sample.id solution.id %}" 
+                           class="btn btn-link btn-sm text-primary p-0 ml-2"
+                           style="border: none; background: none; cursor: pointer;"
+                           title="Edit this solution">
+                          <i class="fas fa-edit"></i>
+                        </a>
+                      {% endif %}
+                      {% if solution.author == user %}
+                      {% comment %}Hide delete button if it's the last reference solution{% endcomment %}
+                      {% if solution.author != sample.author or reference_solution_count > 1 %}
                         <button class="btn btn-link btn-sm text-danger p-0 ml-2" 
                                 onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256 }}', '{{ sample.id }}')"
                                 style="border: none; background: none; cursor: pointer;"
@@ -167,6 +176,7 @@ body.dark-mode .solution-item:hover {
                           <i class="fas fa-lock"></i>
                         </span>
                       {% endif %}
+                    {% endif %}
                     {% endif %}
                   </div>
                 </li>

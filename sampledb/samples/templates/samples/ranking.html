@@ -1,0 +1,178 @@
+{% extends "samples/base.html" %}
+{% load user_tags %}
+
+{% block title %}User Ranking - Samplepedia{% endblock %}
+
+{% block content %}
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-12">
+        <h1 class="m-0">
+          <i class="fas fa-trophy"></i> User Ranking
+        </h1>
+        <p class="text-muted mt-2">
+          Users ranked by total score. Score is calculated from likes on submitted analysis tasks and solutions, with higher difficulty samples earning more points.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    
+    <!-- Ranking Table -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-list-ol"></i> Top Contributors</h3>
+          </div>
+          <div class="card-body">
+            {% if page_obj %}
+              <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                  <thead>
+                    <tr>
+                      <th style="width: 80px;">Rank</th>
+                      <th>User</th>
+                      <th style="text-align: center;">Score</th>
+                      <th style="text-align: center;">Samples</th>
+                      <th style="text-align: center;">Solutions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in page_obj %}
+                      <tr>
+                        <!-- Rank with medal icons for top 3 -->
+                        <td>
+                          {% if item.rank == 1 %}
+                            <span class="badge" style="background-color: #FFD700; color: #000; font-size: 1.1em;">
+                              <i class="fas fa-medal"></i> #1
+                            </span>
+                          {% elif item.rank == 2 %}
+                            <span class="badge" style="background-color: #C0C0C0; color: #000; font-size: 1.1em;">
+                              <i class="fas fa-medal"></i> #2
+                            </span>
+                          {% elif item.rank == 3 %}
+                            <span class="badge" style="background-color: #CD7F32; color: #fff; font-size: 1.1em;">
+                              <i class="fas fa-medal"></i> #3
+                            </span>
+                          {% else %}
+                            <span class="text-muted">#{{ item.rank }}</span>
+                          {% endif %}
+                        </td>
+                        
+                        <!-- User with groups -->
+                        <td>
+                          <a href="{% url 'user_profile' item.user.username %}" class="font-weight-bold">
+                            <i class="fas fa-user"></i> {{ item.user.username }}
+                          </a>
+                          {% display_user_groups item.user %}
+                        </td>
+                        
+                        <!-- Score with badge -->
+                        <td style="text-align: center;">
+                          <span class="badge badge-danger" style="font-size: 1em;">{{ item.score }}</span>
+                        </td>
+                        
+                        <!-- Sample Count -->
+                        <td style="text-align: center;">
+                          <span class="text-muted">{{ item.task_count }}</span>
+                        </td>
+                        
+                        <!-- Solution Count -->
+                        <td style="text-align: center;">
+                          <span class="text-muted">{{ item.solution_count }}</span>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Pagination -->
+              {% if page_obj.has_other_pages %}
+              <div class="card-footer clearfix">
+                <span class="float-left text-muted">
+                  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                <ul class="pagination pagination-sm m-0 float-right">
+                  {% if page_obj.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page=1">
+                      «« First
+                    </a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                      « Previous
+                    </a>
+                  </li>
+                  {% endif %}
+                  
+                  <li class="page-item disabled">
+                    <span class="page-link">Page {{ page_obj.number }}</span>
+                  </li>
+                  
+                  {% if page_obj.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                      Next »
+                    </a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                      Last »»
+                    </a>
+                  </li>
+                  {% endif %}
+                </ul>
+              </div>
+              {% endif %}
+            {% else %}
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No rankings available yet.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scoring Info Card -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-info-circle"></i> Scoring System</h3>
+          </div>
+          <div class="card-body">
+            <p class="mb-2">Your score is calculated based on likes received on your submitted analysis tasks and solutions:</p>
+            <ul class="mb-2">
+              <li><strong>Easy difficulty:</strong> {{ difficulty_points.easy }} points per like</li>
+              <li><strong>Medium difficulty:</strong> {{ difficulty_points.medium }} points per like</li>
+              <li><strong>Advanced difficulty:</strong> {{ difficulty_points.advanced }} points per like</li>
+              <li><strong>Expert difficulty:</strong> {{ difficulty_points.expert }} points per like</li>
+            </ul>
+            <p class="text-muted small mb-0">
+              <em>Note: Likes on solutions are weighted by the difficulty of the analysis task they solve.</em>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="row">
+      <div class="col-12">
+        <a href="/" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Back to Browse
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

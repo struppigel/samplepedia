@@ -44,10 +44,11 @@
                 <p class="mb-2"><strong>Groups:</strong> {% display_user_groups profile_user %}</p>
                 
                 <p class="mb-2"><strong>Member since:</strong> {{ profile_user.date_joined|date:"M d, Y" }}</p>
+                <p class="mb-2"><strong>Score:</strong> <a href="{% url 'ranking' %}">{{ user_score }}</a></p>
               </div>
               <div class="col-md-6">
-                <p class="mb-2"><strong>Samples:</strong> {{ analysis_tasks.count }}</p>
-                <p class="mb-2"><strong>Solutions:</strong> {{ solutions.count }} </p>
+                <p class="mb-2"><strong>Samples:</strong> {{ analysis_tasks.paginator.count }}</p>
+                <p class="mb-2"><strong>Solutions:</strong> {{ solutions.paginator.count }}</p>
                 
               </div>
             </div>
@@ -129,12 +130,21 @@
                         <!-- Delete Action -->
                         {% if user.is_authenticated and user.username == profile_user.username %}
                         <td>
-                          <form method="post" action="{% url 'delete_solution' solution.analysis_task.sha256 solution.analysis_task.id solution.id %}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this solution?');">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Delete Solution">
-                              <i class="fas fa-trash"></i>
-                            </button>
-                          </form>
+                          <a href="{% url 'edit_solution' solution.analysis_task.sha256 solution.analysis_task.id solution.id %}" class="btn btn-sm btn-link text-primary p-0 mr-2" title="Edit Solution">
+                            <i class="fas fa-edit"></i>
+                          </a>
+                          {% if solution.is_undeletable %}
+                            <span class="text-muted" title="Cannot delete the last reference solution">
+                              <i class="fas fa-lock"></i>
+                            </span>
+                          {% else %}
+                            <form method="post" action="{% url 'delete_solution' solution.analysis_task.sha256 solution.analysis_task.id solution.id %}" style="display: inline; margin: 0;" onsubmit="return confirm('Are you sure you want to delete this solution?');">
+                              {% csrf_token %}
+                              <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Delete Solution">
+                                <i class="fas fa-trash"></i>
+                              </button>
+                            </form>
+                          {% endif %}
                         </td>
                         {% endif %}
                       </tr>

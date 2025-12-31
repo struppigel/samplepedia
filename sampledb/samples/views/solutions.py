@@ -62,6 +62,33 @@ def create_solution(request, sha256, task_id):
 
 
 @login_required
+def edit_solution(request, sha256, task_id, solution_id):
+    """Edit a solution (by author or staff)"""
+    sample = get_object_or_404(AnalysisTask, id=task_id)
+    solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample)
+    
+    # Only allow the author or staff to edit
+    if solution.author != request.user and not request.user.is_staff:
+        messages.error(request, 'You do not have permission to edit this solution.')
+        return redirect('sample_detail', sha256=sha256, task_id=task_id)
+    
+    if request.method == 'POST':
+        form = SolutionForm(request.POST, instance=solution)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Solution updated successfully!')
+            return redirect('sample_detail', sha256=sha256, task_id=task_id)
+    else:
+        form = SolutionForm(instance=solution)
+    
+    return render(request, 'samples/edit_solution.html', {
+        'form': form,
+        'sample': sample,
+        'solution': solution,
+    })
+
+
+@login_required
 def delete_solution(request, sha256, task_id, solution_id):
     """Delete a solution (only by its author)"""
     sample = get_object_or_404(AnalysisTask, id=task_id)
@@ -76,8 +103,8 @@ def delete_solution(request, sha256, task_id, solution_id):
         # Check if this is a reference solution (author is task author)
         is_reference_solution = solution.author == sample.author
         
-        # For non-staff users, prevent deleting the last reference solution
-        if is_reference_solution and not request.user.is_staff:
+        # Prevent deleting the last reference solution (for everyone, including staff)
+        if is_reference_solution:
             # Count reference solutions for this task
             reference_solution_count = Solution.objects.filter(
                 analysis_task=sample,

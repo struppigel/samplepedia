@@ -9,8 +9,9 @@ from django.utils.encoding import force_bytes, force_str
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.conf import settings
+from django.core.paginator import Paginator
 
-from ..models import Solution, AnalysisTask
+from ..models import Solution, AnalysisTask, get_user_score
 from ..forms import (
     TurnstileAuthenticationForm,
     TurnstileUserRegistrationForm,
@@ -233,6 +234,18 @@ def user_profile(request, username):
     solutions_paginator = Paginator(solutions_list, 10)  # 10 solutions per page
     solutions = solutions_paginator.get_page(solutions_page)
     
+    # Mark solutions that cannot be deleted (last reference solution)
+    for solution in solutions:
+        is_reference = solution.author == solution.analysis_task.author
+        if is_reference:
+            ref_count = Solution.objects.filter(
+                analysis_task=solution.analysis_task,
+                author=solution.analysis_task.author
+            ).count()
+            solution.is_undeletable = ref_count <= 1
+        else:
+            solution.is_undeletable = False
+    
     # Pagination for analysis tasks
     tasks_page = request.GET.get('tasks_page', 1)
     tasks_paginator = Paginator(analysis_tasks_list, 10)  # 10 tasks per page
@@ -245,11 +258,16 @@ def user_profile(request, username):
             request.user.favorite_samples.values_list('id', flat=True)
         )
     
+    # Calculate user score
+    from ..models import get_user_score
+    user_score = get_user_score(profile_user)
+    
     context = {
         'profile_user': profile_user,
         'solutions': solutions,
         'analysis_tasks': analysis_tasks,
         'user_favorited_ids': user_favorited_ids,
+        'user_score': user_score,
     }
     
     return render(request, 'samples/profile.html', context)
@@ -374,3 +392,53 @@ def verify_email_change(request, uidb64, token):
         success = False
     
     return render(request, 'samples/verify_email_change.html', {'success': success})
+
+
+def ranking(request):
+    """Display user ranking page based on scores"""
+    from django.db import models
+    
+    # Get all active users with at least one task or solution
+    active_users = User.objects.filter(
+        models.Q(analysis_tasks__isnull=False) | models.Q(solutions__isnull=False)
+    ).distinct()
+    
+    # Calculate scores for all active users
+    user_scores = []
+    for user in active_users:
+        score = get_user_score(user)
+        if score > 0:  # Only include users with positive scores
+            task_count = user.analysis_tasks.count()
+            solution_count = user.solutions.count()
+            user_scores.append({
+                'user': user,
+                'score': score,
+                'task_count': task_count,
+                'solution_count': solution_count,
+            })
+    
+    # Sort by score (descending)
+    user_scores.sort(key=lambda x: x['score'], reverse=True)
+    
+    # Add rank numbers
+    for idx, item in enumerate(user_scores, start=1):
+        item['rank'] = idx
+    
+    # Paginate results
+    paginator = Paginator(user_scores, 50)  # 50 users per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Get difficulty points for template display
+    DIFFICULTY_POINTS = {
+        'easy': 100,
+        'medium': 200,
+        'advanced': 300,
+        'expert': 500,
+    }
+    
+    return render(request, 'samples/ranking.html', {
+        'page_obj': page_obj,
+        'difficulty_points': DIFFICULTY_POINTS,
+    })
+

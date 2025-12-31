@@ -11,6 +11,68 @@ from cloudinary.models import CloudinaryField
 from django.core.validators import RegexValidator
 
 
+def get_user_score(user):
+    """Calculate user score based on likes received with difficulty multipliers.
+    
+    Scoring system:
+    - Easy task like: 100 points
+    - Medium task like: 200 points
+    - Advanced task like: 300 points
+    - Expert task like: 500 points
+    
+    - Easy solution like: 100 points
+    - Medium solution like: 200 points
+    - Advanced solution like: 300 points
+    - Expert solution like: 500 points
+    """
+    from django.db.models import Count, Case, When, IntegerField, Sum
+    
+    # Difficulty multipliers
+    DIFFICULTY_POINTS = {
+        'easy': 100,
+        'medium': 200,
+        'advanced': 300,
+        'expert': 500,
+    }
+    
+    # Score from analysis task likes
+    task_score = 0
+    tasks = user.analysis_tasks.annotate(
+        points=Case(
+            When(difficulty='easy', then=DIFFICULTY_POINTS['easy']),
+            When(difficulty='medium', then=DIFFICULTY_POINTS['medium']),
+            When(difficulty='advanced', then=DIFFICULTY_POINTS['advanced']),
+            When(difficulty='expert', then=DIFFICULTY_POINTS['expert']),
+            default=1,
+            output_field=IntegerField(),
+        ),
+        weighted_likes=Count('favorited_by') * models.F('points')
+    ).aggregate(total=Sum('weighted_likes'))
+    
+    task_score = task_score or 0
+    if tasks['total']:
+        task_score = tasks['total']
+    
+    # Score from solution likes (based on the task difficulty they solved)
+    solution_score = 0
+    solutions = user.solutions.select_related('analysis_task').annotate(
+        points=Case(
+            When(analysis_task__difficulty='easy', then=DIFFICULTY_POINTS['easy']),
+            When(analysis_task__difficulty='medium', then=DIFFICULTY_POINTS['medium']),
+            When(analysis_task__difficulty='advanced', then=DIFFICULTY_POINTS['advanced']),
+            When(analysis_task__difficulty='expert', then=DIFFICULTY_POINTS['expert']),
+            default=1,
+            output_field=IntegerField(),
+        ),
+        weighted_likes=Count('liked_by') * models.F('points')
+    ).aggregate(total=Sum('weighted_likes'))
+    
+    if solutions['total']:
+        solution_score = solutions['total']
+    
+    return task_score + solution_score
+
+
 class NotificationQuerySet(models.QuerySet):
     """Custom queryset for Notification model"""
     
