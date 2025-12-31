@@ -15,7 +15,9 @@ from ..forms import (
     TurnstileAuthenticationForm,
     TurnstileUserRegistrationForm,
     TurnstilePasswordResetForm,
-    TurnstileResendVerificationForm
+    TurnstileResendVerificationForm,
+    ChangePasswordForm,
+    ChangeEmailForm
 )
 
 
@@ -239,3 +241,124 @@ def user_profile(request, username):
     }
     
     return render(request, 'samples/profile.html', context)
+
+
+@login_required
+def profile_settings(request):
+    """Profile settings page"""
+    return render(request, 'samples/profile_settings.html')
+
+
+@login_required
+def change_password(request):
+    """Change user's password"""
+    if request.method == 'POST':
+        form = ChangePasswordForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            form.save()
+            
+            # Update the session to prevent logout
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+            
+            messages.success(request, 'Your password has been changed successfully!')
+            return redirect('profile_settings')
+    else:
+        form = ChangePasswordForm(user=request.user)
+    
+    return render(request, 'samples/change_password.html', {'form': form})
+
+
+@login_required
+def change_email(request):
+    """Change user's email address (requires verification)"""
+    if request.method == 'POST':
+        form = ChangeEmailForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            new_email = form.cleaned_data['new_email']
+            
+            # Generate token for email verification
+            token = default_token_generator.make_token(request.user)
+            uid = urlsafe_base64_encode(force_bytes(request.user.pk))
+            
+            # Store the new email temporarily in session (or you could use a database field)
+            request.session['pending_email'] = new_email
+            request.session['pending_email_token'] = token
+            
+            # Build verification URL
+            verification_url = request.build_absolute_uri(
+                f'/verify-email-change/{uid}/{token}/'
+            )
+            
+            # Render email templates
+            context = {
+                'user': request.user,
+                'new_email': new_email,
+                'verification_url': verification_url,
+            }
+            
+            subject = 'Verify your new email address - Samplepedia'
+            html_message = render_to_string('registration/email_change_verification.html', context)
+            plain_message = render_to_string('registration/email_change_verification.txt', context)
+            
+            # Send email to the NEW email address
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[new_email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+            
+            messages.success(
+                request, 
+                f'A verification link has been sent to {new_email}. Please check your email to confirm the change.'
+            )
+            return redirect('profile_settings')
+    else:
+        form = ChangeEmailForm(user=request.user)
+    
+    return render(request, 'samples/change_email.html', {'form': form})
+
+
+@login_required
+def verify_email_change(request, uidb64, token):
+    """Verify new email address and update user"""
+    try:
+        # Decode user ID
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    
+    # Verify token and check if it matches the session
+    if (user is not None and 
+        user == request.user and 
+        default_token_generator.check_token(user, token) and
+        'pending_email' in request.session and
+        'pending_email_token' in request.session and
+        request.session['pending_email_token'] == token):
+        
+        new_email = request.session['pending_email']
+        
+        # Check if email is still available
+        if User.objects.filter(email=new_email).exclude(pk=user.pk).exists():
+            messages.error(request, 'This email address is now registered by another user.')
+            success = False
+        else:
+            # Update the email
+            user.email = new_email
+            user.save()
+            
+            # Clear session data
+            del request.session['pending_email']
+            del request.session['pending_email_token']
+            
+            messages.success(request, 'Your email address has been updated successfully!')
+            success = True
+    else:
+        messages.error(request, 'The verification link is invalid or has expired.')
+        success = False
+    
+    return render(request, 'samples/verify_email_change.html', {'success': success})

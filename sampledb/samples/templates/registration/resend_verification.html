@@ -62,37 +62,8 @@
               </a>
             </form>
             
-            <script>
-              // Enable resend button after Turnstile challenge succeeds
-              function enableResendButton() {
-                document.getElementById('resend-button').disabled = false;
-              }
-              
-              // Add callback attribute to Turnstile widget
-              document.addEventListener('DOMContentLoaded', function() {
-                const turnstileWidget = document.querySelector('.cf-turnstile');
-                if (turnstileWidget) {
-                  turnstileWidget.setAttribute('data-callback', 'enableResendButton');
-                  
-                  // Also check if already solved
-                  const observer = new MutationObserver(function(mutations) {
-                    const response = turnstileWidget.querySelector('input[name="cf-turnstile-response"]');
-                    if (response && response.value) {
-                      enableResendButton();
-                      observer.disconnect();
-                    }
-                  });
-                  observer.observe(turnstileWidget, { childList: true, subtree: true });
-                  
-                  // Check immediately
-                  const response = turnstileWidget.querySelector('input[name="cf-turnstile-response"]');
-                  if (response && response.value) {
-                    enableResendButton();
-                  }
-                }
-              });
-            </script>
-
+            {% include 'samples/_turnstile_script.html' with button_id='resend-button' callback_name='enableResendButton' %}
+            
             <div class="callout callout-info mt-4">
               <h5><i class="icon fas fa-info"></i> Note</h5>
               <p class="mb-0">

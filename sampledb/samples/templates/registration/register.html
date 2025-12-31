@@ -107,36 +107,7 @@
               </a>
             </form>
             
-            <script>
-              // Enable register button after Turnstile challenge succeeds
-              function enableRegisterButton() {
-                document.getElementById('register-button').disabled = false;
-              }
-              
-              // Add callback attribute to Turnstile widget
-              document.addEventListener('DOMContentLoaded', function() {
-                const turnstileWidget = document.querySelector('.cf-turnstile');
-                if (turnstileWidget) {
-                  turnstileWidget.setAttribute('data-callback', 'enableRegisterButton');
-                  
-                  // Also check if already solved
-                  const observer = new MutationObserver(function(mutations) {
-                    const response = turnstileWidget.querySelector('input[name="cf-turnstile-response"]');
-                    if (response && response.value) {
-                      enableRegisterButton();
-                      observer.disconnect();
-                    }
-                  });
-                  observer.observe(turnstileWidget, { childList: true, subtree: true });
-                  
-                  // Check immediately
-                  const response = turnstileWidget.querySelector('input[name="cf-turnstile-response"]');
-                  if (response && response.value) {
-                    enableRegisterButton();
-                  }
-                }
-              });
-            </script>
+            {% include 'samples/_turnstile_script.html' with button_id='register-button' callback_name='enableRegisterButton' %}
           </div>
           <div class="card-footer text-muted">
             Already have an account? <a href="{% url 'login' %}">Login here</a>

@@ -217,3 +217,112 @@ class TurnstileResendVerificationForm(forms.Form):
         widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'your@email.com'})
     )
     turnstile = TurnstileField(label="")
+
+
+# Change Password Form with Turnstile CAPTCHA
+class ChangePasswordForm(forms.Form):
+    """
+    Form for users to change their own password (requires current password).
+    """
+    current_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Current password'}),
+        label="Current Password"
+    )
+    new_password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'New password'}),
+        label="New Password"
+    )
+    new_password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm new password'}),
+        label="Confirm New Password"
+    )
+    turnstile = TurnstileField(label="")
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_current_password(self):
+        """Verify the current password is correct"""
+        current_password = self.cleaned_data.get('current_password')
+        if not self.user.check_password(current_password):
+            raise forms.ValidationError("Your current password is incorrect.")
+        return current_password
+
+    def clean(self):
+        """Validate that the two password fields match"""
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('new_password1')
+        password2 = cleaned_data.get('new_password2')
+
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("The two password fields didn't match.")
+
+        # Validate password strength
+        if password1:
+            from django.contrib.auth.password_validation import validate_password
+            try:
+                validate_password(password1, self.user)
+            except forms.ValidationError as error:
+                self.add_error('new_password1', error)
+
+        return cleaned_data
+
+    def save(self):
+        """Set the new password"""
+        password = self.cleaned_data.get('new_password1')
+        self.user.set_password(password)
+        self.user.save()
+        return self.user
+
+
+# Change Email Form with Turnstile CAPTCHA
+class ChangeEmailForm(forms.Form):
+    """
+    Form for users to change their email address (requires password verification).
+    """
+    new_email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'new@email.com'}),
+        label="New Email Address"
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm your password'}),
+        label="Current Password"
+    )
+    turnstile = TurnstileField(label="")
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_password(self):
+        """Verify the password is correct"""
+        password = self.cleaned_data.get('password')
+        if not self.user.check_password(password):
+            raise forms.ValidationError("Your password is incorrect.")
+        return password
+
+    def clean_new_email(self):
+        """Validate the new email address"""
+        email = self.cleaned_data.get('new_email')
+        
+        # Check if the email is the same as current
+        if email == self.user.email:
+            raise forms.ValidationError("This is already your current email address.")
+        
+        # Check if email is already registered by another user
+        if User.objects.filter(email=email).exclude(pk=self.user.pk).exists():
+            raise forms.ValidationError("This email address is already registered.")
+        
+        # Block disposable/temporary email domains
+        if email:
+            domain = email.split('@')[-1].lower()
+            
+            if domain in blocklist:
+                raise forms.ValidationError(
+                    "Temporary or disposable email addresses are not allowed. "
+                    "Please use a permanent email address."
+                )
+        
+        return email

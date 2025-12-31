@@ -9,10 +9,19 @@
 <div class="content-header">
   <div class="container-fluid">
     <div class="row mb-2">
-      <div class="col-sm-12">
+      <div class="col-sm-6">
         <h1 class="m-0">
           <i class="fas fa-user-circle"></i> {{ profile_user.username }}'s Profile
         </h1>
+      </div>
+      <div class="col-sm-6">
+        {% if user.is_authenticated and user.username == profile_user.username %}
+        <div class="float-right">
+          <a href="{% url 'profile_settings' %}" class="btn btn-primary">
+            <i class="fas fa-cog"></i> Settings
+          </a>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>

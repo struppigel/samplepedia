@@ -11,7 +11,11 @@ from .auth import (
     resend_verification,
     user_profile,
     login_view,
-    password_reset_request
+    password_reset_request,
+    profile_settings,
+    change_password,
+    change_email,
+    verify_email_change
 )
 from .pages import impressum, privacy_policy
 from .comments import edit_comment, delete_comment
@@ -40,6 +44,10 @@ __all__ = [
     'user_profile',
     'login_view',
     'password_reset_request',
+    'profile_settings',
+    'change_password',
+    'change_email',
+    'verify_email_change',
     # Pages
     'impressum',
     'privacy_policy',

@@ -26,6 +26,10 @@ urlpatterns = [
     path("verify-email/<uidb64>/<token>/", views.verify_email, name="verify_email"),
     path("resend-verification/", views.resend_verification, name="resend_verification"),
     path("profile/<str:username>/", views.user_profile, name="user_profile"),
+    path("settings/", views.profile_settings, name="profile_settings"),
+    path("settings/password/", views.change_password, name="change_password"),
+    path("settings/email/", views.change_email, name="change_email"),
+    path("verify-email-change/<uidb64>/<token>/", views.verify_email_change, name="verify_email_change"),
     path("comments/<int:comment_id>/edit/", views.edit_comment, name="comments-xtd-edit"),
     path("comments/<int:comment_id>/delete/", views.delete_comment, name="comments-delete"),
     path(r'comments/', include('django_comments_xtd.urls'))

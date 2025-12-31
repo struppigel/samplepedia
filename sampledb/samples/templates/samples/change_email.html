@@ -1,0 +1,95 @@
+{% extends "samples/base.html" %}
+{% load static %}
+
+{% block title %}Change Email - Samplepedia{% endblock %}
+
+{% block content %}
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-12">
+        <h1 class="m-0">
+          <i class="fas fa-at"></i> Change Email Address
+        </h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-envelope"></i> Update Your Email</h3>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle"></i> 
+              Your current email is: <strong>{{ user.email }}</strong>
+            </div>
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle"></i> 
+              You will need to verify your new email address before the change takes effect.
+            </div>
+
+            <form method="post">
+              {% csrf_token %}
+              
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                  {{ form.non_field_errors }}
+                </div>
+              {% endif %}
+
+              <div class="form-group">
+                <label for="{{ form.new_email.id_for_label }}">{{ form.new_email.label }}</label>
+                {{ form.new_email }}
+                {% if form.new_email.errors %}
+                  <div class="text-danger mt-1">
+                    {{ form.new_email.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                  <div class="text-danger mt-1">
+                    {{ form.password.errors }}
+                  </div>
+                {% endif %}
+                <small class="form-text text-muted">
+                  Enter your password to confirm this change.
+                </small>
+              </div>
+
+              <div class="form-group">
+                {{ form.turnstile }}
+                {% if form.turnstile.errors %}
+                  <div class="text-danger mt-1">
+                    {{ form.turnstile.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <button type="submit" id="email-button" class="btn btn-primary" disabled>
+                <i class="fas fa-paper-plane"></i> Send Verification Email
+              </button>
+              <a href="{% url 'profile_settings' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+              </a>
+            </form>
+            
+            {% include 'samples/_turnstile_script.html' with button_id='email-button' callback_name='enableEmailButton' %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

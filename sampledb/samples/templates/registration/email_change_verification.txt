@@ -1,0 +1,16 @@
+Verify Your New Email Address - Samplepedia
+
+Hello {{ user.username }},
+
+You requested to change your email address on Samplepedia to: {{ new_email }}
+
+To complete this change, please click the link below to verify your new email address:
+
+{{ verification_url }}
+
+If you didn't request this change, please ignore this email. Your email address will not be changed unless you click the verification link above.
+
+This link will expire for security reasons. If you need a new link, please submit the email change request again.
+
+Best regards,
+The Samplepedia Team
