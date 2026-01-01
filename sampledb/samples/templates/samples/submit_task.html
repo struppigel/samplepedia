@@ -247,10 +247,10 @@
           {% if available_images %}
             <div class="row">
               {% for img in available_images %}
-                {% cloudinary_url img.image width=300 height=300 crop='fill' as image_url %}
+                {% cloudinary_url img.image width=300 height=300 crop='fit' as image_url %}
                 <div class="col-md-3 col-sm-4 col-6 mb-3">
-                  <div class="card image-select-card" onclick="selectImage('{{ image_url }}', '{{ img.id }}')" style="cursor: pointer;">
-                    <img src="{{ image_url }}" class="card-img-top" alt="Sample image" style="height: 200px; object-fit: cover;">
+                  <div class="card image-select-card" data-image-id="{{ img.id }}" data-image-url="{{ image_url }}" style="cursor: pointer;">
+                    <img src="{{ image_url }}" class="card-img-top" alt="Sample image" style="width: 100%; height: auto; object-fit: contain; background-color: #f8f9fa;">
                   </div>
                 </div>
               {% endfor %}
@@ -275,19 +275,34 @@
       document.getElementById('selected_image').value = currentImageId;
       
       // Find and show preview of current image
-      const imageCard = document.querySelector(`[onclick*="'${currentImageId}'"]`);
+      const imageCard = document.querySelector(`[data-image-id="${currentImageId}"]`);
       if (imageCard) {
-        const imgSrc = imageCard.querySelector('img').src;
+        const imgSrc = imageCard.getAttribute('data-image-url');
         document.getElementById('preview_img').src = imgSrc;
         document.getElementById('selected_image_preview').style.display = 'block';
+        imageCard.classList.add('selected');
       }
     }
   });
   {% endif %}
   
-  function selectImage(imageUrl, taskId) {
+  // Handle image gallery card clicks
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers to image cards
+    document.querySelectorAll('.image-select-card').forEach(card => {
+      const imageUrl = card.getAttribute('data-image-url');
+      const imageId = card.getAttribute('data-image-id');
+      
+      // Click anywhere on card = select
+      card.addEventListener('click', function() {
+        selectImage(imageUrl, imageId);
+      });
+    });
+  });
+  
+  function selectImage(imageUrl, imageId) {
     // Set hidden input value
-    document.getElementById('selected_image').value = taskId;
+    document.getElementById('selected_image').value = imageId;
     
     // Update preview
     const previewDiv = document.getElementById('selected_image_preview');
@@ -297,9 +312,12 @@
     
     // Highlight selected card
     document.querySelectorAll('.image-select-card').forEach(card => {
-      card.classList.remove('selected');
+      if (card.getAttribute('data-image-id') === imageId) {
+        card.classList.add('selected');
+      } else {
+        card.classList.remove('selected');
+      }
     });
-    event.currentTarget.classList.add('selected');
     
     // Close modal
     $('#imageGalleryModal').modal('hide');

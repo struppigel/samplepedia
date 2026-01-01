@@ -33,9 +33,17 @@ def notification_dropdown(request):
                 # For solution notifications, link to the sample detail page
                 url = n.target.analysis_task.get_absolute_url()
         
+        # For solution like notifications, remove the title from description for dropdown
+        description = n.description
+        if n.verb == 'liked_solution' and "'" in description:
+            # Strip everything between quotes to remove the title
+            # e.g., "user liked your solution 'Title'" -> "user liked your solution"
+            import re
+            description = re.sub(r" '[^']*'", "", description)
+        
         notifications_data.append({
             'id': n.id,
-            'description': n.description,
+            'description': description,
             'timestamp': n.timestamp.isoformat(),
             'url': url,
             'sha256': n.data.get('sha256', '') if n.data else '',
@@ -63,8 +71,9 @@ def mark_notification_read(request, notification_id):
         if hasattr(notification.target, 'get_absolute_url'):
             return redirect(notification.target.get_absolute_url())
         elif notification.verb == 'liked_solution' and hasattr(notification.target, 'analysis_task'):
-            # For solution notifications, redirect to the sample detail page
-            return redirect(notification.target.analysis_task.get_absolute_url())
+            # For solution notifications, redirect to the sample detail page with solution ID
+            url = notification.target.analysis_task.get_absolute_url()
+            return redirect(f"{url}?highlight_solution={notification.target.id}")
     
     return redirect('notification_list')
 

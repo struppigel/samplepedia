@@ -6,22 +6,6 @@
 
 {% block content %}
 
-<style>
-.solution-item:nth-child(even) {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-body.dark-mode .solution-item:nth-child(even) {
-  background-color: rgba(255, 255, 255, 0.02);
-}
-.solution-item:hover {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-  transition: background-color 0.2s ease;
-}
-body.dark-mode .solution-item:hover {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-}
-</style>
-
 <section class="content-header">
   <div class="container-fluid">
     <h1>Sample</h1>
@@ -138,7 +122,7 @@ body.dark-mode .solution-item:hover {
             {% if solutions %}
               <ul class="list-unstyled mb-0">
                 {% for solution in solutions %}
-                <li class="solution-item {% if not forloop.last %}mb-1{% else %}mb-0{% endif %} d-flex align-items-center justify-content-between" style="padding: 0.5rem; margin-left: -0.5rem; margin-right: -0.5rem; border-radius: 4px;">
+                <li class="solution-item {% if not forloop.last %}mb-1{% else %}mb-0{% endif %} d-flex align-items-center justify-content-between" style="padding: 0.5rem; margin-left: -0.5rem; margin-right: -0.5rem; border-radius: 4px;" data-solution-id="{{ solution.id }}">
                   <div class="d-flex align-items-center flex-grow-1">
                     <i class="fas {{ solution.solution_type|solution_icon }}"></i>
                     <a href="{{ solution.url }}" target="_blank" class="ml-2" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">{{ solution.title }}</a>
@@ -356,6 +340,34 @@ function confirmDelete(solutionId, solutionTitle, sha256, taskId) {
     form.submit();
   }
 }
+
+// Highlight solution from notification
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const highlightSolutionId = urlParams.get('highlight_solution');
+  
+  if (highlightSolutionId) {
+    const solutionElement = document.querySelector(`[data-solution-id="${highlightSolutionId}"]`);
+    if (solutionElement) {
+      // Scroll to the solution with a slight delay to ensure page is fully loaded
+      setTimeout(() => {
+        solutionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Add highlight class
+        solutionElement.classList.add('solution-highlight');
+        
+        // Remove highlight class after animation completes
+        setTimeout(() => {
+          solutionElement.classList.remove('solution-highlight');
+        }, 3000);
+      }, 100);
+      
+      // Clean up URL without reloading page
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }
+});
 </script>
 
 {% endblock %}

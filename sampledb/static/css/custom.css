@@ -472,18 +472,32 @@ body.dark-mode button.btn.btn-outline-primary:focus {
 
 /* Image selection card for submit/edit task form */
 .image-select-card {
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   border: 2px solid transparent;
+  overflow: hidden;
 }
 
 .image-select-card:hover {
   border-color: var(--primary-red);
-  transform: scale(1.02);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .image-select-card:hover {
+  box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
 }
 
 .image-select-card.selected {
   border-color: var(--primary-red);
   box-shadow: 0 0 10px var(--primary-red-alpha-40);
+}
+
+.image-select-card img {
+  transition: transform 0.2s ease;
+}
+
+.image-select-card:hover img {
+  transform: scale(1.05);
 }
 
 /* SHA256 field readonly styling for submit/edit task form */
@@ -507,4 +521,51 @@ body.dark-mode button.btn.btn-outline-primary:focus {
   background-color: #1e3c46 !important;
   border-color: #2887a7 !important;
   color: #9ae6e0 !important;
+}
+
+/* Image gallery card backgrounds */
+.image-select-card img {
+  background-color: #f8f9fa;
+}
+
+.dark-mode .image-select-card img {
+  background-color: #1a1a1a;
+}
+
+/* Solution item styling for detail page */
+.solution-item:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.dark-mode .solution-item:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.solution-item:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  transition: background-color 0.2s ease;
+}
+
+.dark-mode .solution-item:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Highlight animation for solution from notification */
+.solution-highlight {
+  background-color: rgba(230, 57, 70, 0.3) !important;
+  animation: highlightFade 3s ease-out;
+  transition: none !important;
+}
+
+.dark-mode .solution-highlight {
+  background-color: rgba(230, 57, 70, 0.4) !important;
+}
+
+@keyframes highlightFade {
+  0% {
+    background-color: rgba(230, 57, 70, 0.5);
+  }
+  100% {
+    background-color: transparent;
+  }
 }

@@ -101,6 +101,8 @@ def toggle_like(request, sha256, task_id):
 
 def toggle_solution_like(request, solution_id):
     """Toggle like for a solution (requires authentication)"""
+    TITLE_MAX_LENGTH = 60
+    
     if not request.user.is_authenticated:
         return JsonResponse({
             'error': 'Login required',
@@ -159,30 +161,34 @@ def toggle_solution_like(request, solution_id):
             
             if other_likers.count() == 0:
                 # Only this user liked it
-                description = f"{request.user.username} liked your solution"
+                title = solution.title[:TITLE_MAX_LENGTH] + '...' if len(solution.title) > TITLE_MAX_LENGTH else solution.title
+                description = f"{request.user.username} liked your solution '{title}'"
             elif other_likers.count() == 1:
                 # Two people total
                 other_user = other_likers.first()
-                description = f"{request.user.username} and {other_user.username} liked your solution"
+                title = solution.title[:TITLE_MAX_LENGTH] + '...' if len(solution.title) > TITLE_MAX_LENGTH else solution.title
+                description = f"{request.user.username} and {other_user.username} liked your solution '{title}'"
             else:
                 # Multiple people
                 count = other_likers.count()
-                description = f"{request.user.username} and {count} others liked your solution"
+                title = solution.title[:TITLE_MAX_LENGTH] + '...' if len(solution.title) > TITLE_MAX_LENGTH else solution.title
+                description = f"{request.user.username} and {count} others liked your solution '{title}'"
             
             existing_notification.description = description
             existing_notification.actor = request.user  # Update to most recent liker
-            existing_notification.data = {'solution_title': solution.title[:50]}
+            existing_notification.data = {'solution_title': solution.title[:TITLE_MAX_LENGTH]}
             existing_notification.timestamp = timezone.now()
             existing_notification.save()
         else:
             # Create new notification
+            title = solution.title[:TITLE_MAX_LENGTH] + '...' if len(solution.title) > TITLE_MAX_LENGTH else solution.title
             Notification.objects.create(
                 recipient=solution.author,
                 actor=request.user,
                 verb='liked_solution',
                 target=solution,
-                description=f"{request.user.username} liked your solution",
-                data={'solution_title': solution.title[:50]}
+                description=f"{request.user.username} liked your solution '{title}'",
+                data={'solution_title': solution.title[:TITLE_MAX_LENGTH]}
             )
     
     # Return JSON response for AJAX
