@@ -276,6 +276,22 @@ COMMENTS_XTD_APP_MODEL_OPTIONS = {
     }
 }
 
+# MarkdownX Configuration
+MARKDOWNX_MARKDOWN_EXTENSIONS = [
+    'markdown.extensions.extra',      # Includes tables, fenced code blocks, etc.
+    'markdown.extensions.nl2br',      # Converts newlines to <br>
+    'markdown.extensions.sane_lists', # Better list handling
+    'markdown.extensions.codehilite', # Syntax highlighting for code blocks
+    'markdown.extensions.fenced_code', # ``` code blocks
+    'pymdownx.tilde',                 # Strikethrough with ~~text~~
+]
+MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {
+    'markdown.extensions.codehilite': {
+        'linenums': False,
+        'guess_lang': False,
+    }
+}
+
 # Cloudflare Turnstile Configuration
 TURNSTILE_SITEKEY = config('TURNSTILE_SITEKEY', default='')
 TURNSTILE_SECRET = config('TURNSTILE_SECRET', default='')

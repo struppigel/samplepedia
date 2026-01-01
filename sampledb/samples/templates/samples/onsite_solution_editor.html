@@ -1,0 +1,549 @@
+{% extends "samples/base.html" %}
+{% load user_tags %}
+{% block title %}{% if solution %}Edit On-Site Solution{% else %}Create On-Site Solution{% endif %}{% endblock %}
+
+{% block content %}
+
+<section class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1>{% if solution %}Edit On-Site Solution{% else %}Create On-Site Solution{% endif %}</h1>
+        <p class="text-muted mb-0">
+          <i class="fas fa-hashtag"></i> Sample: 
+          <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}">
+            <code class="text-danger">{{ sample.sha256|slice:":12" }}</code>
+          </a>
+          {% if sample.goal %}— {{ sample.goal|truncatewords:10 }}{% endif %}
+        </p>
+      </div>
+      <div class="col-sm-6">
+        <div class="float-right">
+          <button type="button" class="btn btn-secondary" id="clearEditor" {% if solution %}style="display:none;"{% endif %}>
+            <i class="fas fa-trash"></i> Clear
+          </button>
+          <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-times"></i> Cancel
+          </a>
+          <button type="button" class="btn {% if solution %}btn-danger{% else %}btn-primary{% endif %}" id="submitSolution">
+            <i class="fas fa-save"></i> {% if solution %}Update Solution{% else %}Save Solution{% endif %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        
+        <!-- Title Input -->
+        <div class="form-group">
+          <label for="solutionTitle">Solution Title</label>
+          <input type="text" 
+                 class="form-control" 
+                 id="solutionTitle" 
+                 placeholder="Enter a descriptive title for your solution"
+                 value="{{ initial_title }}"
+                 required>
+          <div class="text-danger small" id="titleError" style="display:none;"></div>
+        </div>
+
+        <!-- Editor Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Solution Content</h3>
+            <div class="card-tools">
+              <span class="badge badge-info" id="charCount">0 characters</span>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            
+            <!-- Editor Tabs -->
+            <div class="markdown-tabs">
+              <button type="button" class="markdown-tab active" data-tab="write">
+                <i class="fas fa-edit"></i> Write
+              </button>
+              <button type="button" class="markdown-tab" data-tab="preview">
+                <i class="fas fa-eye"></i> Preview
+              </button>
+              <button type="button" class="markdown-tab" data-tab="help">
+                <i class="fas fa-question-circle"></i> Help
+              </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="markdown-tab-content">
+              
+              <!-- Write Pane -->
+              <div class="markdown-pane active" data-pane="write">
+                <textarea 
+                  id="markdownTextarea" 
+                  class="form-control border-0" 
+                  rows="25" 
+                  placeholder="Start writing your solution using markdown...
+
+# Example Heading
+
+Write your **bold** and *italic* text here.
+
+## Code Blocks
+
+```python
+def hello_world():
+    print('Hello, World!')
+```
+
+## Lists
+
+- Item 1
+- Item 2
+- Item 3
+
+## Links and Images
+
+[Link text](https://example.com)
+![Alt text](https://example.com/image.jpg)
+
+## Blockquotes
+
+> This is a blockquote
+"
+                  style="resize: vertical; min-height: 500px;">{{ initial_content }}</textarea>
+                <div class="px-3 pb-3">
+                  <small class="form-text text-muted">
+                    <i class="fas fa-info-circle"></i> 
+                    Full markdown formatting supported. Images via external links are supported.
+                    Press <kbd>Ctrl</kbd>+<kbd>S</kbd> to preview.
+                  </small>
+                </div>
+              </div>
+
+              <!-- Preview Pane (blog-style) -->
+              <div class="markdown-pane" data-pane="preview">
+                <div class="preview-container">
+                  <div class="row justify-content-center">
+                    <div class="col-lg-10 col-xl-9">
+                      <article class="blog-article py-4">
+                        {% include "samples/_article_header.html" with title_id="previewTitle" title="Untitled Solution" author_username=request.user.username publish_date="Today" show_likes=False show_actions=False sample=sample %}
+
+                        <!-- Article Content -->
+                        <div class="article-content markdown-preview-content">
+                          <p class="text-muted">Nothing to preview</p>
+                        </div>
+                      </article>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Help Pane -->
+              <div class="markdown-pane" data-pane="help">
+                <div class="markdown-help-content p-4">
+                  <h4>Markdown Syntax Guide</h4>
+                  
+                  <h5 class="mt-3">Headers</h5>
+                  <pre><code># H1 Header
+## H2 Header
+### H3 Header
+#### H4 Header
+##### H5 Header
+###### H6 Header</code></pre>
+
+                  <h5 class="mt-3">Text Formatting</h5>
+                  <pre><code>**Bold text**
+*Italic text*
+***Bold and italic***
+~~Strikethrough~~</code></pre>
+
+                  <h5 class="mt-3">Lists</h5>
+                  <pre><code>Unordered list:
+- Item 1
+- Item 2
+  - Nested item
+
+Ordered list:
+1. First item
+2. Second item
+3. Third item</code></pre>
+
+                  <h5 class="mt-3">Links</h5>
+                  <pre><code>[Link text](https://example.com)
+[Link with title](https://example.com "Link title")</code></pre>
+
+                  <h5 class="mt-3">Images</h5>
+                  <pre><code>![Alt text](https://example.com/image.jpg)
+![Image with title](https://example.com/image.jpg "Image title")</code></pre>
+
+                  <h5 class="mt-3">Code</h5>
+                  <pre><code>Inline code: `code here`
+
+Code block:
+```python
+def example():
+    return "Hello"
+```</code></pre>
+
+                  <h5 class="mt-3">Blockquotes</h5>
+                  <pre><code>> This is a blockquote
+> Multiple lines
+>> Nested blockquote</code></pre>
+
+                  <h5 class="mt-3">Horizontal Rule</h5>
+                  <pre><code>---
+or
+***</code></pre>
+
+                  <h5 class="mt-3">Tables</h5>
+                  <pre><code>| Column 1 | Column 2 | Column 3 |
+|----------|----------|----------|
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |</code></pre>
+
+                  <div class="alert alert-info mt-4">
+                    <i class="fas fa-lightbulb"></i> <strong>Tips:</strong>
+                    <ul class="mb-0 mt-2">
+                      <li>Use the Preview tab to see how your solution will look</li>
+                      <li>Press <kbd>Ctrl</kbd>+<kbd>S</kbd> (or <kbd>Cmd</kbd>+<kbd>S</kbd> on Mac) to quickly switch to preview</li>
+                      <li>Content is auto-saved every 5 seconds to prevent data loss</li>
+                      <li>External images are supported, but file uploads are not</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<form method="post" id="solutionForm" style="display:none;">
+  {% csrf_token %}
+  <input type="hidden" name="title" id="hiddenTitle">
+  <input type="hidden" name="content" id="hiddenContent">
+  <input type="hidden" name="solution_type" value="onsite">
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const tabs = document.querySelectorAll('.markdown-tab');
+  const panes = document.querySelectorAll('.markdown-pane');
+  const textarea = document.getElementById('markdownTextarea');
+  const titleInput = document.getElementById('solutionTitle');
+  const previewTitle = document.getElementById('previewTitle');
+  const previewContent = document.querySelector('.markdown-preview-content');
+  const charCount = document.getElementById('charCount');
+  const clearBtn = document.getElementById('clearEditor');
+  const submitBtn = document.getElementById('submitSolution');
+  const titleError = document.getElementById('titleError');
+  
+  let previewCache = '';
+  
+  // Character counter
+  function updateCharCount() {
+    const count = textarea.value.length;
+    charCount.textContent = `${count.toLocaleString()} character${count !== 1 ? 's' : ''}`;
+  }
+  
+  textarea.addEventListener('input', updateCharCount);
+  updateCharCount();
+  
+  // Update preview title when title changes
+  titleInput.addEventListener('input', function() {
+    const title = this.value.trim() || 'Untitled Solution';
+    previewTitle.textContent = title;
+  });
+  
+  // Initialize preview title
+  if (titleInput.value.trim()) {
+    previewTitle.textContent = titleInput.value.trim();
+  }
+  
+  // Tab switching
+  tabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+      const targetTab = this.getAttribute('data-tab');
+      
+      // Update active tab
+      tabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Update active pane
+      panes.forEach(p => {
+        if (p.getAttribute('data-pane') === targetTab) {
+          p.classList.add('active');
+        } else {
+          p.classList.remove('active');
+        }
+      });
+      
+      // If switching to preview, render markdown
+      if (targetTab === 'preview') {
+        renderPreview();
+      }
+    });
+  });
+  
+  // Render markdown preview
+  function renderPreview() {
+    const content = textarea.value;
+    
+    // Only fetch if content changed
+    if (content !== previewCache) {
+      previewCache = content;
+      
+      if (!content.trim()) {
+        previewContent.innerHTML = '<p class="text-muted">Nothing to preview</p>';
+        return;
+      }
+      
+      // Show loading state
+      previewContent.innerHTML = '<p class="text-muted"><i class="fas fa-spinner fa-spin"></i> Loading preview...</p>';
+      
+      // Fetch preview from server
+      fetch('{% url "markdown_preview" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: 'content=' + encodeURIComponent(content)
+      })
+      .then(response => response.json())
+      .then(data => {
+        previewContent.innerHTML = data.html;
+      })
+      .catch(error => {
+        console.error('Preview error:', error);
+        previewContent.innerHTML = '<p class="text-danger"><i class="fas fa-exclamation-triangle"></i> Error loading preview</p>';
+      });
+    }
+  }
+  
+  // Clear editor (only for new solutions)
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function() {
+      if (textarea.value && !confirm('Are you sure you want to clear all content?')) {
+        return;
+      }
+      textarea.value = '';
+      titleInput.value = '';
+      previewCache = '';
+      previewTitle.textContent = 'Untitled Solution';
+      updateCharCount();
+      previewContent.innerHTML = '<p class="text-muted">Nothing to preview</p>';
+      localStorage.removeItem(STORAGE_KEY);
+    });
+  }
+  
+  // Submit solution
+  submitBtn.addEventListener('click', function() {
+    const title = titleInput.value.trim();
+    const content = textarea.value.trim();
+    
+    // Validation
+    let hasError = false;
+    
+    if (!title) {
+      titleError.textContent = 'Title is required';
+      titleError.style.display = 'block';
+      titleInput.focus();
+      hasError = true;
+    } else {
+      titleError.style.display = 'none';
+    }
+    
+    if (!content) {
+      alert('Please write some content for your solution');
+      textarea.focus();
+      hasError = true;
+    }
+    
+    if (hasError) return;
+    
+    // Populate hidden form and submit
+    document.getElementById('hiddenTitle').value = title;
+    document.getElementById('hiddenContent').value = content;
+    
+    // Disable button to prevent double submission
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
+    document.getElementById('solutionForm').submit();
+  });
+  
+  // Keyboard shortcuts
+  textarea.addEventListener('keydown', function(e) {
+    // Tab key for indentation
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      const value = this.value;
+      
+      // Insert tab
+      this.value = value.substring(0, start) + '  ' + value.substring(end);
+      this.selectionStart = this.selectionEnd = start + 2;
+    }
+    
+    // Ctrl/Cmd + S to trigger preview
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      // Switch to preview tab
+      const previewTab = document.querySelector('.markdown-tab[data-tab="preview"]');
+      previewTab.click();
+    }
+  });
+  
+  // Auto-save to localStorage
+  const STORAGE_KEY = 'onsite_solution_{{ sample.id }}{% if solution %}_{{ solution.id }}{% endif %}';
+  const AUTOSAVE_INTERVAL = 5000; // 5 seconds
+  
+  // Load saved content on page load (only for new solutions)
+  {% if not solution %}
+  const savedData = localStorage.getItem(STORAGE_KEY);
+  if (savedData) {
+    try {
+      const data = JSON.parse(savedData);
+      if (confirm('Found auto-saved content. Would you like to restore it?')) {
+        titleInput.value = data.title || '';
+        textarea.value = data.content || '';
+        updateCharCount();
+        if (titleInput.value.trim()) {
+          previewTitle.textContent = titleInput.value.trim();
+        }
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch (e) {
+      console.error('Error loading auto-save:', e);
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }
+  {% endif %}
+  
+  // Auto-save
+  setInterval(function() {
+    const title = titleInput.value.trim();
+    const content = textarea.value.trim();
+    if (title || content) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ title, content }));
+    }
+  }, AUTOSAVE_INTERVAL);
+});
+</script>
+
+<style>
+/* Editor-specific styles */
+#markdownTextarea {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.markdown-help-content h4 {
+  color: var(--primary-red);
+  margin-bottom: 1rem;
+}
+
+.markdown-help-content h5 {
+  color: var(--body-color);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.markdown-help-content pre {
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--form-border);
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.markdown-help-content code {
+  color: var(--body-color);
+  font-size: 0.9em;
+}
+
+.dark-mode .markdown-help-content pre {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Preview pane styling */
+.markdown-pane[data-pane="preview"] {
+  background-color: #f8f9fa;
+  min-height: 500px;
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.preview-container {
+  padding: 2rem 1rem;
+}
+
+.markdown-pane[data-pane="help"] {
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+/* Dark mode adjustments for preview */
+.dark-mode .markdown-pane[data-pane="preview"] {
+  background-color: #1a1a1a;
+}
+
+.dark-mode .preview-container {
+  color: var(--text-color);
+}
+
+.dark-mode .task-reference {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.preview-container .task-reference {
+  background-color: #f0f0f0;
+  border-left: 4px solid #dc3545;
+  border-radius: 6px;
+}
+
+.dark-mode .preview-container .task-reference {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-left-color: #17a2b8;
+}
+
+/* Character count badge styling */
+#charCount {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+}
+
+/* Keyboard shortcut badge */
+kbd {
+  background-color: #f7f7f7;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 0 0 2px #fff inset;
+  color: #333;
+  display: inline-block;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 0 0.1em;
+  padding: 0.1em 0.6em;
+  text-shadow: 0 1px 0 #fff;
+}
+
+.dark-mode kbd {
+  background-color: #3a3a3a;
+  border-color: #555;
+  color: #eee;
+  text-shadow: none;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 0 0 2px #2a2a2a inset;
+}
+</style>
+
+{% endblock %}

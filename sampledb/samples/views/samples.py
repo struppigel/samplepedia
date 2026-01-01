@@ -244,15 +244,26 @@ def submit_task(request):
                 ref_title = form.cleaned_data.get('reference_solution_title')
                 ref_type = form.cleaned_data.get('reference_solution_type')
                 ref_url = form.cleaned_data.get('reference_solution_url')
+                ref_content = form.cleaned_data.get('reference_solution_content')
                 
-                if ref_title and ref_type and ref_url:
-                    Solution.objects.create(
-                        analysis_task=sample,
-                        title=ref_title,
-                        solution_type=ref_type,
-                        url=ref_url,
-                        author=request.user
-                    )
+                if ref_title and ref_type:
+                    # Create solution based on type
+                    if ref_type == 'onsite':
+                        Solution.objects.create(
+                            analysis_task=sample,
+                            title=ref_title,
+                            solution_type=ref_type,
+                            content=ref_content or '',
+                            author=request.user
+                        )
+                    elif ref_url:
+                        Solution.objects.create(
+                            analysis_task=sample,
+                            title=ref_title,
+                            solution_type=ref_type,
+                            url=ref_url,
+                            author=request.user
+                        )
             
             # Transaction committed, Discord notification will fire now with correct data
             messages.success(request, f'AnalysisTask {sample.sha256[:12]}... submitted successfully!')

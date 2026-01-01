@@ -1,0 +1,41 @@
+{% extends "samples/base.html" %}
+{% load user_tags %}
+{% block title %}{{ solution.title }}{% endblock %}
+
+{% block content %}
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-lg-9 col-xl-8">
+        
+        <!-- Article Header -->
+        <article class="blog-article">
+          {% include "samples/_article_header.html" with title=solution.title author_username=solution.author.username author_url=user_profile_url is_reference=is_reference publish_date=solution.created_at|date:"F d, Y" show_likes=True like_count=solution.like_count show_actions=True solution=solution user_has_liked=user_has_liked edit_url=edit_solution_url task_url=task_detail_url sample=sample %}
+
+          <!-- Article Content -->
+          <div class="article-content markdown-preview-content">
+            {{ rendered_content|safe }}
+          </div>
+        </article>
+
+        <!-- Back Button -->
+        <div class="mt-5 mb-4">
+          <button onclick="smartBack()" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left mr-1"></i> Back to task
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// Smart back navigation
+function smartBack() {
+  window.location.href = '{% url "sample_detail" sha256=sample.sha256 task_id=sample.id %}';
+}
+</script>
+
+{% endblock %}

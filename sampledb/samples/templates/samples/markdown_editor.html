@@ -1,0 +1,418 @@
+{% extends "samples/base.html" %}
+{% block title %}Markdown Editor{% endblock %}
+
+{% block content %}
+
+<section class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1>Markdown Editor</h1>
+      </div>
+      <div class="col-sm-6">
+        <div class="float-right">
+          <button type="button" class="btn btn-secondary" id="clearEditor">
+            <i class="fas fa-trash"></i> Clear
+          </button>
+          <button type="button" class="btn btn-primary" id="copyMarkdown">
+            <i class="fas fa-copy"></i> Copy Markdown
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Blog-Style Solution Editor</h3>
+            <div class="card-tools">
+              <span class="badge badge-info" id="charCount">0 characters</span>
+            </div>
+          </div>
+          <div class="card-body">
+            
+            <!-- Editor Tabs -->
+            <div class="markdown-tabs">
+              <button type="button" class="markdown-tab active" data-tab="write">
+                <i class="fas fa-edit"></i> Write
+              </button>
+              <button type="button" class="markdown-tab" data-tab="preview">
+                <i class="fas fa-eye"></i> Preview
+              </button>
+              <button type="button" class="markdown-tab" data-tab="help">
+                <i class="fas fa-question-circle"></i> Help
+              </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="markdown-tab-content">
+              
+              <!-- Write Pane -->
+              <div class="markdown-pane active" data-pane="write">
+                <textarea 
+                  id="markdownTextarea" 
+                  class="form-control" 
+                  rows="20" 
+                  placeholder="Start writing your markdown content here...
+                  
+# Example Heading
+
+Write your **bold** and *italic* text here.
+
+## Code Blocks
+
+```python
+def hello_world():
+    print('Hello, World!')
+```
+
+## Lists
+
+- Item 1
+- Item 2
+- Item 3
+
+## Links
+
+[Link text](https://example.com)
+
+## Images
+
+![Alt text](https://example.com/image.jpg)
+
+## Blockquotes
+
+> This is a blockquote
+
+"></textarea>
+                <small class="form-text text-muted mt-2">
+                  <i class="fas fa-info-circle"></i> 
+                  This editor supports full markdown formatting. Images via external links are supported, but file uploads are not.
+                </small>
+              </div>
+
+              <!-- Preview Pane -->
+              <div class="markdown-pane" data-pane="preview">
+                <div class="markdown-preview-content">
+                  <p class="text-muted">Nothing to preview</p>
+                </div>
+              </div>
+
+              <!-- Help Pane -->
+              <div class="markdown-pane" data-pane="help">
+                <div class="markdown-help-content">
+                  <h4>Markdown Syntax Guide</h4>
+                  
+                  <h5 class="mt-3">Headers</h5>
+                  <pre><code># H1 Header
+## H2 Header
+### H3 Header
+#### H4 Header
+##### H5 Header
+###### H6 Header</code></pre>
+
+                  <h5 class="mt-3">Text Formatting</h5>
+                  <pre><code>**Bold text**
+*Italic text*
+***Bold and italic***
+~~Strikethrough~~</code></pre>
+
+                  <h5 class="mt-3">Lists</h5>
+                  <pre><code>Unordered list:
+- Item 1
+- Item 2
+  - Nested item
+
+Ordered list:
+1. First item
+2. Second item
+3. Third item</code></pre>
+
+                  <h5 class="mt-3">Links</h5>
+                  <pre><code>[Link text](https://example.com)
+[Link with title](https://example.com "Link title")</code></pre>
+
+                  <h5 class="mt-3">Images</h5>
+                  <pre><code>![Alt text](https://example.com/image.jpg)
+![Image with title](https://example.com/image.jpg "Image title")</code></pre>
+
+                  <h5 class="mt-3">Code</h5>
+                  <pre><code>Inline code: `code here`
+
+Code block:
+```python
+def example():
+    return "Hello"
+```</code></pre>
+
+                  <h5 class="mt-3">Blockquotes</h5>
+                  <pre><code>> This is a blockquote
+> Multiple lines
+>> Nested blockquote</code></pre>
+
+                  <h5 class="mt-3">Horizontal Rule</h5>
+                  <pre><code>---
+or
+***</code></pre>
+
+                  <h5 class="mt-3">Tables</h5>
+                  <pre><code>| Column 1 | Column 2 | Column 3 |
+|----------|----------|----------|
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |</code></pre>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const tabs = document.querySelectorAll('.markdown-tab');
+  const panes = document.querySelectorAll('.markdown-pane');
+  const textarea = document.getElementById('markdownTextarea');
+  const previewContent = document.querySelector('.markdown-preview-content');
+  const charCount = document.getElementById('charCount');
+  const clearBtn = document.getElementById('clearEditor');
+  const copyBtn = document.getElementById('copyMarkdown');
+  
+  let previewCache = '';
+  
+  // Character counter
+  function updateCharCount() {
+    const count = textarea.value.length;
+    charCount.textContent = `${count.toLocaleString()} character${count !== 1 ? 's' : ''}`;
+  }
+  
+  textarea.addEventListener('input', updateCharCount);
+  updateCharCount();
+  
+  // Tab switching
+  tabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+      const targetTab = this.getAttribute('data-tab');
+      
+      // Update active tab
+      tabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Update active pane
+      panes.forEach(p => {
+        if (p.getAttribute('data-pane') === targetTab) {
+          p.classList.add('active');
+        } else {
+          p.classList.remove('active');
+        }
+      });
+      
+      // If switching to preview, render markdown
+      if (targetTab === 'preview') {
+        renderPreview();
+      }
+    });
+  });
+  
+  // Render markdown preview
+  function renderPreview() {
+    const content = textarea.value;
+    
+    // Only fetch if content changed
+    if (content !== previewCache) {
+      previewCache = content;
+      
+      if (!content.trim()) {
+        previewContent.innerHTML = '<p class="text-muted">Nothing to preview</p>';
+        return;
+      }
+      
+      // Show loading state
+      previewContent.innerHTML = '<p class="text-muted"><i class="fas fa-spinner fa-spin"></i> Loading preview...</p>';
+      
+      // Fetch preview from server
+      fetch('{% url "markdown_preview" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: 'content=' + encodeURIComponent(content)
+      })
+      .then(response => response.json())
+      .then(data => {
+        previewContent.innerHTML = data.html;
+      })
+      .catch(error => {
+        console.error('Preview error:', error);
+        previewContent.innerHTML = '<p class="text-danger"><i class="fas fa-exclamation-triangle"></i> Error loading preview</p>';
+      });
+    }
+  }
+  
+  // Clear editor
+  clearBtn.addEventListener('click', function() {
+    if (textarea.value && !confirm('Are you sure you want to clear all content?')) {
+      return;
+    }
+    textarea.value = '';
+    previewCache = '';
+    updateCharCount();
+    previewContent.innerHTML = '<p class="text-muted">Nothing to preview</p>';
+  });
+  
+  // Copy markdown to clipboard
+  copyBtn.addEventListener('click', function() {
+    if (!textarea.value) {
+      alert('Nothing to copy!');
+      return;
+    }
+    
+    textarea.select();
+    textarea.setSelectionRange(0, 99999); // For mobile devices
+    
+    navigator.clipboard.writeText(textarea.value).then(function() {
+      // Visual feedback
+      const originalHtml = copyBtn.innerHTML;
+      copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+      copyBtn.classList.remove('btn-primary');
+      copyBtn.classList.add('btn-success');
+      
+      setTimeout(function() {
+        copyBtn.innerHTML = originalHtml;
+        copyBtn.classList.remove('btn-success');
+        copyBtn.classList.add('btn-primary');
+      }, 2000);
+    }).catch(function(err) {
+      console.error('Copy failed:', err);
+      alert('Failed to copy to clipboard');
+    });
+  });
+  
+  // Keyboard shortcuts
+  textarea.addEventListener('keydown', function(e) {
+    // Tab key for indentation
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      const value = this.value;
+      
+      // Insert tab
+      this.value = value.substring(0, start) + '  ' + value.substring(end);
+      this.selectionStart = this.selectionEnd = start + 2;
+    }
+    
+    // Ctrl/Cmd + S to trigger preview
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      // Switch to preview tab
+      const previewTab = document.querySelector('.markdown-tab[data-tab="preview"]');
+      previewTab.click();
+    }
+  });
+  
+  // Auto-save to localStorage
+  const STORAGE_KEY = 'markdown_editor_content';
+  const AUTOSAVE_INTERVAL = 5000; // 5 seconds
+  
+  // Load saved content on page load
+  const savedContent = localStorage.getItem(STORAGE_KEY);
+  if (savedContent) {
+    if (confirm('Found auto-saved content. Would you like to restore it?')) {
+      textarea.value = savedContent;
+      updateCharCount();
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }
+  
+  // Auto-save
+  setInterval(function() {
+    if (textarea.value) {
+      localStorage.setItem(STORAGE_KEY, textarea.value);
+    }
+  }, AUTOSAVE_INTERVAL);
+  
+  // Clear auto-save on clear
+  clearBtn.addEventListener('click', function() {
+    localStorage.removeItem(STORAGE_KEY);
+  });
+});
+</script>
+
+<style>
+/* Additional styles for markdown editor */
+#markdownTextarea {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.markdown-help-content {
+  padding: 1rem;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.markdown-help-content h4 {
+  color: var(--primary-red);
+  margin-bottom: 1rem;
+}
+
+.markdown-help-content h5 {
+  color: var(--body-color);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.markdown-help-content pre {
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--form-border);
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.markdown-help-content code {
+  color: var(--body-color);
+  font-size: 0.9em;
+}
+
+[data-theme="dark"] .markdown-help-content pre {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Ensure preview pane has proper styling */
+.markdown-pane[data-pane="preview"] {
+  border: 1px solid var(--form-border);
+  border-radius: 0.25rem;
+  padding: 1rem;
+  background-color: var(--form-bg);
+  min-height: 400px;
+}
+
+.markdown-pane[data-pane="help"] {
+  border: 1px solid var(--form-border);
+  border-radius: 0.25rem;
+  background-color: var(--form-bg);
+}
+
+/* Character count badge styling */
+#charCount {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+}
+</style>
+
+{% endblock %}

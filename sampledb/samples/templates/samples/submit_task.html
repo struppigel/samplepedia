@@ -165,7 +165,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="form-group" id="reference-url-field">
                 <label for="{{ form.reference_solution_url.id_for_label }}">Solution URL{% if not user.is_staff %} <span class="text-danger">*</span>{% endif %}</label>
                 {{ form.reference_solution_url }}
                 {% if form.reference_solution_url.errors %}
@@ -175,6 +175,17 @@
                 {% else %}
                   <small class="form-text text-muted">Provide a link to your writeup, video, or paper</small>
                 {% endif %}
+              </div>
+
+              <div class="form-group" id="reference-content-field" style="display: none;">
+                <label for="reference_solution_content">Solution Content</label>
+                <div class="alert alert-info">
+                  <i class="fas fa-external-link-alt"></i>
+                  <strong>Use Full Editor:</strong> 
+                  <a href="{% url 'markdown_editor' %}" target="_blank" class="alert-link">Open Markdown Editor</a> to write your on-site solution. Copy and paste the content back here when done.
+                </div>
+                <textarea id="reference_solution_content" name="reference_solution_content" class="form-control" rows="10" placeholder="Paste your markdown content here..."></textarea>
+                <small class="form-text text-muted">Markdown content for on-site solutions. Images via external links are supported.</small>
               </div>
               {% endif %}
 
@@ -400,6 +411,30 @@
     const textarea = document.getElementById('id_description');
     const previewContent = document.querySelector('.markdown-preview-content');
     let previewCache = '';
+    
+    // Toggle reference solution fields based on type
+    const refSolutionTypeSelect = document.getElementById('id_reference_solution_type');
+    const refUrlField = document.getElementById('reference-url-field');
+    const refContentField = document.getElementById('reference-content-field');
+    
+    if (refSolutionTypeSelect && refUrlField && refContentField) {
+      function toggleRefFields() {
+        const selectedType = refSolutionTypeSelect.value;
+        if (selectedType === 'onsite') {
+          refUrlField.style.display = 'none';
+          refContentField.style.display = 'block';
+        } else {
+          refUrlField.style.display = 'block';
+          refContentField.style.display = 'none';
+        }
+      }
+      
+      // Initial toggle
+      toggleRefFields();
+      
+      // Listen for changes
+      refSolutionTypeSelect.addEventListener('change', toggleRefFields);
+    }
     
     tabs.forEach(tab => {
       tab.addEventListener('click', function() {

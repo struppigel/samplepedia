@@ -55,9 +55,15 @@
               <!-- Solution Title with Link -->
               <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 <i class="fas {{ solution.solution_type|solution_icon }} mr-2"></i>
-                <a href="{{ solution.url }}" target="_blank" class="text-muted" rel="noopener noreferrer" title="{{ solution.title }}" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
-                  {{ solution.title }}
-                </a>
+                {% if solution.solution_type == 'onsite' %}
+                  <a href="{% url 'view_onsite_solution' solution.analysis_task.sha256 solution.analysis_task.id solution.id %}" title="{{ solution.title }}">
+                    {{ solution.title }}
+                  </a>
+                {% else %}
+                  <a href="{{ solution.url }}" target="_blank" class="text-muted" rel="noopener noreferrer" title="{{ solution.title }}" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
+                    {{ solution.title }}
+                  </a>
+                {% endif %}
               </td>
 
               <!-- Related Sample -->

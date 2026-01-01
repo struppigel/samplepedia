@@ -267,6 +267,11 @@ body .btn.btn-outline-primary:active {
   font-size: 0.9em;
 }
 
+.spoiler-text del {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
 .spoiler-text pre {
   background-color: rgba(0, 0, 0, 0.1);
   padding: 0.75rem;
@@ -287,6 +292,14 @@ body .btn.btn-outline-primary:active {
   color: var(--text-muted);
 }
 
+.spoiler-text img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1rem 0;
+  border-radius: 4px;
+}
+
 .spoiler-text a {
   color: var(--link-color);
   text-decoration: none;
@@ -300,6 +313,29 @@ body .btn.btn-outline-primary:active {
   border: 0;
   border-top: 1px solid var(--border-color);
   margin: 1rem 0;
+}
+
+.spoiler-text table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75rem 0;
+  border: 1px solid var(--form-border);
+}
+
+.spoiler-text table th,
+.spoiler-text table td {
+  border: 1px solid var(--form-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.spoiler-text table th {
+  background-color: rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+.spoiler-text table tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 /* Dark mode adjustments for markdown */
@@ -321,4 +357,135 @@ body .btn.btn-outline-primary:active {
   padding: 0.75rem;
   padding-left: 1rem;
   border-radius: 4px;
+}
+
+.dark-mode .spoiler-text table th {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .spoiler-text table tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+/* Blog Article Styles */
+.blog-article {
+  max-width: 100%;
+  padding: 2rem 0;
+}
+
+.article-header {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.article-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-color);
+  margin-bottom: 1.5rem;
+}
+
+.article-meta {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.article-meta a {
+  font-weight: 500;
+}
+
+.article-meta .author-info {
+  font-weight: 500;
+}
+
+.task-reference {
+  background-color: #f0f0f0;
+  border-left: 4px solid #dc3545;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.article-content {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--text-color);
+}
+
+.article-content h1,
+.article-content h2,
+.article-content h3,
+.article-content h4,
+.article-content h5,
+.article-content h6 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.article-content h1 {
+  font-size: 2rem;
+}
+
+.article-content h2 {
+  font-size: 1.75rem;
+}
+
+.article-content h3 {
+  font-size: 1.5rem;
+}
+
+.article-content p {
+  margin-bottom: 1.25rem;
+}
+
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 1.5rem 0;
+}
+
+.article-content pre {
+  background-color: var(--code-bg);
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.article-content blockquote {
+  border-left: 4px solid var(--primary);
+  padding-left: 1.5rem;
+  margin: 1.5rem 0;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Dark mode adjustments for blog article */
+.dark-mode .article-title {
+  color: var(--text-color);
+}
+
+.dark-mode .article-content {
+  color: var(--text-color);
+}
+
+.dark-mode .task-reference {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-left-color: var(--cyan-info) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .article-title {
+    font-size: 2rem;
+  }
+  
+  .article-content {
+    font-size: 1rem;
+  }
+  
+  .blog-article {
+    padding: 1rem 0;
+  }
 }
