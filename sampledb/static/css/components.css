@@ -149,9 +149,9 @@ body .btn.btn-outline-primary:active {
   position: relative;
   border-radius: 4px;
   padding: 2px 6px;
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--primary-red-alpha-10);
   cursor: pointer;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--primary-red-alpha-30);
   min-height: 2rem;
 }
 
@@ -304,14 +304,21 @@ body .btn.btn-outline-primary:active {
 
 /* Dark mode adjustments for markdown */
 .dark-mode .spoiler-text code {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #e6e6e6;
+  background-color: #000000;
+  color: #ffd700;
 }
 
 .dark-mode .spoiler-text pre {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: #000000;
 }
 
 .dark-mode .spoiler-text pre code {
-  color: #e6e6e6;
+  color: #ffd700;
+}
+
+.dark-mode .spoiler-text blockquote {
+  background-color: rgba(0, 123, 255, 0.15);
+  padding: 0.75rem;
+  padding-left: 1rem;
+  border-radius: 4px;
 }
