@@ -2,8 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models.functions import Lower
-from django.db.models import Count, Case, When, IntegerField, Q, OuterRef, Subquery
+from django.db.models.functions import Lower, Cast
+from django.db.models import Count, Case, When, IntegerField, CharField, Q, OuterRef, Subquery
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -35,7 +35,7 @@ def sample_list(request):
     # Subquery to count comments for each task
     comment_count_subquery = Comment.objects.filter(
         content_type=analysistask_ct,
-        object_pk=OuterRef('pk'),
+        object_pk=Cast(OuterRef('pk'), output_field=CharField()),
         is_public=True,
         is_removed=False
     ).values('object_pk').annotate(
