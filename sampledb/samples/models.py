@@ -11,6 +11,16 @@ from cloudinary.models import CloudinaryField
 from django.core.validators import RegexValidator
 
 
+# Difficulty point multipliers - SINGLE SOURCE OF TRUTH
+# Used in score calculation and displayed in UI
+DIFFICULTY_POINTS = {
+    'easy': 10,
+    'medium': 20,
+    'advanced': 40,
+    'expert': 80,
+}
+
+
 def get_user_score(user):
     """Calculate user score based on likes received with difficulty multipliers.
     
@@ -26,14 +36,6 @@ def get_user_score(user):
     - Expert solution like: 500 points
     """
     from django.db.models import Count, Case, When, IntegerField, Sum
-    
-    # Difficulty multipliers
-    DIFFICULTY_POINTS = {
-        'easy': 100,
-        'medium': 200,
-        'advanced': 300,
-        'expert': 500,
-    }
     
     # Score from analysis task likes
     task_score = 0

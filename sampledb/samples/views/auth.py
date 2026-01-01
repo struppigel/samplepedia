@@ -10,8 +10,9 @@ from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.db.models import Q
 
-from ..models import Solution, AnalysisTask, get_user_score
+from ..models import Solution, AnalysisTask, get_user_score, DIFFICULTY_POINTS
 from ..forms import (
     TurnstileAuthenticationForm,
     TurnstileUserRegistrationForm,
@@ -262,12 +263,38 @@ def user_profile(request, username):
     from ..models import get_user_score
     user_score = get_user_score(profile_user)
     
+    # Calculate user rank by comparing scores
+    if user_score > 0:
+        # Get all users with scores
+        all_users = User.objects.filter(
+            Q(analysis_tasks__isnull=False) | Q(solutions__isnull=False)
+        ).distinct()
+        
+        # Calculate scores and sort
+        user_scores = []
+        for u in all_users:
+            score = get_user_score(u)
+            if score > 0:
+                user_scores.append({'user_id': u.id, 'score': score})
+        
+        user_scores.sort(key=lambda x: x['score'], reverse=True)
+        
+        # Find rank
+        user_rank = None
+        for idx, item in enumerate(user_scores, start=1):
+            if item['user_id'] == profile_user.id:
+                user_rank = idx
+                break
+    else:
+        user_rank = None
+    
     context = {
         'profile_user': profile_user,
         'solutions': solutions,
         'analysis_tasks': analysis_tasks,
         'user_favorited_ids': user_favorited_ids,
         'user_score': user_score,
+        'user_rank': user_rank,
     }
     
     return render(request, 'samples/profile.html', context)
@@ -397,6 +424,7 @@ def verify_email_change(request, uidb64, token):
 def ranking(request):
     """Display user ranking page based on scores"""
     from django.db import models
+    from django.db.models import Count, Q
     
     # Get all active users with at least one task or solution
     active_users = User.objects.filter(
@@ -410,11 +438,40 @@ def ranking(request):
         if score > 0:  # Only include users with positive scores
             task_count = user.analysis_tasks.count()
             solution_count = user.solutions.count()
+            
+            # Calculate likes per difficulty from tasks
+            task_likes_easy = user.analysis_tasks.filter(difficulty='easy').aggregate(
+                total=Count('favorited_by', distinct=True))['total'] or 0
+            task_likes_medium = user.analysis_tasks.filter(difficulty='medium').aggregate(
+                total=Count('favorited_by', distinct=True))['total'] or 0
+            task_likes_advanced = user.analysis_tasks.filter(difficulty='advanced').aggregate(
+                total=Count('favorited_by', distinct=True))['total'] or 0
+            task_likes_expert = user.analysis_tasks.filter(difficulty='expert').aggregate(
+                total=Count('favorited_by', distinct=True))['total'] or 0
+            
+            # Calculate likes per difficulty from solutions
+            solution_likes_easy = user.solutions.filter(analysis_task__difficulty='easy').aggregate(
+                total=Count('liked_by', distinct=True))['total'] or 0
+            solution_likes_medium = user.solutions.filter(analysis_task__difficulty='medium').aggregate(
+                total=Count('liked_by', distinct=True))['total'] or 0
+            solution_likes_advanced = user.solutions.filter(analysis_task__difficulty='advanced').aggregate(
+                total=Count('liked_by', distinct=True))['total'] or 0
+            solution_likes_expert = user.solutions.filter(analysis_task__difficulty='expert').aggregate(
+                total=Count('liked_by', distinct=True))['total'] or 0
+            
             user_scores.append({
                 'user': user,
                 'score': score,
                 'task_count': task_count,
                 'solution_count': solution_count,
+                'task_likes_easy': task_likes_easy,
+                'task_likes_medium': task_likes_medium,
+                'task_likes_advanced': task_likes_advanced,
+                'task_likes_expert': task_likes_expert,
+                'solution_likes_easy': solution_likes_easy,
+                'solution_likes_medium': solution_likes_medium,
+                'solution_likes_advanced': solution_likes_advanced,
+                'solution_likes_expert': solution_likes_expert,
             })
     
     # Sort by score (descending)
@@ -428,14 +485,6 @@ def ranking(request):
     paginator = Paginator(user_scores, 50)  # 50 users per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
-    # Get difficulty points for template display
-    DIFFICULTY_POINTS = {
-        'easy': 100,
-        'medium': 200,
-        'advanced': 300,
-        'expert': 500,
-    }
     
     return render(request, 'samples/ranking.html', {
         'page_obj': page_obj,

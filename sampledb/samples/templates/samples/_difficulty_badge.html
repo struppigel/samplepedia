@@ -1,9 +1,6 @@
+{% load user_tags %}
 <a href="/?difficulty={{ difficulty }}"
-   class="badge
-   {% if difficulty == 'easy' %}badge-info
-   {% elif difficulty == 'medium' %}badge-warning
-   {% elif difficulty == 'advanced' %}badge-danger
-   {% else %}badge-dark{% endif %}"
+   class="badge {{ difficulty|difficulty_badge_class }}"
    style="color: white; text-decoration: none;">
    {{ difficulty_display }}
 </a>

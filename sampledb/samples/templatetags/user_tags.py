@@ -10,6 +10,18 @@ def display_user_groups(user):
     """
     return {'user': user}
 
+@register.inclusion_tag('samples/_rank_medal.html')
+def rank_medal(rank, size='normal'):
+    """
+    Display ranking medal badge for top 3 users, or rank number for others.
+    Shows gold (#1), silver (#2), or bronze (#3) medal badges.
+    
+    Args:
+        rank: The user's rank position
+        size: 'normal' (1.1em) or 'small' (0.85em) for different display contexts
+    """
+    return {'rank': rank, 'size': size}
+
 @register.inclusion_tag('samples/_difficulty_badge.html')
 def difficulty_badge(difficulty, difficulty_display=None):
     """
@@ -52,6 +64,22 @@ def is_in(value, container):
     Usage: {% if task.id|is_in:user_favorited_ids %}
     """
     return value in container
+
+@register.filter
+def difficulty_badge_class(difficulty):
+    """
+    Return the Bootstrap badge class for a difficulty level.
+    This is the single source of truth for difficulty badge colors.
+    
+    Returns a string like "badge-info" ready to use in badge class attribute.
+    """
+    badge_classes = {
+        'easy': 'badge-info',
+        'medium': 'badge-warning',
+        'advanced': 'badge-danger',
+        'expert': 'badge-dark',
+    }
+    return badge_classes.get(difficulty, 'badge-secondary')
 
 @register.filter
 def solution_icon(solution_type):

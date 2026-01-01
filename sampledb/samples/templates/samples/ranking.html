@@ -40,6 +40,8 @@
                       <th style="text-align: center;">Score</th>
                       <th style="text-align: center;">Samples</th>
                       <th style="text-align: center;">Solutions</th>
+                      <th style="text-align: center;">Sample Likes</th>
+                      <th style="text-align: center;">Solution Likes</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -47,21 +49,7 @@
                       <tr>
                         <!-- Rank with medal icons for top 3 -->
                         <td>
-                          {% if item.rank == 1 %}
-                            <span class="badge" style="background-color: #FFD700; color: #000; font-size: 1.1em;">
-                              <i class="fas fa-medal"></i> #1
-                            </span>
-                          {% elif item.rank == 2 %}
-                            <span class="badge" style="background-color: #C0C0C0; color: #000; font-size: 1.1em;">
-                              <i class="fas fa-medal"></i> #2
-                            </span>
-                          {% elif item.rank == 3 %}
-                            <span class="badge" style="background-color: #CD7F32; color: #fff; font-size: 1.1em;">
-                              <i class="fas fa-medal"></i> #3
-                            </span>
-                          {% else %}
-                            <span class="text-muted">#{{ item.rank }}</span>
-                          {% endif %}
+                          {% rank_medal item.rank %}
                         </td>
                         
                         <!-- User with groups -->
@@ -85,6 +73,64 @@
                         <!-- Solution Count -->
                         <td style="text-align: center;">
                           <span class="text-muted">{{ item.solution_count }}</span>
+                        </td>
+                        
+                        <!-- Task Likes by Difficulty -->
+                        <td style="text-align: center;">
+                          <div class="d-flex justify-content-center gap-2" style="gap: 8px;">
+                            {% if item.task_likes_easy > 0 %}
+                              <span class="badge {{ 'easy'|difficulty_badge_class }}" style="color: white;" title="Easy: {{ item.task_likes_easy }} likes">
+                                <i class="fas fa-heart"></i> {{ item.task_likes_easy }}
+                              </span>
+                            {% endif %}
+                            {% if item.task_likes_medium > 0 %}
+                              <span class="badge {{ 'medium'|difficulty_badge_class }}" style="color: white;" title="Medium: {{ item.task_likes_medium }} likes">
+                                <i class="fas fa-heart"></i> {{ item.task_likes_medium }}
+                              </span>
+                            {% endif %}
+                            {% if item.task_likes_advanced > 0 %}
+                              <span class="badge {{ 'advanced'|difficulty_badge_class }}" style="color: white;" title="Advanced: {{ item.task_likes_advanced }} likes">
+                                <i class="fas fa-heart"></i> {{ item.task_likes_advanced }}
+                              </span>
+                            {% endif %}
+                            {% if item.task_likes_expert > 0 %}
+                              <span class="badge {{ 'expert'|difficulty_badge_class }}" style="color: white;" title="Expert: {{ item.task_likes_expert }} likes">
+                                <i class="fas fa-heart"></i> {{ item.task_likes_expert }}
+                              </span>
+                            {% endif %}
+                            {% if item.task_likes_easy == 0 and item.task_likes_medium == 0 and item.task_likes_advanced == 0 and item.task_likes_expert == 0 %}
+                              <span class="text-muted">-</span>
+                            {% endif %}
+                          </div>
+                        </td>
+                        
+                        <!-- Solution Likes by Difficulty -->
+                        <td style="text-align: center;">
+                          <div class="d-flex justify-content-center gap-2" style="gap: 8px;">
+                            {% if item.solution_likes_easy > 0 %}
+                              <span class="badge {{ 'easy'|difficulty_badge_class }}" style="color: white;" title="Easy: {{ item.solution_likes_easy }} likes">
+                                <i class="fas fa-heart"></i> {{ item.solution_likes_easy }}
+                              </span>
+                            {% endif %}
+                            {% if item.solution_likes_medium > 0 %}
+                              <span class="badge {{ 'medium'|difficulty_badge_class }}" style="color: white;" title="Medium: {{ item.solution_likes_medium }} likes">
+                                <i class="fas fa-heart"></i> {{ item.solution_likes_medium }}
+                              </span>
+                            {% endif %}
+                            {% if item.solution_likes_advanced > 0 %}
+                              <span class="badge {{ 'advanced'|difficulty_badge_class }}" style="color: white;" title="Advanced: {{ item.solution_likes_advanced }} likes">
+                                <i class="fas fa-heart"></i> {{ item.solution_likes_advanced }}
+                              </span>
+                            {% endif %}
+                            {% if item.solution_likes_expert > 0 %}
+                              <span class="badge {{ 'expert'|difficulty_badge_class }}" style="color: white;" title="Expert: {{ item.solution_likes_expert }} likes">
+                                <i class="fas fa-heart"></i> {{ item.solution_likes_expert }}
+                              </span>
+                            {% endif %}
+                            {% if item.solution_likes_easy == 0 and item.solution_likes_medium == 0 and item.solution_likes_advanced == 0 and item.solution_likes_expert == 0 %}
+                              <span class="text-muted">-</span>
+                            {% endif %}
+                          </div>
                         </td>
                       </tr>
                     {% endfor %}
@@ -151,10 +197,10 @@
           <div class="card-body">
             <p class="mb-2">Your score is calculated based on likes received on your submitted analysis tasks and solutions:</p>
             <ul class="mb-2">
-              <li><strong>Easy difficulty:</strong> {{ difficulty_points.easy }} points per like</li>
-              <li><strong>Medium difficulty:</strong> {{ difficulty_points.medium }} points per like</li>
-              <li><strong>Advanced difficulty:</strong> {{ difficulty_points.advanced }} points per like</li>
-              <li><strong>Expert difficulty:</strong> {{ difficulty_points.expert }} points per like</li>
+              <li>{% difficulty_badge 'easy' 'Easy' %} {{ difficulty_points.easy }} points per like</li>
+              <li>{% difficulty_badge 'medium' 'Medium' %} {{ difficulty_points.medium }} points per like</li>
+              <li>{% difficulty_badge 'advanced' 'Advanced' %} {{ difficulty_points.advanced }} points per like</li>
+              <li>{% difficulty_badge 'expert' 'Expert' %} {{ difficulty_points.expert }} points per like</li>
             </ul>
             <p class="text-muted small mb-0">
               <em>Note: Likes on solutions are weighted by the difficulty of the analysis task they solve.</em>
