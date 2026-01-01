@@ -98,7 +98,7 @@ function toggleFavorites(form) {
                 {% include 'samples/_sortable_column.html' with field='goal' minus_field='-goal' label='Goal' %}
               </th>
               <th style="width: 80px; text-align: center; cursor: pointer;">
-                <span class="text-dark">Solutions</span>
+                {% include 'samples/_sortable_column.html' with field='solutions' minus_field='-solutions' label='Solutions' %}
               </th>
               <th style="width: 80px; text-align: center; cursor: pointer;">
                 {% include 'samples/_sortable_column.html' with field='likes' minus_field='-likes' label='Likes' %}

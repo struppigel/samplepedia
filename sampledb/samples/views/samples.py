@@ -3,12 +3,14 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
-from django.db.models import Count, Case, When, IntegerField
+from django.db.models import Count, Case, When, IntegerField, Q, OuterRef, Subquery
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from taggit.models import Tag
 import re
+from django.contrib.contenttypes.models import ContentType
+from django_comments.models import Comment
 
 from ..models import AnalysisTask, Difficulty, SampleImage, Solution
 from ..forms import AnalysisTaskForm
@@ -27,9 +29,24 @@ def sample_list(request):
     favorites_only = request.GET.get("favorites") == "true"
     sort = request.GET.get("sort", "-id")  # Default to reverse chronological
 
+    # Get ContentType for AnalysisTask
+    analysistask_ct = ContentType.objects.get_for_model(AnalysisTask)
+
+    # Subquery to count comments for each task
+    comment_count_subquery = Comment.objects.filter(
+        content_type=analysistask_ct,
+        object_pk=OuterRef('pk'),
+        is_public=True,
+        is_removed=False
+    ).values('object_pk').annotate(
+        count=Count('pk')
+    ).values('count')
+
     # Annotate with favorite count and difficulty order for sorting
     samples = AnalysisTask.objects.annotate(
         favorite_count_annotated=Count('favorited_by'),
+        solution_count_annotated=Count('solutions'),
+        comment_count_annotated=Subquery(comment_count_subquery, output_field=IntegerField()),
         difficulty_order=Case(
             When(difficulty='easy', then=1),
             When(difficulty='medium', then=2),
@@ -73,6 +90,10 @@ def sample_list(request):
         '-goal': '-goal',
         'video': 'has_video',
         '-video': '-has_video',
+        'solutions': 'solution_count_annotated',
+        '-solutions': '-solution_count_annotated',
+        'comments': 'comment_count_annotated',
+        '-comments': '-comment_count_annotated',
         'likes': 'favorite_count_annotated',
         '-likes': '-favorite_count_annotated',
         'created': 'created_at',
