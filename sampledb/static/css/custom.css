@@ -469,3 +469,42 @@ body.dark-mode button.btn.btn-outline-primary:focus {
   color: white !important;
   box-shadow: 0 0 0 0.2rem rgba(74, 158, 255, 0.25) !important;
 }
+
+/* Image selection card for submit/edit task form */
+.image-select-card {
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.image-select-card:hover {
+  border-color: var(--primary-red);
+  transform: scale(1.02);
+}
+
+.image-select-card.selected {
+  border-color: var(--primary-red);
+  box-shadow: 0 0 10px var(--primary-red-alpha-40);
+}
+
+/* SHA256 field readonly styling for submit/edit task form */
+.sha256-readonly-field {
+  background-color: #f8f9fa !important;
+  cursor: not-allowed;
+}
+
+.dark-mode .sha256-readonly-field {
+  background-color: #482d2d !important;
+  color: #c0a0a0 !important;
+}
+
+/* SHA256 field when successfully extracted */
+.sha256-readonly-field.is-valid {
+  background-color: #d4edda !important;
+  border-color: #2872a7 !important;
+}
+
+.dark-mode .sha256-readonly-field.is-valid {
+  background-color: #1e3c46 !important;
+  border-color: #2887a7 !important;
+  color: #9ae6e0 !important;
+}

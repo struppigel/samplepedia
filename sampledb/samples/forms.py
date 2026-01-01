@@ -89,6 +89,7 @@ class AnalysisTaskForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
+        self.is_edit = kwargs.pop('is_edit', False)
         super().__init__(*args, **kwargs)
         # Make all fields required
         for field_name in self.fields:
@@ -104,11 +105,17 @@ class AnalysisTaskForm(forms.ModelForm):
         from .models import SolutionType
         self.fields['reference_solution_type'].choices = [('', '---------')] + list(SolutionType.choices)
         
-        # Make reference solution fields required for non-staff users
-        if self.user and not self.user.is_staff:
-            self.fields['reference_solution_title'].required = True
-            self.fields['reference_solution_type'].required = True
-            self.fields['reference_solution_url'].required = True
+        # Hide reference solution fields when editing
+        if self.is_edit:
+            del self.fields['reference_solution_title']
+            del self.fields['reference_solution_type']
+            del self.fields['reference_solution_url']
+        else:
+            # Make reference solution fields required for non-staff users when creating
+            if self.user and not self.user.is_staff:
+                self.fields['reference_solution_title'].required = True
+                self.fields['reference_solution_type'].required = True
+                self.fields['reference_solution_url'].required = True
     
     def clean_download_link(self):
         download_link = self.cleaned_data.get('download_link')
@@ -138,16 +145,16 @@ class AnalysisTaskForm(forms.ModelForm):
         return download_link
     
     def clean(self):
-        """Validate reference solution fields for non-staff users"""
+        """Validate reference solution fields for non-staff users when creating (not editing)"""
         cleaned_data = super().clean()
         
-        # Check if user is non-staff
-        if self.user and not self.user.is_staff:
+        # Only validate reference solution when creating a new task (not editing)
+        if not self.is_edit and self.user and not self.user.is_staff:
             ref_title = cleaned_data.get('reference_solution_title')
             ref_type = cleaned_data.get('reference_solution_type')
             ref_url = cleaned_data.get('reference_solution_url')
             
-            # All three must be provided for non-staff users
+            # All three must be provided for non-staff users when creating
             if not all([ref_title, ref_type, ref_url]):
                 raise forms.ValidationError(
                     "You must provide a reference solution (title, type, and URL) when submitting an analysis task."

@@ -189,7 +189,7 @@ def extract_youtube_id(url):
 def submit_task(request):
     """Allow users to submit their own analysis task"""
     if request.method == 'POST':
-        form = AnalysisTaskForm(request.POST, user=request.user)
+        form = AnalysisTaskForm(request.POST, user=request.user, is_edit=False)
         if form.is_valid():
             # Use atomic transaction to ensure tags/tools are saved before Discord notification
             with transaction.atomic():
@@ -234,7 +234,7 @@ def submit_task(request):
             messages.success(request, f'AnalysisTask {sample.sha256[:12]}... submitted successfully!')
             return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
     else:
-        form = AnalysisTaskForm(user=request.user)
+        form = AnalysisTaskForm(user=request.user, is_edit=False)
     
     # Get available images from image library
     available_images = SampleImage.objects.all()
@@ -257,7 +257,7 @@ def edit_task(request, sha256, task_id):
         return redirect('sample_detail', sha256=task.sha256, task_id=task.id)
     
     if request.method == 'POST':
-        form = AnalysisTaskForm(request.POST, instance=task, user=request.user)
+        form = AnalysisTaskForm(request.POST, instance=task, user=request.user, is_edit=True)
         if form.is_valid():
             # Use atomic transaction
             with transaction.atomic():
@@ -288,7 +288,12 @@ def edit_task(request, sha256, task_id):
             messages.success(request, f'AnalysisTask {sample.sha256[:12]}... updated successfully!')
             return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
     else:
-        form = AnalysisTaskForm(instance=task, user=request.user)
+        # Prepare initial data with properly formatted tags and tools
+        initial_data = {
+            'tags': ', '.join(task.tags.values_list('name', flat=True)),
+            'tools': ', '.join(task.tools.values_list('name', flat=True)),
+        }
+        form = AnalysisTaskForm(instance=task, initial=initial_data, user=request.user, is_edit=True)
     
     # Get available images from image library
     available_images = SampleImage.objects.all()

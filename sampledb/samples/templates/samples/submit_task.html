@@ -24,6 +24,12 @@
             <form method="post" novalidate>
               {% csrf_token %}
               
+              {% if not is_edit and not user.is_staff %}
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> <strong>Reference Solution Required:</strong> You must provide one reference solution (your own writeup, video, or analysis) when submitting a task.
+              </div>
+              {% endif %}
+              
               <div class="form-group">
                 <label for="{{ form.sha256.id_for_label }}">SHA256 Hash</label>
                 {{ form.sha256 }}
@@ -121,15 +127,9 @@
                 <small class="form-text text-muted">Choose an image from gallery</small>
               </div>
 
+              {% if not is_edit %}
               <hr class="my-4">
               <h5 class="mb-3">Reference Solution{% if not user.is_staff %} <span class="text-danger">*</span>{% else %} (Optional){% endif %}</h5>
-              <p class="small text-muted mb-3">
-                {% if not user.is_staff %}
-                  You must provide one reference solution when submitting an analysis task. This helps ensure quality content.
-                {% else %}
-                  You may optionally provide a reference solution when submitting an analysis task.
-                {% endif %}
-              </p>
               
               <div class="form-group">
                 <label for="{{ form.reference_solution_title.id_for_label }}">Solution Title{% if not user.is_staff %} <span class="text-danger">*</span>{% endif %}</label>
@@ -162,6 +162,7 @@
                   <small class="form-text text-muted">Provide a link to your writeup, video, or paper</small>
                 {% endif %}
               </div>
+              {% endif %}
 
               {% if form.non_field_errors %}
                 <div class="alert alert-danger">
@@ -203,11 +204,7 @@
           <div class="card-body">
             <p class="small mb-3">Provide a valid SHA256 hash (64 hex characters) for the contained file, if the download consists of several files, use the hash of the archive</p>
             <p class="small mb-3">The download link must be to malshare or malwarebazaar</p>
-            <p class="small mb-3">Choose the appropriate difficulty level, see explanation below</p>
-            {% if not user.is_staff %}
-            <p class="small mb-0"><strong class="text-danger">Required:</strong> You must provide one reference solution (your own writeup, video, or analysis) when submitting a task</p>
-            {% endif %}
-            </ul>
+            <p class="small mb-0">Choose the appropriate difficulty level, see explanation below</p>
           </div>
         </div>
         
@@ -268,45 +265,6 @@
       </div>
     </div>
   </div>
-
-  <style>
-  .image-select-card {
-    transition: all 0.2s;
-    border: 2px solid transparent;
-  }
-  .image-select-card:hover {
-    border-color: #e63946;
-    transform: scale(1.02);
-  }
-  .image-select-card.selected {
-    border-color: #e63946;
-    box-shadow: 0 0 10px rgba(230, 57, 70, 0.5);
-  }
-  
-  /* Styling for readonly SHA256 field */
-  .sha256-readonly-field {
-    background-color: #f8f9fa !important;
-    cursor: not-allowed;
-  }
-  
-  /* Dark mode styling for readonly SHA256 field */
-  .dark-mode .sha256-readonly-field {
-    background-color: #482d2d !important;
-    color: #c0a0a0 !important;
-  }
-  
-  /* When SHA256 is successfully extracted */
-  .sha256-readonly-field.is-valid {
-    background-color: #d4edda !important;
-    border-color: #2872a7 !important;
-  }
-  
-  .dark-mode .sha256-readonly-field.is-valid {
-    background-color: #1e3c46 !important;
-    border-color: #2887a7 !important;
-    color: #9ae6e0 !important;
-  }
-  </style>
 
   <script>
   // Pre-select current image in edit mode
