@@ -101,16 +101,28 @@
 
                         <!-- Solution Type -->
                         <td>
+                          {% if solution.solution_type == 'onsite' %}
+                          <a href="{% url 'view_onsite_solution' solution.analysis_task.sha256 solution.analysis_task.id solution.id %}" class="text-dark">
+                            <i class="fas {{ solution.solution_type|solution_icon }}"> </i> {{ solution.get_solution_type_display }}
+                          </a>
+                          {% else %}
                           <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}" class="text-dark">
                             <i class="fas {{ solution.solution_type|solution_icon }}"> </i> {{ solution.get_solution_type_display }}
                           </a>
+                          {% endif %}
                         </td>
 
                         <!-- Solution Title -->
                         <td>
+                          {% if solution.solution_type == 'onsite' %}
+                          <a href="{% url 'view_onsite_solution' solution.analysis_task.sha256 solution.analysis_task.id solution.id %}" class="text-dark">
+                            {{ solution.title|truncatechars:50 }}
+                          </a>
+                          {% else %}
                           <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}" class="text-dark">
                             {{ solution.title|truncatechars:50 }}
                           </a>
+                          {% endif %}
                         </td>
 
                         <!-- Created Date -->
@@ -122,9 +134,15 @@
                         
                         <!-- External Link -->
                         <td>
-                          <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" title="View Solution" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
-                            <i class="fas fa-external-link-alt"></i>
-                          </a>
+                          {% if solution.solution_type == 'onsite' %}
+                            <a href="{% url 'view_onsite_solution' solution.analysis_task.sha256 solution.analysis_task.id solution.id %}" rel="noopener noreferrer" title="View Solution">
+                              <i class="fas fa-eye"></i>
+                            </a>
+                          {% else %}
+                            <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" title="View Solution" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
+                              <i class="fas fa-external-link-alt"></i>
+                            </a>
+                          {% endif %}
                         </td>
                         
                         <!-- Delete Action -->

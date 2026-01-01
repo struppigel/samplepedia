@@ -21,29 +21,23 @@
       <i class="fas fa-calendar mr-1"></i>
       {{ publish_date }}
     </div>
-    {% if show_likes %}
-    <div class="like-count mb-2">
-      <i class="fas fa-heart mr-1"></i>
-      {{ like_count }} {% if like_count == 1 %}like{% else %}likes{% endif %}
-    </div>
+    {% if show_actions %}
+      {% if solution and user_has_liked != None %}
+        <div class="mr-4 mb-2">
+          {% solution_like_button solution user_has_liked %}
+        </div>
+      {% endif %}
+      {% if edit_url %}
+        <div class="mb-2">
+          <a href="{{ edit_url }}" 
+             class="btn btn-sm btn-secondary" 
+             title="Edit Solution">
+            <i class="fas fa-edit"></i> Edit
+          </a>
+        </div>
+      {% endif %}
     {% endif %}
   </div>
-
-  <!-- Action Buttons (optional) -->
-  {% if show_actions %}
-  <div class="article-actions d-flex align-items-center mb-4">
-    {% if solution and user_has_liked != None %}
-      {% solution_like_button solution user_has_liked %}
-    {% endif %}
-    {% if edit_url %}
-      <a href="{{ edit_url }}" 
-         class="btn btn-sm btn-secondary ml-2" 
-         title="Edit Solution">
-        <i class="fas fa-edit"></i> Edit
-      </a>
-    {% endif %}
-  </div>
-  {% endif %}
 
   <!-- Task Reference -->
   <div class="task-reference p-3 mb-4">
