@@ -1,0 +1,66 @@
+/* CSS Variables - Theme Colors and Context-Aware Properties */
+
+:root {
+  /* Primary Theme Colors */
+  --primary-red: #e63946;
+  --primary-red-alpha-10: rgba(230, 57, 70, 0.1);
+  --primary-red-alpha-20: rgba(230, 57, 70, 0.2);
+  --primary-red-alpha-25: rgba(230, 57, 70, 0.25);
+  --primary-red-alpha-30: rgba(230, 57, 70, 0.3);
+  --primary-red-alpha-40: rgba(230, 57, 70, 0.4);
+  --dark-bg: #1e1e1e;
+  --darker-bg: #141414;
+  --card-bg: #2a2a2a;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --accent-red: #ff4757;
+  
+  /* Additional color variables */
+  --light-bg: #f8f9fa;
+  --gray-600: #6c757d;
+  --gray-700: #545b62;
+  --gray-800: #343a40;
+  --gray-900: #111111;
+  --border-light: #dee2e6;
+  --blue-primary: #007bff;
+  --blue-light: #4a9eff;
+  --orange-warning: #ffa726;
+  --red-danger: #ef5350;
+  --cyan-info: #17a2b8;
+  --green-success: #d4edda;
+  --green-border: #2872a7;
+  --teal-bg: #1e3c46;
+  --teal-border: #2887a7;
+  --teal-text: #9ae6e0;
+  --brown-bg: #482d2d;
+  --brown-text: #c0a0a0;
+  
+  /* Context-aware variables (change in dark mode) */
+  --body-bg: #ffffff;
+  --body-color: #212529;
+  --form-bg: rgba(0, 0, 0, 0.02);
+  --form-bg-focus: rgba(0, 0, 0, 0.04);
+  --form-border: #ced4da;
+  --form-placeholder: rgba(0, 0, 0, 0.4);
+  --table-stripe: rgba(0, 0, 0, 0.03);
+  --table-border: rgba(0, 0, 0, 0.08);
+  --list-item-bg: #ffffff;
+  --list-item-border: rgba(0, 0, 0, 0.125);
+  --solution-even-bg: rgba(0, 0, 0, 0.02);
+  --solution-hover-bg: rgba(0, 0, 0, 0.05);
+  --page-link-bg: #ffffff;
+  --page-link-color: var(--blue-primary);
+  --page-link-border: var(--border-light);
+  --alert-info-bg: #d1ecf1;
+  --alert-info-border: #bee5eb;
+  --alert-info-text: #333;
+  --alert-link-color: var(--primary-red);
+  --alert-link-hover: var(--blue-primary);
+  --footer-bg: var(--gray-800);
+  --sha256-readonly-bg: var(--light-bg);
+  --sha256-readonly-color: var(--body-color);
+  --sha256-valid-bg: var(--green-success);
+  --sha256-valid-border: var(--green-border);
+  --sha256-valid-color: var(--body-color);
+  --image-bg: var(--light-bg);
+}

@@ -1,0 +1,214 @@
+/* Component Styles - Cards, Badges, Alerts, Buttons */
+
+/* Cards */
+.card {
+  border-radius: 8px;
+}
+
+.card-header {
+  padding: 0.5rem 0.75rem !important;
+}
+
+.card-title {
+  margin-bottom: 0 !important;
+}
+
+/* Badges */
+.badge-success {
+  background-color: var(--primary-red) !important;
+}
+
+.badge-warning {
+  background-color: var(--orange-warning) !important;
+}
+
+.badge-danger {
+  background-color: var(--red-danger) !important;
+}
+
+.badge-dark {
+  background-color: var(--gray-900) !important;
+}
+
+.badge-info {
+  background-color: var(--cyan-info) !important;
+}
+
+/* Badge hover effects */
+a.badge {
+  transition: filter 0.15s ease;
+}
+
+a.badge:hover {
+  filter: brightness(1.2);
+  text-decoration: none;
+}
+
+/* Tag colors - generates consistent color per tag */
+.badge-tag {
+  color: white !important;
+  text-decoration: none;
+}
+
+/* Alert info styling - uses context-aware variables */
+.alert-info {
+  background-color: var(--alert-info-bg) !important;
+  border-color: var(--alert-info-border) !important;
+  color: var(--alert-info-text) !important;
+}
+
+/* Alert link styling - uses context-aware variables */
+.alert-info .alert-link {
+  color: var(--alert-link-color) !important;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.alert-info .alert-link:hover {
+  color: var(--alert-link-hover) !important;
+  text-decoration: underline;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--primary-red) !important;
+  border-color: var(--primary-red) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-red) !important;
+  border-color: var(--accent-red) !important;
+}
+
+.btn-back {
+  color: var(--primary-red);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-back:hover {
+  color: var(--blue-primary);
+}
+
+/* Button overrides - consolidated for efficiency */
+/* Success button (gray) */
+body .btn.btn-success,
+body a.btn.btn-success,
+body button.btn.btn-success {
+  background-color: var(--gray-600) !important;
+  border-color: var(--gray-600) !important;
+  color: white !important;
+}
+
+body .btn.btn-success:hover,
+body .btn.btn-success:focus,
+body .btn.btn-success:active {
+  background-color: #5a6268 !important;
+  border-color: var(--gray-700) !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25) !important;
+}
+
+/* Outline primary button (blue) */
+body .btn.btn-outline-primary,
+body a.btn.btn-outline-primary,
+body button.btn.btn-outline-primary {
+  background-color: transparent !important;
+  border-color: var(--blue-primary) !important;
+  color: var(--blue-primary) !important;
+}
+
+body .btn.btn-outline-primary:hover,
+body .btn.btn-outline-primary:focus,
+body .btn.btn-outline-primary:active {
+  background-color: var(--blue-primary) !important;
+  border-color: var(--blue-primary) !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Favorite buttons */
+.favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.favorite-count {
+  display: inline-block;
+  min-width: 1.5rem;
+  text-align: left;
+}
+
+/* Spoiler styling (both themes) */
+.spoiler {
+  display: inline-block;
+  position: relative;
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: var(--primary-red-alpha-10);
+  cursor: pointer;
+  border: 1px solid var(--primary-red-alpha-30);
+}
+
+.spoiler > .spoiler-text {
+  color: transparent;
+  user-select: none;
+}
+
+.spoiler.decrypting > .spoiler-text {
+  color: inherit;
+  user-select: none;
+}
+
+.spoiler::after {
+  content: "Spoiler, click to reveal";
+  position: absolute;
+  inset: 0;
+  padding: 2px 6px;
+  color: var(--primary-red);
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.spoiler.revealed > .spoiler-text {
+  color: inherit;
+  user-select: text;
+}
+
+.spoiler.decrypting::after,
+.spoiler.revealed::after {
+  display: none;
+}
+
+/* Solution item styling for detail page - uses context-aware variables */
+.solution-item:nth-child(even) {
+  background-color: var(--solution-even-bg);
+}
+
+.solution-item:hover {
+  background-color: var(--solution-hover-bg) !important;
+  transition: background-color 0.2s ease;
+}
+
+/* Highlight animation for solution from notification */
+.solution-highlight {
+  background-color: rgba(230, 57, 70, 0.3) !important;
+  animation: highlightFade 3s ease-out;
+  transition: none !important;
+}
+
+@keyframes highlightFade {
+  0% {
+    background-color: rgba(230, 57, 70, 0.5);
+  }
+  100% {
+    background-color: transparent;
+  }
+}

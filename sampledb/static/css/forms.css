@@ -1,0 +1,93 @@
+/* Form Controls and Input Styling */
+
+/* Form inputs - uses context-aware variables */
+.form-control {
+  background-color: var(--form-bg) !important;
+  border-color: var(--form-border) !important;
+  color: var(--body-color) !important;
+}
+
+.form-control:focus {
+  background-color: var(--form-bg-focus) !important;
+  border-color: var(--primary-red) !important;
+  box-shadow: 0 0 0 0.2rem var(--primary-red-alpha-25) !important;
+  color: var(--body-color) !important;
+}
+
+/* Ensure placeholder text is visible */
+.form-control::placeholder {
+  color: var(--form-placeholder) !important;
+  opacity: 0.6 !important;
+}
+
+/* Fix for autofill and active input states */
+.dark-mode input.form-control:-webkit-autofill,
+.dark-mode input.form-control:-webkit-autofill:hover,
+.dark-mode input.form-control:-webkit-autofill:focus,
+.dark-mode input.form-control:-webkit-autofill:active,
+.dark-mode textarea.form-control:-webkit-autofill,
+.dark-mode textarea.form-control:-webkit-autofill:hover,
+.dark-mode textarea.form-control:-webkit-autofill:focus,
+.dark-mode textarea.form-control:-webkit-autofill:active,
+.dark-mode select.form-control:-webkit-autofill,
+.dark-mode select.form-control:-webkit-autofill:hover,
+.dark-mode select.form-control:-webkit-autofill:focus,
+.dark-mode select.form-control:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+  background-color: var(--card-bg) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--card-bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--card-bg) inset !important;
+  caret-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+}
+
+/* Additional fix for Firefox and other browsers */
+.dark-mode input.form-control:-moz-autofill,
+.dark-mode textarea.form-control:-moz-autofill,
+.dark-mode select.form-control:-moz-autofill {
+  background-color: var(--card-bg) !important;
+  color: #ffffff !important;
+  -moz-text-fill-color: #ffffff !important;
+}
+
+/* SHA256 readonly field - uses context-aware variables */
+.sha256-readonly-field {
+  background-color: var(--sha256-readonly-bg) !important;
+  color: var(--sha256-readonly-color) !important;
+  cursor: not-allowed;
+}
+
+/* SHA256 field when successfully extracted - uses context-aware variables */
+.sha256-readonly-field.is-valid {
+  background-color: var(--sha256-valid-bg) !important;
+  border-color: var(--sha256-valid-border) !important;
+  color: var(--sha256-valid-color) !important;
+}
+
+/* Image selection card for submit/edit task form */
+.image-select-card {
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  overflow: hidden;
+}
+
+.image-select-card:hover {
+  border-color: var(--primary-red);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.image-select-card.selected {
+  border-color: var(--primary-red);
+  box-shadow: 0 0 10px var(--primary-red-alpha-40);
+}
+
+.image-select-card img {
+  transition: transform 0.2s ease;
+  background-color: var(--image-bg);
+}
+
+.image-select-card:hover img {
+  transform: scale(1.05);
+}

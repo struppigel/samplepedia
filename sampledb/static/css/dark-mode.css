@@ -1,0 +1,152 @@
+/* Dark Mode Styles and Variable Overrides */
+
+.dark-mode {
+  /* Override context-aware variables for dark mode */
+  --body-bg: var(--darker-bg);
+  --body-color: var(--text-primary);
+  --form-bg: rgba(255, 255, 255, 0.05);
+  --form-bg-focus: rgba(255, 255, 255, 0.08);
+  --form-border: rgba(255, 255, 255, 0.1);
+  --form-placeholder: rgba(255, 255, 255, 0.4);
+  --table-stripe: rgba(255, 255, 255, 0.03);
+  --table-border: rgba(255, 255, 255, 0.08);
+  --list-item-bg: var(--card-bg);
+  --list-item-border: rgba(255, 255, 255, 0.1);
+  --solution-even-bg: rgba(255, 255, 255, 0.02);
+  --solution-hover-bg: rgba(255, 255, 255, 0.05);
+  --page-link-bg: var(--card-bg);
+  --page-link-color: var(--text-primary);
+  --page-link-border: rgba(255, 255, 255, 0.1);
+  --alert-info-bg: rgba(57, 92, 230, 0.437);
+  --alert-info-border: rgba(57, 69, 230, 0.4);
+  --alert-info-text: var(--text-primary);
+  --alert-link-color: #ffffff;
+  --alert-link-hover: #000000;
+  --footer-bg: var(--dark-bg);
+  --sha256-readonly-bg: var(--brown-bg);
+  --sha256-readonly-color: var(--brown-text);
+  --sha256-valid-bg: var(--teal-bg);
+  --sha256-valid-border: var(--teal-border);
+  --sha256-valid-color: var(--teal-text);
+  --image-bg: #1a1a1a;
+}
+
+.dark-mode {
+  background-color: var(--body-bg) !important;
+  color: var(--body-color);
+}
+
+.dark-mode .navbar-dark {
+  background-color: var(--dark-bg) !important;
+  border-bottom: 1px solid var(--primary-red-alpha-30);
+}
+
+.dark-mode .content-wrapper {
+  background-color: var(--body-bg) !important;
+}
+
+.dark-mode .card {
+  background-color: var(--card-bg) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px;
+}
+
+.dark-mode .card-header {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  border-bottom: 1px solid var(--primary-red-alpha-30) !important;
+}
+
+/* Dark mode table styling */
+.dark-mode .table {
+  color: var(--body-color) !important;
+  background-color: transparent !important;
+}
+
+/* Dark mode list groups */
+.dark-mode .list-group-item {
+  background-color: var(--list-item-bg) !important;
+  border-color: var(--list-item-border) !important;
+  color: var(--body-color) !important;
+}
+
+.dark-mode .list-group-item-action:hover {
+  background-color: var(--primary-red-alpha-10) !important;
+  color: var(--body-color) !important;
+}
+
+.dark-mode .list-group-item h5 {
+  color: var(--body-color) !important;
+}
+
+/* Dark mode pagination */
+.dark-mode .pagination .page-link {
+  background-color: var(--page-link-bg) !important;
+  border-color: var(--page-link-border) !important;
+  color: var(--page-link-color) !important;
+}
+
+.dark-mode .pagination .page-link:hover {
+  background-color: var(--primary-red-alpha-20) !important;
+  color: var(--primary-red) !important;
+}
+
+.dark-mode .pagination .page-item.active .page-link {
+  background-color: var(--primary-red) !important;
+  border-color: var(--primary-red) !important;
+}
+
+/* Dark mode select dropdowns */
+.dark-mode select.form-control option {
+  background-color: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Dark mode spoiler improvements */
+body:not(.dark-mode) .spoiler {
+  background: var(--light-bg);
+  border: 1px solid var(--border-light);
+}
+
+body:not(.dark-mode) .spoiler::after {
+  background: var(--gray-600);
+  color: white;
+}
+
+/* Dark mode button overrides */
+body.dark-mode .btn.btn-success,
+body.dark-mode a.btn.btn-success,
+body.dark-mode button.btn.btn-success {
+  background-color: #495057 !important;
+  border-color: #495057 !important;
+}
+
+body.dark-mode .btn.btn-success:hover,
+body.dark-mode .btn.btn-success:focus,
+body.dark-mode .btn.btn-success:active {
+  background-color: var(--gray-600) !important;
+  border-color: var(--gray-600) !important;
+}
+
+body.dark-mode .btn.btn-outline-primary,
+body.dark-mode a.btn.btn-outline-primary,
+body.dark-mode button.btn.btn-outline-primary {
+  border-color: var(--blue-light) !important;
+  color: var(--blue-light) !important;
+}
+
+body.dark-mode .btn.btn-outline-primary:hover,
+body.dark-mode .btn.btn-outline-primary:focus,
+body.dark-mode .btn.btn-outline-primary:active {
+  background-color: var(--blue-light) !important;
+  border-color: var(--blue-light) !important;
+}
+
+/* Dark mode image select card */
+.dark-mode .image-select-card:hover {
+  box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
+}
+
+/* Dark mode solution highlight */
+.dark-mode .solution-highlight {
+  background-color: rgba(230, 57, 70, 0.4) !important;
+}

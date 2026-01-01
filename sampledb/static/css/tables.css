@@ -1,0 +1,32 @@
+/* Table Styling */
+
+/* Table styling - uses context-aware variables */
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--table-stripe) !important;
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--primary-red-alpha-10) !important;
+}
+
+.table td, .table th {
+  border-color: var(--table-border) !important;
+}
+
+/* Pagination - uses context-aware variables */
+.pagination .page-link {
+  background-color: var(--page-link-bg);
+  border-color: var(--page-link-border);
+  color: var(--page-link-color);
+}
+
+.pagination .page-link:hover {
+  background-color: var(--primary-red-alpha-10);
+  color: var(--primary-red);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--primary-red);
+  border-color: var(--primary-red);
+  color: white;
+}

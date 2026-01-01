@@ -1,0 +1,52 @@
+/* Layout and Structure Styles */
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+}
+
+/* Links */
+a {
+  color: var(--primary-red);
+}
+
+a:hover {
+  color: var(--accent-red);
+}
+
+/* Keep text-muted links gray but red on hover */
+a.text-muted {
+  color: var(--gray-600) !important;
+}
+
+a.text-muted:hover {
+  color: var(--accent-red) !important;
+}
+
+/* Navbar */
+.navbar-brand {
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+/* Footer - uses context-aware variables */
+.main-footer {
+  border-top: 1px solid var(--primary-red-alpha-30);
+  background-color: var(--footer-bg);
+}
+
+.main-footer a {
+  transition: color 0.2s ease;
+}
+
+.main-footer .text-muted {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.main-footer .text-muted:hover {
+  color: var(--accent-red) !important;
+}
