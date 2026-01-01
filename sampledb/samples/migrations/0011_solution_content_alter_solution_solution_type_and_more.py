@@ -10,16 +10,20 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # First add the content field
         migrations.AddField(
             model_name='solution',
             name='content',
-            field=models.TextField(blank=True, help_text='Markdown content for on-site solutions', verbose_name='Content'),
+            field=models.TextField(blank=True, default='', help_text='Markdown content for on-site solutions', verbose_name='Content'),
+            preserve_default=False,
         ),
+        # Then update solution_type choices to include 'onsite'
         migrations.AlterField(
             model_name='solution',
             name='solution_type',
             field=models.CharField(choices=[('blog', 'Blog'), ('paper', 'Paper'), ('video', 'Video'), ('onsite', 'On-Site Article')], max_length=10, verbose_name='Solution type'),
         ),
+        # Finally make url nullable (for onsite solutions)
         migrations.AlterField(
             model_name='solution',
             name='url',
