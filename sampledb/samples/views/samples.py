@@ -5,11 +5,14 @@ from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.db.models import Count, Case, When, IntegerField
 from django.db import transaction
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from taggit.models import Tag
 import re
 
 from ..models import AnalysisTask, Difficulty, SampleImage, Solution
 from ..forms import AnalysisTaskForm
+from markdownx.utils import markdownify
 
 
 def sample_list(request):
@@ -334,3 +337,11 @@ def delete_task(request, sha256, task_id):
     
     # If not POST, redirect back to detail page
     return redirect('sample_detail', sha256=task.sha256, task_id=task.id)
+
+
+@require_POST
+def markdown_preview(request):
+    """AJAX endpoint to render markdown preview"""
+    content = request.POST.get('content', '')
+    html = markdownify(content)
+    return JsonResponse({'html': html})

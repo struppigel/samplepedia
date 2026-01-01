@@ -91,3 +91,126 @@
 .image-select-card:hover img {
   transform: scale(1.05);
 }
+
+/* Markdown preview tabs */
+.markdown-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: -1px;
+  border-bottom: 1px solid var(--form-border);
+}
+
+.markdown-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.markdown-tab:hover {
+  color: var(--body-color);
+  border-bottom-color: var(--form-border);
+}
+
+.markdown-tab.active {
+  color: var(--primary-red);
+  border-bottom-color: var(--primary-red);
+}
+
+.markdown-tab-content {
+  position: relative;
+}
+
+.markdown-pane {
+  display: none;
+}
+
+.markdown-pane.active {
+  display: block;
+}
+
+.markdown-pane[data-pane="preview"] {
+  border: 1px solid var(--form-border);
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+  background-color: var(--form-bg);
+  min-height: 200px;
+}
+
+.markdown-preview-content {
+  color: var(--body-color);
+}
+
+.markdown-preview-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Markdown content styling in preview */
+.markdown-preview-content h1,
+.markdown-preview-content h2,
+.markdown-preview-content h3,
+.markdown-preview-content h4,
+.markdown-preview-content h5,
+.markdown-preview-content h6 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-preview-content h1:first-child,
+.markdown-preview-content h2:first-child,
+.markdown-preview-content h3:first-child,
+.markdown-preview-content h4:first-child,
+.markdown-preview-content h5:first-child,
+.markdown-preview-content h6:first-child {
+  margin-top: 0;
+}
+
+.markdown-preview-content code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.markdown-preview-content pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.75rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+.markdown-preview-content pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.markdown-preview-content blockquote {
+  border-left: 4px solid var(--primary-red);
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: var(--text-muted);
+}
+
+.markdown-preview-content ul,
+.markdown-preview-content ol {
+  margin-bottom: 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-preview-content li {
+  margin-bottom: 0.25rem;
+}
+
+/* Dark mode adjustments for markdown preview */
+[data-theme="dark"] .markdown-preview-content code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .markdown-preview-content pre {
+  background-color: rgba(255, 255, 255, 0.05);
+}

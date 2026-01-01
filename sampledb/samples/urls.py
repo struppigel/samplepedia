@@ -44,4 +44,6 @@ urlpatterns = [
     path("notifications/mark-all-read/", views.mark_all_read, name="mark_all_read"),
     path("notifications/<int:notification_id>/delete/", views.delete_notification, name="delete_notification"),
     path("notifications/unread-count/", views.unread_count, name="unread_count"),
+    # Markdown preview
+    path("markdown-preview/", views.markdown_preview, name="markdown_preview"),
 ]

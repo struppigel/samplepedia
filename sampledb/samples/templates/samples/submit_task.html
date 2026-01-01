@@ -67,12 +67,26 @@
 
               <div class="form-group">
                 <label for="{{ form.description.id_for_label }}">Description</label>
-                {{ form.description }}
+                <div class="markdown-tabs">
+                  <button type="button" class="markdown-tab active" data-tab="write">Write</button>
+                  <button type="button" class="markdown-tab" data-tab="preview">Preview</button>
+                </div>
+                <div class="markdown-tab-content">
+                  <div class="markdown-pane active" data-pane="write">
+                    {{ form.description }}
+                  </div>
+                  <div class="markdown-pane" data-pane="preview">
+                    <div class="markdown-preview-content">
+                      <p class="text-muted">Nothing to preview</p>
+                    </div>
+                  </div>
+                </div>
                 {% if form.description.errors %}
                   <div class="text-danger small">
                     {{ form.description.errors }}
                   </div>
                 {% else %}
+                <small class="form-text text-muted">This field accepts markdown formatting, feel free to add tips here, the field will be in a spoiler</small>
                 {% endif %}
               </div>
 
@@ -202,9 +216,9 @@
             <h3 class="card-title">Submission Guidelines</h3>
           </div>
           <div class="card-body">
-            <p class="small mb-3">Provide a valid SHA256 hash (64 hex characters) for the contained file, if the download consists of several files, use the hash of the archive</p>
             <p class="small mb-3">The download link must be to malshare or malwarebazaar</p>
             <p class="small mb-0">Choose the appropriate difficulty level, see explanation below</p>
+            <p class="small mb-0">You can add analysis tips to the description, it will be in a spoiler</p>
           </div>
         </div>
         
@@ -377,6 +391,70 @@
         downloadLinkInput.dispatchEvent(new Event('input'));
       }
     }
+  });
+  
+  // Markdown preview tabs
+  document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.markdown-tab');
+    const panes = document.querySelectorAll('.markdown-pane');
+    const textarea = document.getElementById('id_description');
+    const previewContent = document.querySelector('.markdown-preview-content');
+    let previewCache = '';
+    
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const targetTab = this.getAttribute('data-tab');
+        
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Update active pane
+        panes.forEach(p => {
+          if (p.getAttribute('data-pane') === targetTab) {
+            p.classList.add('active');
+          } else {
+            p.classList.remove('active');
+          }
+        });
+        
+        // If switching to preview, render markdown
+        if (targetTab === 'preview') {
+          const content = textarea.value;
+          
+          // Only fetch if content changed
+          if (content !== previewCache) {
+            previewCache = content;
+            
+            if (!content.trim()) {
+              previewContent.innerHTML = '<p class=\"text-muted\">Nothing to preview</p>';
+              return;
+            }
+            
+            // Show loading state
+            previewContent.innerHTML = '<p class=\"text-muted\"><i class=\"fas fa-spinner fa-spin\"></i> Loading preview...</p>';
+            
+            // Fetch preview from server
+            fetch('{% url "markdown_preview" %}', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+              },
+              body: 'content=' + encodeURIComponent(content)
+            })
+            .then(response => response.json())
+            .then(data => {
+              previewContent.innerHTML = data.html;
+            })
+            .catch(error => {
+              console.error('Preview error:', error);
+              previewContent.innerHTML = '<p class=\"text-danger\">Error loading preview</p>';
+            });
+          }
+        }
+      });
+    });
   });
   </script>
 </section>

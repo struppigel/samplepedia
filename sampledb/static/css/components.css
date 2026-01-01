@@ -145,23 +145,23 @@ body .btn.btn-outline-primary:active {
 
 /* Spoiler styling (both themes) */
 .spoiler {
-  display: inline-block;
+  display: block;
   position: relative;
   border-radius: 4px;
   padding: 2px 6px;
   background: var(--primary-red-alpha-10);
   cursor: pointer;
   border: 1px solid var(--primary-red-alpha-30);
+  min-height: 2rem;
 }
 
 .spoiler > .spoiler-text {
-  color: transparent;
+  visibility: hidden;
   user-select: none;
 }
 
-.spoiler.decrypting > .spoiler-text {
-  color: inherit;
-  user-select: none;
+.spoiler > .spoiler-text * {
+  visibility: hidden;
 }
 
 .spoiler::after {
@@ -175,14 +175,18 @@ body .btn.btn-outline-primary:active {
   display: flex;
   align-items: center;
   font-weight: 500;
+  z-index: 1;
 }
 
 .spoiler.revealed > .spoiler-text {
-  color: inherit;
+  visibility: visible;
   user-select: text;
 }
 
-.spoiler.decrypting::after,
+.spoiler.revealed > .spoiler-text * {
+  visibility: visible;
+}
+
 .spoiler.revealed::after {
   display: none;
 }
@@ -211,4 +215,98 @@ body .btn.btn-outline-primary:active {
   100% {
     background-color: transparent;
   }
+}
+
+/* Markdown content styling */
+/* General markdown elements */
+.spoiler-text h1,
+.spoiler-text h2,
+.spoiler-text h3,
+.spoiler-text h4,
+.spoiler-text h5,
+.spoiler-text h6 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.spoiler-text h1:first-child,
+.spoiler-text h2:first-child,
+.spoiler-text h3:first-child,
+.spoiler-text h4:first-child,
+.spoiler-text h5:first-child,
+.spoiler-text h6:first-child {
+  margin-top: 0;
+}
+
+.spoiler-text > *:first-child {
+  margin-top: 0;
+}
+
+.spoiler-text > *:last-child {
+  margin-bottom: 0;
+}
+
+.spoiler-text p {
+  margin-bottom: 0.75rem;
+}
+
+.spoiler-text ul,
+.spoiler-text ol {
+  margin-bottom: 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.spoiler-text li {
+  margin-bottom: 0.25rem;
+}
+
+.spoiler-text code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.spoiler-text pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.75rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+.spoiler-text pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.spoiler-text blockquote {
+  border-left: 4px solid var(--primary-red);
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: var(--text-muted);
+}
+
+.spoiler-text a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+.spoiler-text a:hover {
+  text-decoration: underline;
+}
+
+.spoiler-text hr {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: 1rem 0;
+}
+
+/* Dark mode adjustments for markdown */
+[data-theme="dark"] .spoiler-text code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .spoiler-text pre {
+  background-color: rgba(255, 255, 255, 0.05);
 }

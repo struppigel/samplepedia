@@ -96,6 +96,7 @@ INSTALLED_APPS = [
     'django_comments',
     'ipware',
     'turnstile',
+    'markdownx',
 ]
 
 MIDDLEWARE = [

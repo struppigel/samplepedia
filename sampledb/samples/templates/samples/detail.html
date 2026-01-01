@@ -2,6 +2,7 @@
 {% load user_tags %}
 {% load comments %}
 {% load comments_xtd %}
+{% load markdownx_filters %}
 {% block title %}{{ sample.sha256 }}{% endblock %}
 
 {% block content %}
@@ -90,7 +91,7 @@
             {% if sample.description %}
               <h6>Description</h6>
               <div class="spoiler" style="width: 100%;">
-                <div class="spoiler-text" style="margin: 0; width: 100%;">{{ sample.description|linebreaks }}</div>
+                <div class="spoiler-text" style="margin: 0; width: 100%;">{{ sample.description|markdownify }}</div>
               </div>
             {% endif %}
 
