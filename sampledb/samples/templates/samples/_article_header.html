@@ -1,0 +1,67 @@
+{% load user_tags %}
+<header class="article-header mb-4">
+  <h1 class="article-title mb-3" {% if title_id %}id="{{ title_id }}"{% endif %}>{{ title }}</h1>
+  
+  <!-- Article Meta -->
+  <div class="article-meta d-flex flex-wrap align-items-center text-muted mb-3">
+    <div class="author-info mr-4 mb-2">
+      <i class="fas fa-user mr-1"></i>
+      {% if author_url %}
+        <a href="{{ author_url }}" class="text-reset">{{ author_username }}</a>
+      {% else %}
+        <span>{{ author_username }}</span>
+      {% endif %}
+      {% if is_reference %}
+        <span class="badge badge-info ml-2" title="Reference solution by task author">
+          <i class="fas fa-star"></i> Reference
+        </span>
+      {% endif %}
+    </div>
+    <div class="publish-date mr-4 mb-2">
+      <i class="fas fa-calendar mr-1"></i>
+      {{ publish_date }}
+    </div>
+    {% if show_likes %}
+    <div class="like-count mb-2">
+      <i class="fas fa-heart mr-1"></i>
+      {{ like_count }} {% if like_count == 1 %}like{% else %}likes{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Action Buttons (optional) -->
+  {% if show_actions %}
+  <div class="article-actions d-flex align-items-center mb-4">
+    {% if solution and user_has_liked != None %}
+      {% solution_like_button solution user_has_liked %}
+    {% endif %}
+    {% if edit_url %}
+      <a href="{{ edit_url }}" 
+         class="btn btn-sm btn-secondary ml-2" 
+         title="Edit Solution">
+        <i class="fas fa-edit"></i> Edit
+      </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Task Reference -->
+  <div class="task-reference p-3 mb-4">
+    <div class="small text-muted mb-1">Sample</div>
+    <div>
+      {% if task_url %}
+        <a href="{{ task_url }}">
+          <code class="text-danger">{{ sample.sha256|slice:":12" }}</code>
+        </a>
+      {% else %}
+        <code class="text-danger">{{ sample.sha256|slice:":12" }}</code>
+      {% endif %}
+      {% if sample.goal %}
+        <span class="text-muted">—</span> {{ sample.goal|truncatewords:15 }}
+      {% endif %}
+    </div>
+    <div class="mt-2">
+      {% difficulty_badge sample.difficulty sample.difficulty %}
+    </div>
+  </div>
+</header>

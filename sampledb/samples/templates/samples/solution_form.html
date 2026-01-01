@@ -1,12 +1,12 @@
 {% extends "samples/base.html" %}
 
-{% block title %}Edit Solution{% endblock %}
+{% block title %}{% if solution %}Edit Solution{% else %}Add Solution{% endif %}{% endblock %}
 
 {% block content %}
 
 <section class="content-header">
   <div class="container-fluid">
-    <h1>Edit Solution</h1>
+    <h1>{% if solution %}Edit Solution{% else %}Add Solution{% endif %}</h1>
   </div>
 </section>
 
@@ -18,7 +18,7 @@
         <!-- Sample Info Card -->
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Analysis Task</h3>
+            <h3 class="card-title">Sample</h3>
           </div>
           <div class="card-body">
             <dl class="row mb-0">
@@ -82,7 +82,7 @@
                 <label for="{{ form.content.id_for_label }}">Content</label>
                 <div class="alert alert-info mb-2">
                   <i class="fas fa-external-link-alt"></i>
-                  <a href="{% url 'markdown_editor' %}" target="_blank" class="alert-link">Open Full Markdown Editor</a> in a new tab for a better writing experience. Copy your content back here when done.
+                  <a href="{% url 'onsite_solution_editor' sha256=sample.sha256 task_id=sample.id %}" class="alert-link">Open Dedicated On-Site Editor</a> for a better writing experience with full-page markdown editing and accurate preview.
                 </div>
                 <div class="markdown-tabs">
                   <button type="button" class="markdown-tab active" data-tab="write">
@@ -118,8 +118,8 @@
               {% endif %}
 
               <div class="form-group mb-0">
-                <button type="submit" class="btn btn-danger">
-                  <i class="fas fa-save"></i> Update Solution
+                <button type="submit" class="btn {% if solution %}btn-danger{% else %}btn-primary{% endif %}">
+                  <i class="fas fa-save"></i> {% if solution %}Update Solution{% else %}Save Solution{% endif %}
                 </button>
                 <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-secondary">
                   <i class="fas fa-times"></i> Cancel
@@ -131,6 +131,7 @@
 
       </div>
       
+      {% if solution %}
       <div class="col-md-4">
         <div class="card">
           <div class="card-header">
@@ -144,6 +145,7 @@
           </div>
         </div>
       </div>
+      {% endif %}
     </div>
   </div>
 </section>

@@ -4,94 +4,30 @@
 
 {% block content %}
 
-<section class="content-header">
-  <div class="container-fluid">
-    <h1>{{ solution.title }}</h1>
-  </div>
-</section>
-
 <section class="content">
   <div class="container-fluid">
-
-    <div class="row">
-      <div class="col-md-12">
+    <div class="row justify-content-center">
+      <div class="col-lg-9 col-xl-8">
         
-        <!-- Solution Metadata Card -->
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">
-              <i class="fas fa-file-alt"></i> On-Site Solution
-            </h3>
-            <div class="card-tools">
-              {% if user_can_edit %}
-                <a href="{% url 'edit_solution' sha256=sample.sha256 task_id=sample.id solution_id=solution.id %}" 
-                   class="btn btn-sm btn-secondary mr-2" 
-                   title="Edit Solution">
-                  <i class="fas fa-edit"></i>
-                </a>
-              {% endif %}
-              {% solution_like_button solution user_has_liked %}
-            </div>
-          </div>
-          <div class="card-body">
-            <dl class="row mb-0">
-              <dt class="col-sm-2">Author</dt>
-              <dd class="col-sm-10">
-                <a href="{% url 'user_profile' solution.author.username %}">{{ solution.author.username }}</a>
-                {% if solution.author == sample.author %}
-                  <span class="badge badge-info ml-2" title="Reference solution by task author">
-                    <i class="fas fa-star"></i> Reference
-                  </span>
-                {% endif %}
-              </dd>
+        <!-- Article Header -->
+        <article class="blog-article">
+          {% include "samples/_article_header.html" with title=solution.title author_username=solution.author.username author_url=user_profile_url is_reference=is_reference publish_date=solution.created_at|date:"F d, Y" show_likes=True like_count=solution.like_count show_actions=True solution=solution user_has_liked=user_has_liked edit_url=edit_solution_url task_url=task_detail_url sample=sample %}
 
-              <dt class="col-sm-2">Analysis Task</dt>
-              <dd class="col-sm-10">
-                <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}">
-                  <code class="text-danger">{{ sample.sha256|slice:":12" }}</code>
-                </a>
-                {% if sample.goal %}
-                  - {{ sample.goal|truncatewords:15 }}
-                {% endif %}
-              </dd>
-
-              <dt class="col-sm-2">Difficulty</dt>
-              <dd class="col-sm-10">
-                {% difficulty_badge sample.difficulty sample.difficulty %}
-              </dd>
-
-              <dt class="col-sm-2">Likes</dt>
-              <dd class="col-sm-10">
-                <span class="badge badge-secondary">
-                  <i class="fas fa-heart"></i> {{ solution.like_count }}
-                </span>
-              </dd>
-
-              <dt class="col-sm-2">Published</dt>
-              <dd class="col-sm-10">
-                {{ solution.created_at|date:"F d, Y" }}
-              </dd>
-            </dl>
-          </div>
-        </div>
-
-        <!-- Solution Content Card -->
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Solution</h3>
-          </div>
-          <div class="card-body markdown-preview-content">
+          <!-- Article Content -->
+          <div class="article-content markdown-preview-content">
             {{ rendered_content|safe }}
           </div>
+        </article>
+
+        <!-- Back Button -->
+        <div class="mt-5 mb-4">
+          <button onclick="smartBack()" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left mr-1"></i> Back to task
+          </button>
         </div>
 
       </div>
     </div>
-
-    <button onclick="smartBack()" class="btn-back mt-2">
-      ← Back to task
-    </button>
-
   </div>
 </section>
 

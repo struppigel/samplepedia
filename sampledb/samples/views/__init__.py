@@ -1,6 +1,6 @@
 # Import all views for backward compatibility with urls.py
 from .samples import sample_list, sample_detail, submit_task, edit_task, delete_task, markdown_preview
-from .solutions import create_solution, edit_solution, delete_solution, solution_list, view_onsite_solution
+from .solutions import create_solution, edit_solution, delete_solution, solution_list, view_onsite_solution, onsite_solution_editor
 from .courses import course_list, course_samples
 from .likes import toggle_like, toggle_solution_like
 from .auth import (
