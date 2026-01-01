@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
+from markdownx.utils import markdownify
 
 from ..models import AnalysisTask, Solution, SolutionType
 from ..forms import SolutionForm
@@ -120,3 +121,30 @@ def delete_solution(request, sha256, task_id, solution_id):
         return redirect('sample_detail', sha256=sha256, task_id=task_id)
     
     return redirect('sample_detail', sha256=sha256, task_id=task_id)
+
+
+def view_onsite_solution(request, sha256, task_id, solution_id):
+    """View an on-site solution with rendered markdown content"""
+    sample = get_object_or_404(AnalysisTask, id=task_id)
+    solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type='onsite')
+    
+    # Check if user liked this solution
+    user_has_liked = False
+    if request.user.is_authenticated:
+        user_has_liked = solution.liked_by.filter(id=request.user.id).exists()
+    
+    # Check if user can edit
+    user_can_edit = False
+    if request.user.is_authenticated:
+        user_can_edit = solution.author == request.user or request.user.is_staff
+    
+    # Render markdown content
+    rendered_content = markdownify(solution.content) if solution.content else ''
+    
+    return render(request, 'samples/view_onsite_solution.html', {
+        'sample': sample,
+        'solution': solution,
+        'rendered_content': rendered_content,
+        'user_has_liked': user_has_liked,
+        'user_can_edit': user_can_edit,
+    })

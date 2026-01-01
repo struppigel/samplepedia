@@ -1,0 +1,105 @@
+{% extends "samples/base.html" %}
+{% load user_tags %}
+{% block title %}{{ solution.title }}{% endblock %}
+
+{% block content %}
+
+<section class="content-header">
+  <div class="container-fluid">
+    <h1>{{ solution.title }}</h1>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-md-12">
+        
+        <!-- Solution Metadata Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-file-alt"></i> On-Site Solution
+            </h3>
+            <div class="card-tools">
+              {% if user_can_edit %}
+                <a href="{% url 'edit_solution' sha256=sample.sha256 task_id=sample.id solution_id=solution.id %}" 
+                   class="btn btn-sm btn-secondary mr-2" 
+                   title="Edit Solution">
+                  <i class="fas fa-edit"></i>
+                </a>
+              {% endif %}
+              {% solution_like_button solution user_has_liked %}
+            </div>
+          </div>
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-sm-2">Author</dt>
+              <dd class="col-sm-10">
+                <a href="{% url 'user_profile' solution.author.username %}">{{ solution.author.username }}</a>
+                {% if solution.author == sample.author %}
+                  <span class="badge badge-info ml-2" title="Reference solution by task author">
+                    <i class="fas fa-star"></i> Reference
+                  </span>
+                {% endif %}
+              </dd>
+
+              <dt class="col-sm-2">Analysis Task</dt>
+              <dd class="col-sm-10">
+                <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}">
+                  <code class="text-danger">{{ sample.sha256|slice:":12" }}</code>
+                </a>
+                {% if sample.goal %}
+                  - {{ sample.goal|truncatewords:15 }}
+                {% endif %}
+              </dd>
+
+              <dt class="col-sm-2">Difficulty</dt>
+              <dd class="col-sm-10">
+                {% difficulty_badge sample.difficulty sample.difficulty %}
+              </dd>
+
+              <dt class="col-sm-2">Likes</dt>
+              <dd class="col-sm-10">
+                <span class="badge badge-secondary">
+                  <i class="fas fa-heart"></i> {{ solution.like_count }}
+                </span>
+              </dd>
+
+              <dt class="col-sm-2">Published</dt>
+              <dd class="col-sm-10">
+                {{ solution.created_at|date:"F d, Y" }}
+              </dd>
+            </dl>
+          </div>
+        </div>
+
+        <!-- Solution Content Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Solution</h3>
+          </div>
+          <div class="card-body markdown-preview-content">
+            {{ rendered_content|safe }}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <button onclick="smartBack()" class="btn-back mt-2">
+      ← Back to task
+    </button>
+
+  </div>
+</section>
+
+<script>
+// Smart back navigation
+function smartBack() {
+  window.location.href = '{% url "sample_detail" sha256=sample.sha256 task_id=sample.id %}';
+}
+</script>
+
+{% endblock %}

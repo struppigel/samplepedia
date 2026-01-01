@@ -126,7 +126,11 @@
                 <li class="solution-item {% if not forloop.last %}mb-1{% else %}mb-0{% endif %} d-flex align-items-center justify-content-between" style="padding: 0.5rem; margin-left: -0.5rem; margin-right: -0.5rem; border-radius: 4px;" data-solution-id="{{ solution.id }}">
                   <div class="d-flex align-items-center flex-grow-1">
                     <i class="fas {{ solution.solution_type|solution_icon }}"></i>
-                    <a href="{{ solution.url }}" target="_blank" class="ml-2" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">{{ solution.title }}</a>
+                    {% if solution.solution_type == 'onsite' %}
+                      <a href="{% url 'view_onsite_solution' sha256=sample.sha256 task_id=sample.id solution_id=solution.id %}" class="ml-2">{{ solution.title }}</a>
+                    {% else %}
+                      <a href="{{ solution.url }}" target="_blank" class="ml-2" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">{{ solution.title }}</a>
+                    {% endif %}
                     {% if solution.author == sample.author %}
                       <span class="badge badge-info ml-2" title="Reference solution by task author">
                         <i class="fas fa-star"></i> Reference

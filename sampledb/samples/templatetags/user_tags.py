@@ -93,6 +93,7 @@ def solution_icon(solution_type):
         'blog': 'fa-book text-info',
         'paper': 'fa-file-alt text-secondary',
         'video': 'fa-video text-danger',
+        'onsite': 'fa-file-alt text-success',
     }
     return icons.get(solution_type, 'fa-link text-primary')
 
@@ -100,19 +101,21 @@ def solution_icon(solution_type):
 def solution_icons(task):
     """
     Display solution type icons for an analysis task.
-    Shows one icon per solution type (blog, paper, video).
+    Shows one icon per solution type (blog, paper, video, onsite).
     """
     solutions = task.solutions.all()
     has_blog = solutions.filter(solution_type='blog').exists()
     has_paper = solutions.filter(solution_type='paper').exists()
     has_video = solutions.filter(solution_type='video').exists()
+    has_onsite = solutions.filter(solution_type='onsite').exists()
     total_count = solutions.count()
     
     return {
         'has_blog': has_blog,
         'has_paper': has_paper,
         'has_video': has_video,
-        'has_any': has_blog or has_paper or has_video,
+        'has_onsite': has_onsite,
+        'has_any': has_blog or has_paper or has_video or has_onsite,
         'total_count': total_count
     }
 

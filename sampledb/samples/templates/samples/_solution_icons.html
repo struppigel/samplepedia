@@ -9,6 +9,9 @@
   {% if has_video %}
     <i class="fas {{ 'video'|solution_icon }}" title="Video"></i>
   {% endif %}
+  {% if has_onsite %}
+    <i class="fas {{ 'onsite'|solution_icon }}" title="On-Site Article"></i>
+  {% endif %}
   <span class="text-muted" style="font-size: 0.9em;">{{ total_count }}</span>
 {% else %}
   <span class="text-muted">—</span>

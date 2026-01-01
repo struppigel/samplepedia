@@ -46,12 +46,29 @@ class AuthenticatedCommentForm(XtdCommentForm):
 class SolutionForm(forms.ModelForm):
     class Meta:
         model = Solution
-        fields = ['title', 'solution_type', 'url']
+        fields = ['title', 'solution_type', 'url', 'content']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Solution title'}),
             'solution_type': forms.Select(attrs={'class': 'form-control'}),
             'url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 15, 'id': 'id_content'}),
         }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        solution_type = cleaned_data.get('solution_type')
+        url = cleaned_data.get('url')
+        content = cleaned_data.get('content')
+        
+        # Validate that onsite solutions have content
+        if solution_type == 'onsite' and not content:
+            raise forms.ValidationError('On-site solutions must have content.')
+        
+        # Validate that non-onsite solutions have URL
+        if solution_type != 'onsite' and not url:
+            raise forms.ValidationError('External solutions must have a URL.')
+        
+        return cleaned_data
 
 # for submitting analysis tasks
 class AnalysisTaskForm(forms.ModelForm):
@@ -72,6 +89,11 @@ class AnalysisTaskForm(forms.ModelForm):
         required=False,
         widget=forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
         label='Reference Solution URL'
+    )
+    reference_solution_content = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
+        label='Reference Solution Content'
     )
     
     class Meta:
@@ -110,12 +132,13 @@ class AnalysisTaskForm(forms.ModelForm):
             del self.fields['reference_solution_title']
             del self.fields['reference_solution_type']
             del self.fields['reference_solution_url']
+            del self.fields['reference_solution_content']
         else:
             # Make reference solution fields required for non-staff users when creating
             if self.user and not self.user.is_staff:
                 self.fields['reference_solution_title'].required = True
                 self.fields['reference_solution_type'].required = True
-                self.fields['reference_solution_url'].required = True
+                # URL and content validation is handled in clean() based on type
     
     def clean_download_link(self):
         download_link = self.cleaned_data.get('download_link')
@@ -153,12 +176,25 @@ class AnalysisTaskForm(forms.ModelForm):
             ref_title = cleaned_data.get('reference_solution_title')
             ref_type = cleaned_data.get('reference_solution_type')
             ref_url = cleaned_data.get('reference_solution_url')
+            ref_content = cleaned_data.get('reference_solution_content')
             
-            # All three must be provided for non-staff users when creating
-            if not all([ref_title, ref_type, ref_url]):
+            # Title and type are always required
+            if not ref_title or not ref_type:
                 raise forms.ValidationError(
-                    "You must provide a reference solution (title, type, and URL) when submitting an analysis task."
+                    "You must provide a reference solution title and type when submitting an analysis task."
                 )
+            
+            # Validate based on solution type
+            if ref_type == 'onsite':
+                if not ref_content:
+                    raise forms.ValidationError(
+                        "On-site reference solutions must have content."
+                    )
+            else:
+                if not ref_url:
+                    raise forms.ValidationError(
+                        "External reference solutions (blog, paper, video) must have a URL."
+                    )
         
         return cleaned_data
 

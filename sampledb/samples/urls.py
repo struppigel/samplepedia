@@ -18,6 +18,7 @@ urlpatterns = [
     path("sample/<str:sha256>/<int:task_id>/solution/add/", views.create_solution, name="create_solution"),
     path("sample/<str:sha256>/<int:task_id>/solution/<int:solution_id>/edit/", views.edit_solution, name="edit_solution"),
     path("sample/<str:sha256>/<int:task_id>/solution/<int:solution_id>/delete/", views.delete_solution, name="delete_solution"),
+    path("sample/<str:sha256>/<int:task_id>/solution/<int:solution_id>/view/", views.view_onsite_solution, name="view_onsite_solution"),
     path("impressum/", views.impressum, name="impressum"),
     path("privacy/", views.privacy_policy, name="privacy_policy"),
     path("login/", views.login_view, name="login"),

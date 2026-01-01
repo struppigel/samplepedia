@@ -354,6 +354,7 @@ class SolutionType(models.TextChoices):
     BLOG = "blog", "Blog"
     PAPER = "paper", "Paper"
     VIDEO = "video", "Video"
+    ONSITE = "onsite", "On-Site Article"
 
 
 class Solution(models.Model):
@@ -377,7 +378,15 @@ class Solution(models.Model):
     
     url = models.URLField(
         max_length=500,
-        verbose_name="URL"
+        verbose_name="URL",
+        blank=True,
+        null=True
+    )
+    
+    content = models.TextField(
+        verbose_name="Content",
+        blank=True,
+        help_text="Markdown content for on-site solutions"
     )
     
     author = models.ForeignKey(
