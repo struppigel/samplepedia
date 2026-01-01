@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
 
 def impressum(request):
@@ -9,3 +10,9 @@ def impressum(request):
 def privacy_policy(request):
     """Display privacy policy page"""
     return render(request, "samples/privacy.html")
+
+
+@login_required
+def markdown_editor(request):
+    """Full-featured markdown editor for blog-like solution submissions"""
+    return render(request, "samples/markdown_editor.html")

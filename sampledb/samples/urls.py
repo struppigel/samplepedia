@@ -9,6 +9,7 @@ urlpatterns = [
     path("courses/", views.course_list, name="course_list"),
     path("courses/<int:course_id>/", views.course_samples, name="course_samples"),
     path("ranking/", views.ranking, name="ranking"),
+    path("markdown-editor/", views.markdown_editor, name="markdown_editor"),
     path("sample/<str:sha256>/<int:task_id>/", views.sample_detail, name="sample_detail"),
     path("sample/<str:sha256>/<int:task_id>/edit/", views.edit_task, name="edit_task"),
     path("sample/<str:sha256>/<int:task_id>/delete/", views.delete_task, name="delete_task"),

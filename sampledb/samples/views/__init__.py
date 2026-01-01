@@ -18,7 +18,7 @@ from .auth import (
     verify_email_change,
     ranking
 )
-from .pages import impressum, privacy_policy
+from .pages import impressum, privacy_policy, markdown_editor
 from .comments import edit_comment, delete_comment
 from .notifications import (
     notification_list,
@@ -65,6 +65,7 @@ __all__ = [
     # Pages
     'impressum',
     'privacy_policy',
+    'markdown_editor',
     # Comments
     'edit_comment',
     'delete_comment',
