@@ -24,6 +24,30 @@
             <form method="post" novalidate>
               {% csrf_token %}
               
+              {% if form.errors %}
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Form Validation Errors</h5>
+                <p class="mb-2">Please correct the following errors:</p>
+                <ul class="mb-0">
+                  {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  {% endif %}
+                  {% for field in form %}
+                    {% if field.errors %}
+                      {% for error in field.errors %}
+                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                      {% endfor %}
+                    {% endif %}
+                  {% endfor %}
+                </ul>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              {% endif %}
+              
               {% if not is_edit and not user.is_staff %}
               <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> <strong>Reference Solution Required:</strong> You must provide one reference solution (your own writeup, video, or analysis) when submitting a task.
@@ -182,7 +206,7 @@
                 <div class="alert alert-info">
                   <i class="fas fa-external-link-alt"></i>
                   <strong>Use Full Editor:</strong> 
-                  <a href="{% url 'markdown_editor' %}" target="_blank" class="alert-link">Open Markdown Editor</a> to write your on-site solution. Copy and paste the content back here when done.
+                  <a href="{% url 'markdown_editor' %}" target="_blank" class="alert-link" id="openMarkdownEditorLink">Open Markdown Editor</a> to write your on-site solution. Copy and paste the content back here when done.
                 </div>
                 <textarea id="reference_solution_content" name="reference_solution_content" class="form-control" rows="10" placeholder="Paste your markdown content here..."></textarea>
                 <small class="form-text text-muted">Markdown content for on-site solutions. Images via external links are supported.</small>
@@ -404,6 +428,142 @@
     }
   });
   
+  // Markdown editor integration (load from and save to localStorage)
+  document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.getElementById('id_reference_solution_title');
+    const contentTextarea = document.getElementById('reference_solution_content');
+    const solutionTypeSelect = document.getElementById('id_reference_solution_type');
+    const markdownEditorLink = document.getElementById('openMarkdownEditorLink');
+    const sha256Input = document.getElementById('id_sha256');
+    const goalInput = document.getElementById('id_goal');
+    const descriptionTextarea = document.getElementById('id_description');
+    const downloadLinkInput = document.getElementById('id_download_link');
+    const selectedImageInput = document.getElementById('selected_image');
+    const tagsInput = document.getElementById('id_tags');
+    const toolsInput = document.getElementById('id_tools');
+    const difficultySelect = document.getElementById('id_difficulty');
+    
+    // Load saved form data from localStorage if available (on page load)
+    const savedTitle = localStorage.getItem('draft_reference_solution_title');
+    const savedContent = localStorage.getItem('draft_reference_solution');
+    const savedSolutionType = localStorage.getItem('draft_form_solution_type');
+    const savedSha256 = localStorage.getItem('draft_form_sha256');
+    const savedGoal = localStorage.getItem('draft_form_goal');
+    const savedDescription = localStorage.getItem('draft_form_description');
+    const savedDownloadLink = localStorage.getItem('draft_form_download_link');
+    const savedImageId = localStorage.getItem('draft_form_image_id');
+    const savedImageUrl = localStorage.getItem('draft_form_image_url');
+    const savedTags = localStorage.getItem('draft_form_tags');
+    const savedTools = localStorage.getItem('draft_form_tools');
+    const savedDifficulty = localStorage.getItem('draft_form_difficulty');
+    
+    if (savedTitle && titleInput && !titleInput.value) {
+      titleInput.value = savedTitle;
+    }
+    
+    // Restore solution type first (before content)
+    if (savedContent && contentTextarea && !contentTextarea.value) {
+      // If we have content from markdown editor, always set type to 'onsite'
+      if (solutionTypeSelect) {
+        solutionTypeSelect.value = 'onsite';
+        // Trigger the change event to show/hide fields
+        solutionTypeSelect.dispatchEvent(new Event('change'));
+      }
+      // Then set the content
+      contentTextarea.value = savedContent;
+    } else if (savedSolutionType && solutionTypeSelect && !solutionTypeSelect.value) {
+      solutionTypeSelect.value = savedSolutionType;
+      solutionTypeSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // Restore other form fields
+    if (savedSha256 && sha256Input && !sha256Input.value) {
+      sha256Input.value = savedSha256;
+    }
+    
+    if (savedGoal && goalInput && !goalInput.value) {
+      goalInput.value = savedGoal;
+    }
+    
+    if (savedDescription && descriptionTextarea && !descriptionTextarea.value) {
+      descriptionTextarea.value = savedDescription;
+    }
+    
+    if (savedDownloadLink && downloadLinkInput && !downloadLinkInput.value) {
+      downloadLinkInput.value = savedDownloadLink;
+    }
+    
+    if (savedTags && tagsInput && !tagsInput.value) {
+      tagsInput.value = savedTags;
+    }
+    
+    if (savedTools && toolsInput && !toolsInput.value) {
+      toolsInput.value = savedTools;
+    }
+    
+    if (savedDifficulty && difficultySelect) {
+      // Always restore saved difficulty (select fields may have default values)
+      difficultySelect.value = savedDifficulty;
+    }
+    
+    if (savedImageId && selectedImageInput && !selectedImageInput.value) {
+      selectedImageInput.value = savedImageId;
+      // Restore image preview
+      if (savedImageUrl) {
+        const previewImg = document.getElementById('preview_img');
+        const previewDiv = document.getElementById('selected_image_preview');
+        if (previewImg && previewDiv) {
+          previewImg.src = savedImageUrl;
+          previewDiv.style.display = 'block';
+        }
+      }
+    }
+    
+    // Transfer data to markdown editor when link is clicked
+    if (markdownEditorLink) {
+      markdownEditorLink.addEventListener('click', function(e) {
+        // Save all form values to localStorage
+        if (titleInput) {
+          localStorage.setItem('draft_reference_solution_title', titleInput.value);
+        }
+        if (contentTextarea) {
+          localStorage.setItem('draft_reference_solution', contentTextarea.value);
+        }
+        if (solutionTypeSelect) {
+          localStorage.setItem('draft_form_solution_type', solutionTypeSelect.value);
+        }
+        if (sha256Input) {
+          localStorage.setItem('draft_form_sha256', sha256Input.value);
+        }
+        if (goalInput) {
+          localStorage.setItem('draft_form_goal', goalInput.value);
+        }
+        if (descriptionTextarea) {
+          localStorage.setItem('draft_form_description', descriptionTextarea.value);
+        }
+        if (downloadLinkInput) {
+          localStorage.setItem('draft_form_download_link', downloadLinkInput.value);
+        }
+        if (tagsInput) {
+          localStorage.setItem('draft_form_tags', tagsInput.value);
+        }
+        if (toolsInput) {
+          localStorage.setItem('draft_form_tools', toolsInput.value);
+        }
+        if (difficultySelect) {
+          localStorage.setItem('draft_form_difficulty', difficultySelect.value);
+        }
+        if (selectedImageInput && selectedImageInput.value) {
+          localStorage.setItem('draft_form_image_id', selectedImageInput.value);
+          const previewImg = document.getElementById('preview_img');
+          if (previewImg && previewImg.src) {
+            localStorage.setItem('draft_form_image_url', previewImg.src);
+          }
+        }
+      });
+    }
+  });
+  
   // Markdown preview tabs
   document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.querySelectorAll('.markdown-tab');
@@ -490,6 +650,16 @@
         }
       });
     });
+  });
+  
+  // Clear localStorage on successful form submission
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[method="post"]');
+    if (form) {
+      form.addEventListener('submit', function() {
+        clearFormDrafts();
+      });
+    }
   });
   </script>
 </section>
