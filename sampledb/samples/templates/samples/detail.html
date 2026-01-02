@@ -7,14 +7,17 @@
 
 {% block content %}
 
-<section class="content-header">
-  <div class="container-fluid">
-    <h1>Sample</h1>
-  </div>
-</section>
-
 <section class="content">
   <div class="container-fluid">
+
+    <!-- Title -->
+    <div class="row justify-content-center mb-3">
+      <div class="col-md-12" style="max-width: 1600px;">
+        <div class="content-header">
+          <h1>Sample</h1>
+        </div>
+      </div>
+    </div>
 
     <!-- Main Layout: Left (Metadata + Analysis) | Right (Image + Video) -->
     <div class="row justify-content-center">
@@ -228,10 +231,14 @@
       {% endif %}
     </div>
 
-    
-    <button onclick="smartBack()" class="btn-back mt-2">
-  ← Back to list
-  </button>
+    <!-- Back Button -->
+    <div class="row justify-content-center mt-3">
+      <div class="col-md-12" style="max-width: {% if sample.image or sample.youtube_id or youtube_solution %}1600px{% else %}1200px{% endif %};">
+        <button onclick="smartBack()" class="btn-back">
+          ← Back to list
+        </button>
+      </div>
+    </div>
 
     <!-- Comments Section -->
     <div class="row mt-3 justify-content-center">
