@@ -240,3 +240,23 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
         'initial_title': initial_title,
         'initial_content': initial_content,
     })
+
+
+def solutions_showcase(request):
+    """Display the newest solutions (all types) in a card grid layout"""
+    # Get the 6 most recent solutions with their related data
+    solutions = Solution.objects.select_related(
+        'analysis_task', 'author'
+    ).order_by('-created_at')[:6]
+    
+    # Get user's liked solution IDs for display
+    user_liked_solution_ids = set()
+    if request.user.is_authenticated:
+        user_liked_solution_ids = set(
+            request.user.liked_solutions.values_list('id', flat=True)
+        )
+    
+    return render(request, 'samples/solutions_showcase.html', {
+        'solutions': solutions,
+        'user_liked_solution_ids': user_liked_solution_ids,
+    })

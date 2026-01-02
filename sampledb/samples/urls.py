@@ -6,6 +6,7 @@ urlpatterns = [
     path("", views.sample_list, name="sample_list"),
     path("submit/", views.submit_task, name="submit_task"),
     path("solutions/", views.solution_list, name="solution_list"),
+    path("onsite-solutions/", views.solutions_showcase, name="solutions_showcase"),
     path("courses/", views.course_list, name="course_list"),
     path("courses/<int:course_id>/", views.course_samples, name="course_samples"),
     path("ranking/", views.ranking, name="ranking"),
