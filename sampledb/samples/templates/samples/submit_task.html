@@ -24,6 +24,30 @@
             <form method="post" novalidate>
               {% csrf_token %}
               
+              {% if form.errors %}
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Form Validation Errors</h5>
+                <p class="mb-2">Please correct the following errors:</p>
+                <ul class="mb-0">
+                  {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  {% endif %}
+                  {% for field in form %}
+                    {% if field.errors %}
+                      {% for error in field.errors %}
+                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                      {% endfor %}
+                    {% endif %}
+                  {% endfor %}
+                </ul>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              {% endif %}
+              
               {% if not is_edit and not user.is_staff %}
               <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> <strong>Reference Solution Required:</strong> You must provide one reference solution (your own writeup, video, or analysis) when submitting a task.
@@ -625,6 +649,16 @@
         }
       });
     });
+  });
+  
+  // Clear localStorage on successful form submission
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[method="post"]');
+    if (form) {
+      form.addEventListener('submit', function() {
+        clearFormDrafts();
+      });
+    }
   });
   </script>
 </section>
