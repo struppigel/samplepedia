@@ -501,7 +501,8 @@
       toolsInput.value = savedTools;
     }
     
-    if (savedDifficulty && difficultySelect && !difficultySelect.value) {
+    if (savedDifficulty && difficultySelect) {
+      // Always restore saved difficulty (select fields may have default values)
       difficultySelect.value = savedDifficulty;
     }
     

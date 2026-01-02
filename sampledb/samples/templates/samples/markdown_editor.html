@@ -55,18 +55,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearBtn = document.getElementById('clearEditor');
     const copyBtn = document.getElementById('copyMarkdown');
     
-    // Restore title from submit form data if available
-    const FORM_DATA_KEY = 'submit_task_form_data';
-    const savedFormData = localStorage.getItem(FORM_DATA_KEY);
-    if (savedFormData && titleInput) {
-      try {
-        const formData = JSON.parse(savedFormData);
-        if (formData.reference_solution_title) {
-          titleInput.value = formData.reference_solution_title;
-        }
-      } catch (e) {
-        console.error('Error restoring title:', e);
-      }
+    // Restore title and content from submit form if available
+    const savedTitle = localStorage.getItem('draft_reference_solution_title');
+    const savedContent = localStorage.getItem('draft_reference_solution');
+    
+    if (savedTitle && titleInput) {
+      titleInput.value = savedTitle;
+    }
+    
+    if (savedContent && textarea) {
+      textarea.value = savedContent;
+      window.editorAPI.updateCharCount();
     }
     
     // Clear editor
@@ -90,22 +89,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-      // Save content to localStorage with special key for submit form
+      // Save content and title to localStorage for submit form
       localStorage.setItem('draft_reference_solution', textarea.value);
       
-      // Also save/update the title in form data if it was entered
       if (titleInput && titleInput.value) {
-        const savedFormData = localStorage.getItem(FORM_DATA_KEY);
-        let formData = {};
-        if (savedFormData) {
-          try {
-            formData = JSON.parse(savedFormData);
-          } catch (e) {
-            formData = {};
-          }
-        }
-        formData.reference_solution_title = titleInput.value;
-        localStorage.setItem(FORM_DATA_KEY, JSON.stringify(formData));
+        localStorage.setItem('draft_reference_solution_title', titleInput.value);
       }
       
       // Visual feedback before navigation
@@ -152,29 +140,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const STORAGE_KEY = 'markdown_editor_content';
     const AUTOSAVE_INTERVAL = 5000; // 5 seconds
     
-    // Load saved content on page load
-    // First check if we have content from submit form, otherwise check auto-saved content
-    let contentToRestore = null;
-    if (savedFormData) {
-      try {
-        const formData = JSON.parse(savedFormData);
-        if (formData.reference_solution_content) {
-          contentToRestore = formData.reference_solution_content;
-        }
-      } catch (e) {
-        console.error('Error parsing form data:', e);
+    // Note: Content was already restored earlier from draft_reference_solution
+    // Only restore from auto-save if no draft content exists
+    if (!savedContent) {
+      const autoSavedContent = localStorage.getItem(STORAGE_KEY);
+      if (autoSavedContent) {
+        textarea.value = autoSavedContent;
+        window.editorAPI.updateCharCount();
       }
-    }
-    
-    // If no content from form data, check auto-saved content
-    if (!contentToRestore) {
-      contentToRestore = localStorage.getItem(STORAGE_KEY);
-    }
-    
-    // Restore content if found
-    if (contentToRestore) {
-      textarea.value = contentToRestore;
-      window.editorAPI.updateCharCount();
     }
     
     // Auto-save
