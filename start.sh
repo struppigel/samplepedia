@@ -3,6 +3,15 @@
 # Change to the Django project directory
 cd sampledb
 
+# Run tests - fail build if tests fail
+echo "Running tests..."
+python manage.py test samples.test_task_submission --verbosity=1
+if [ $? -ne 0 ]; then
+    echo "Tests failed! Aborting deployment."
+    exit 1
+fi
+echo "All tests passed!"
+
 # Run database migrations
 python manage.py migrate --no-input
 
