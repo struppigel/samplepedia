@@ -113,9 +113,12 @@ class AnalysisTaskForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         self.is_edit = kwargs.pop('is_edit', False)
         super().__init__(*args, **kwargs)
-        # Make all fields required
-        for field_name in self.fields:
-            self.fields[field_name].required = True
+        
+        # Make core model fields required (but not reference solution fields)
+        core_fields = ['sha256', 'download_link', 'description', 'goal', 'difficulty', 'tags', 'tools']
+        for field_name in core_fields:
+            if field_name in self.fields:
+                self.fields[field_name].required = True
         
         # Exclude expert difficulty from choices
         self.fields['difficulty'].choices = [
