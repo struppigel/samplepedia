@@ -17,9 +17,9 @@
   <div class="container-fluid">
 
     <!-- Main Layout: Left (Metadata + Analysis) | Right (Image + Video) -->
-    <div class="row">
+    <div class="row justify-content-center">
       <!-- LEFT COLUMN: Metadata and Analysis -->
-      <div class="{% if sample.image or sample.youtube_id or youtube_solution %}col-md-8{% else %}col-md-12{% endif %}">
+      <div class="{% if sample.image or sample.youtube_id or youtube_solution %}col-md-8{% else %}col-md-12{% endif %}" style="max-width: 1200px;">
         
         <!-- Metadata Card -->
         <div class="card">
@@ -180,7 +180,7 @@
 
       <!-- RIGHT COLUMN: Image and Video -->
       {% if sample.image or sample.youtube_id or youtube_solution %}
-      <div class="col-md-4">
+      <div class="col-md-4" style="max-width: 400px;">
         
         <!-- Image Card -->
         {% if sample.image %}
@@ -234,8 +234,8 @@
   </button>
 
     <!-- Comments Section -->
-    <div class="row mt-3">
-      <div class="col-md-12">
+    <div class="row mt-3 justify-content-center">
+      <div class="col-md-12" style="max-width: {% if sample.image or sample.youtube_id or youtube_solution %}1600px{% else %}1200px{% endif %};">
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Comments</h3>

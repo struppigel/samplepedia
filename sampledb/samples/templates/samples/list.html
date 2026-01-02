@@ -118,11 +118,7 @@ function toggleFavorites(form) {
               <!-- SHA256 and Link -->
               <td style="max-width: 200px; padding: 0.3rem 0.75rem;">
                 <a href="{% url 'sample_detail' s.sha256 s.id %}" class="d-flex align-items-center" style="min-width: 0;">
-                  {% if s.image %}
-                    <img src="{% cloudinary_url s.image width=32 height=32 crop='fill' %}" alt="Thumbnail" class="rounded mr-2" style="width: 32px; height: 32px; object-fit: cover; flex-shrink: 0;">
-                  {% else %}
-                    <div class="rounded mr-2 bg-secondary" style="width: 32px; height: 32px; display: inline-block; flex-shrink: 0;"></div>
-                  {% endif %}
+                  <i class="fas fa-file-code mr-1" style="flex-shrink: 0; font-size: 1.2rem;"></i>
                   <code style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="{{ s.sha256 }}">{{ s.sha256 }}</code>
                 </a>
               </td>
@@ -133,11 +129,11 @@ function toggleFavorites(form) {
               </td>
               
               <td>
-                {% include 'samples/_expandable_tag_list.html' with tags=s.tags.all max_width='300px' %}
+                {% include 'samples/_expandable_tag_list.html' with tags=s.tags.all max_width='15vw' %}
               </td>
 
               <!-- Goal -->
-              <td style="max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <td style="max-width: 15vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 <a href="{% url 'sample_detail' s.sha256 s.id %}" class="text-muted">
                   {{ s.goal }}
                 </a>
