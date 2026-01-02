@@ -248,6 +248,11 @@ class TaskSubmissionViewTestCase(TestCase):
         
         response = self.client.post(reverse('submit_task'), data=post_data)
         
+        # Debug: Print form errors if submission failed
+        if response.status_code != 302:
+            if 'form' in response.context:
+                print(f"\nForm errors: {response.context['form'].errors}")
+        
         # Should redirect to task detail page
         self.assertEqual(response.status_code, 302)
         
@@ -283,6 +288,11 @@ class TaskSubmissionViewTestCase(TestCase):
         
         response = self.client.post(reverse('submit_task'), data=post_data)
         
+        # Debug: Print form errors if submission failed
+        if response.status_code != 302:
+            if 'form' in response.context:
+                print(f"\nForm errors: {response.context['form'].errors}")
+        
         # Should redirect to task detail page
         self.assertEqual(response.status_code, 302)
         
@@ -310,6 +320,11 @@ class TaskSubmissionViewTestCase(TestCase):
         }
         
         response = self.client.post(reverse('submit_task'), data=post_data)
+        
+        # Debug: Print form errors if submission failed
+        if response.status_code != 302:
+            if 'form' in response.context:
+                print(f"\nForm errors: {response.context['form'].errors}")
         
         # Should redirect to task detail page
         self.assertEqual(response.status_code, 302)
