@@ -150,3 +150,8 @@ body.dark-mode .btn.btn-outline-primary:active {
 .dark-mode .solution-highlight {
   background-color: rgba(230, 57, 70, 0.4) !important;
 }
+
+/* Make paper solution icons white in dark mode for better visibility */
+body.dark-mode .fas.text-secondary {
+  color: #ffffff !important;
+}

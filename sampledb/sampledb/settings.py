@@ -149,6 +149,14 @@ DATABASES = {
     )
 }
 
+# Use SQLite for tests when running on Railway (DATABASE_URL is set but tests can't access it during build)
+import sys
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',  # Use in-memory database for faster tests
+    }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

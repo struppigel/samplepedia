@@ -9,15 +9,55 @@ from ..forms import SolutionForm
 
 
 def solution_list(request):
-    """List all solutions with optional filtering by solution type"""
-    solution_type = request.GET.get("solution_type", "")
+    """List all solutions with optional filtering by solution type, search, and sorting"""
+    from django.db.models import Q, Count, Case, When, IntegerField
     
-    # Get all solutions ordered by most recent first
-    solutions = Solution.objects.select_related('analysis_task', 'author').all()
+    solution_type = request.GET.get("solution_type", "")
+    q = request.GET.get("q", "").strip()
+    sort = request.GET.get("sort", "-created")
+    
+    # Get all solutions with like count and difficulty order annotations
+    solutions = Solution.objects.select_related('analysis_task', 'author').annotate(
+        like_count_annotated=Count('liked_by'),
+        difficulty_order=Case(
+            When(analysis_task__difficulty='easy', then=1),
+            When(analysis_task__difficulty='medium', then=2),
+            When(analysis_task__difficulty='advanced', then=3),
+            When(analysis_task__difficulty='expert', then=4),
+            output_field=IntegerField(),
+        )
+    )
     
     # Filter by solution type if specified
     if solution_type:
         solutions = solutions.filter(solution_type=solution_type)
+    
+    # Search by title or SHA256
+    if q:
+        solutions = solutions.filter(
+            Q(title__icontains=q) | Q(analysis_task__sha256__icontains=q)
+        )
+    
+    # Handle sorting
+    sort_mapping = {
+        'title': 'title',
+        '-title': '-title',
+        'sha256': 'analysis_task__sha256',
+        '-sha256': '-analysis_task__sha256',
+        'difficulty': 'difficulty_order',
+        '-difficulty': '-difficulty_order',
+        'author': 'author__username',
+        '-author': '-author__username',
+        'likes': 'like_count_annotated',
+        '-likes': '-like_count_annotated',
+        'created': 'created_at',
+        '-created': '-created_at',
+    }
+    
+    if sort in sort_mapping:
+        solutions = solutions.order_by(sort_mapping[sort])
+    else:
+        solutions = solutions.order_by('-created_at')
     
     # Paginate the results (25 per page)
     paginator = Paginator(solutions, 25)
@@ -33,9 +73,11 @@ def solution_list(request):
     
     return render(request, 'samples/solutions_list.html', {
         'page_obj': page_obj,
+        'q': q,
         'selected_type': solution_type,
         'solution_types': SolutionType.choices,
         'user_liked_solution_ids': user_liked_solution_ids,
+        'sort': sort,
     })
 
 
@@ -239,4 +281,24 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
         'solution': solution,
         'initial_title': initial_title,
         'initial_content': initial_content,
+    })
+
+
+def solutions_showcase(request):
+    """Display the newest solutions (all types) in a card grid layout"""
+    # Get the 6 most recent solutions with their related data
+    solutions = Solution.objects.select_related(
+        'analysis_task', 'author'
+    ).order_by('-created_at')[:6]
+    
+    # Get user's liked solution IDs for display
+    user_liked_solution_ids = set()
+    if request.user.is_authenticated:
+        user_liked_solution_ids = set(
+            request.user.liked_solutions.values_list('id', flat=True)
+        )
+    
+    return render(request, 'samples/solutions_showcase.html', {
+        'solutions': solutions,
+        'user_liked_solution_ids': user_liked_solution_ids,
     })

@@ -45,6 +45,9 @@ def course_samples(request, course_id):
     # Sort by section number
     sample_data.sort(key=lambda x: (x['section'], x['lecture_number']))
     
+    # Count distinct samples
+    distinct_sample_count = len(set(item['sample'].id for item in sample_data))
+    
     # Get user's favorited sample IDs for display
     user_favorited_ids = set()
     if request.user.is_authenticated:
@@ -55,5 +58,6 @@ def course_samples(request, course_id):
     return render(request, "samples/course_samples.html", {
         "course": course,
         "sample_data": sample_data,
+        "distinct_sample_count": distinct_sample_count,
         "user_favorited_ids": user_favorited_ids,
     })

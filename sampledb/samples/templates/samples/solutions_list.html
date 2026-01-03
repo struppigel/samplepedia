@@ -9,7 +9,7 @@
 
 <section class="content-header">
   <div class="container-fluid">
-    <h1>Latest Solutions</h1>
+    <h1>Solutions Overview</h1>
   </div>
 </section>
 
@@ -18,10 +18,20 @@
 
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Recently Posted Solutions</h3>
+        <h3 class="card-title">Solution Search</h3>
 
         <div class="card-tools">
           <form method="get" class="form-inline">
+            <div class="input-group input-group-sm mr-2" style="width: 300px;">
+              <input
+                type="text"
+                name="q"
+                class="form-control"
+                placeholder="Search title or SHA256"
+                value="{{ q }}"
+              >
+            </div>
+            
             <select name="solution_type" class="form-control form-control-sm mr-2" style="width: 120px;" onchange="this.form.submit()">
               <option value="">All Types</option>
               {% for value, label in solution_types %}
@@ -29,7 +39,10 @@
               {% endfor %}
             </select>
             
-            {% if selected_type %}
+            <button type="submit" class="btn btn-default btn-sm mr-2">
+              Filter
+            </button>
+            {% if q or selected_type %}
               <a href="{% url 'solution_list' %}" class="btn btn-sm btn-secondary mr-2">Clear</a>
             {% endif %}
           </form>
@@ -40,13 +53,25 @@
         <table class="table table-striped table-hover text-nowrap table-sm">
           <thead>
             <tr>
-              <th>Solution</th>
-              <th>SHA256</th>
-              <th>Difficulty</th>
-              <th>Tags</th>
-              <th>Author</th>
-              <th style="width: 80px; text-align: center;">Likes</th>
-              <th style="width: 100px; text-align: center;">Posted</th>
+              <th style="cursor: pointer;">
+                {% include 'samples/_sortable_column.html' with field='title' minus_field='-title' label='Solution' %}
+              </th>
+              <th style="cursor: pointer;">
+                {% include 'samples/_sortable_column.html' with field='sha256' minus_field='-sha256' label='SHA256' %}
+              </th>
+              <th style="cursor: pointer;">
+                {% include 'samples/_sortable_column.html' with field='difficulty' minus_field='-difficulty' label='Difficulty' %}
+              </th>
+              <th><span class="text-dark">Tags</span></th>
+              <th style="cursor: pointer;">
+                {% include 'samples/_sortable_column.html' with field='author' minus_field='-author' label='Author' %}
+              </th>
+              <th style="width: 80px; text-align: center; cursor: pointer;">
+                {% include 'samples/_sortable_column.html' with field='likes' minus_field='-likes' label='Likes' %}
+              </th>
+              <th style="width: 100px; text-align: center; cursor: pointer;">
+                {% include 'samples/_sortable_column.html' with field='created' minus_field='-created' label='Posted' %}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -69,11 +94,7 @@
               <!-- Related Sample -->
               <td style="max-width: 200px; padding: 0.3rem 0.75rem;">
                 <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}" class="d-flex align-items-center" style="min-width: 0;">
-                  {% if solution.analysis_task.image %}
-                    <img src="{% cloudinary_url solution.analysis_task.image width=32 height=32 crop='fill' %}" alt="Thumbnail" class="rounded mr-2" style="width: 32px; height: 32px; object-fit: cover; flex-shrink: 0;">
-                  {% else %}
-                    <div class="rounded mr-2 bg-secondary" style="width: 32px; height: 32px; display: inline-block; flex-shrink: 0;"></div>
-                  {% endif %}
+                  <i class="fas fa-file-code mr-1" style="flex-shrink: 0; font-size: 1.2rem;"></i>
                   <code style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="{{ solution.analysis_task.sha256 }}">{{ solution.analysis_task.sha256 }}</code>
                 </a>
               </td>

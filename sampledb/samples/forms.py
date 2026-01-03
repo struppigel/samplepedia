@@ -114,7 +114,7 @@ class AnalysisTaskForm(forms.ModelForm):
         self.is_edit = kwargs.pop('is_edit', False)
         super().__init__(*args, **kwargs)
         
-        # Make core model fields required (not reference solution fields)
+        # Make core model fields required (but not reference solution fields)
         core_fields = ['sha256', 'download_link', 'description', 'goal', 'difficulty', 'tags', 'tools']
         for field_name in core_fields:
             if field_name in self.fields:

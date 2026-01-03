@@ -21,7 +21,7 @@
       <div class="card-header">
         <h3 class="card-title">Samples by Section</h3>
         <div class="card-tools">
-          <span class="badge badge-info mr-2">{{ sample_data|length }} sample{{ sample_data|length|pluralize }}</span>
+          <span class="badge badge-info mr-2">{{ distinct_sample_count }} sample{{ distinct_sample_count|pluralize }}</span>
         </div>
       </div>
 
@@ -34,7 +34,7 @@
                 <th style="width: 200px;">Title</th>
                 <th>SHA256</th>
                 <th>Tags</th>
-                <th>Goal</th>
+                <th>Description</th>
                 <th style="width: 80px; text-align: center;">Download</th>
               </tr>
             </thead>
@@ -65,10 +65,14 @@
                   {% include 'samples/_expandable_tag_list.html' with tags=item.sample.tags.all max_width='300px' %}
                 </td>
 
-                <!-- Goal -->
+                <!-- Description -->
                 <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   <a href="{% url 'sample_detail' item.sample.sha256 item.sample.id %}" class="text-muted">
-                    {{ item.sample.goal|truncatechars:80 }}
+                    {% if item.sample.description %}
+                      {{ item.sample.description|striptags|truncatechars:80 }}
+                    {% else %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
                   </a>
                 </td>
 
