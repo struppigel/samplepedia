@@ -218,8 +218,8 @@ class TaskSubmissionViewTestCase(TestCase):
     def test_submit_task_requires_login(self):
         """Submitting a task should require authentication"""
         response = self.client.get(reverse('submit_task'))
-        self.assertEqual(response.status_code, 302)  # Redirect to login
-        self.assertIn('login', response.url)
+        # assertRedirects handles both 301 and 302
+        self.assertRedirects(response, '/login/?next=/submit/', fetch_redirect_response=False)
     
     def test_submit_task_get_renders_form(self):
         """GET request should render the submission form"""
@@ -250,15 +250,19 @@ class TaskSubmissionViewTestCase(TestCase):
         response = self.client.post(reverse('submit_task'), data=post_data)
         
         # Debug: Print form errors if submission failed
-        if response.status_code != 302:
+        if response.status_code not in (301, 302):
             if response.context and 'form' in response.context:
                 print(f"\nForm errors: {response.context['form'].errors}")
         
-        # Should redirect to task detail page
-        self.assertEqual(response.status_code, 302)
-        
         # Task should be created
         task = AnalysisTask.objects.get(sha256='b' * 64)
+        
+        # Should redirect to task detail page - assertRedirects handles 301 and 302
+        self.assertRedirects(
+            response,
+            reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id}),
+            fetch_redirect_response=False
+        )
         self.assertEqual(task.author, self.regular_user)
         self.assertEqual(task.goal, 'Find the C2 server')
         self.assertEqual(task.difficulty, Difficulty.EASY)
@@ -290,15 +294,19 @@ class TaskSubmissionViewTestCase(TestCase):
         response = self.client.post(reverse('submit_task'), data=post_data)
         
         # Debug: Print form errors if submission failed
-        if response.status_code != 302:
+        if response.status_code not in (301, 302):
             if response.context and 'form' in response.context:
                 print(f"\nForm errors: {response.context['form'].errors}")
         
-        # Should redirect to task detail page
-        self.assertEqual(response.status_code, 302)
-        
         # Task should be created
         task = AnalysisTask.objects.get(sha256='c' * 64)
+        
+        # Should redirect to task detail page - assertRedirects handles 301 and 302
+        self.assertRedirects(
+            response,
+            reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id}),
+            fetch_redirect_response=False
+        )
         
         # Reference solution should be created with content
         solution = Solution.objects.get(analysis_task=task)
@@ -323,15 +331,19 @@ class TaskSubmissionViewTestCase(TestCase):
         response = self.client.post(reverse('submit_task'), data=post_data)
         
         # Debug: Print form errors if submission failed
-        if response.status_code != 302:
+        if response.status_code not in (301, 302):
             if response.context and 'form' in response.context:
                 print(f"\nForm errors: {response.context['form'].errors}")
         
-        # Should redirect to task detail page
-        self.assertEqual(response.status_code, 302)
-        
         # Task should be created
         task = AnalysisTask.objects.get(sha256='d' * 64)
+        
+        # Should redirect to task detail page - assertRedirects handles 301 and 302
+        self.assertRedirects(
+            response,
+            reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id}),
+            fetch_redirect_response=False
+        )
         self.assertEqual(task.author, self.staff_user)
         
         # No reference solution should exist
@@ -353,10 +365,15 @@ class TaskSubmissionViewTestCase(TestCase):
         
         response = self.client.post(reverse('submit_task'), data=post_data)
         
-        # Should redirect to task detail page
-        self.assertEqual(response.status_code, 302)
-        
+        # Task should be created
         task = AnalysisTask.objects.get(sha256='e' * 64)
+        
+        # Should redirect to task detail page - assertRedirects handles 301 and 302
+        self.assertRedirects(
+            response,
+            reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id}),
+            fetch_redirect_response=False
+        )
         
         # Tags should be lowercase
         tag_names = [tag.name for tag in task.tags.all()]
@@ -417,7 +434,8 @@ class TaskEditPermissionTestCase(TestCase):
         self.client.login(username='other', password='testpass123')
         url = reverse('edit_task', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id})
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 302)  # Redirected
+        # assertRedirects handles both 301 and 302
+        self.assertRedirects(response, reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}), fetch_redirect_response=False)
     
     def test_staff_can_edit_any_task(self):
         """Staff users should be able to edit any task"""
