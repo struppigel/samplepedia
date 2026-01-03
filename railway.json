@@ -2,7 +2,7 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "cd sampledb && python manage.py test samples.test_task_submission --verbosity=1"
+    "buildCommand": "cd sampledb && python manage.py test samples --verbosity=1"
   },
   "deploy": {
     "startCommand": "bash start.sh",
