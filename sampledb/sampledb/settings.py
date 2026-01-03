@@ -14,9 +14,13 @@ from pathlib import Path
 from decouple import config, Csv
 import dj_database_url
 import cloudinary
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Detect if we're running tests
+TESTING = 'test' in sys.argv
 
 
 # Quick-start development settings - unsuitable for production
@@ -38,7 +42,8 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # SSL/HTTPS settings for production (when behind Cloudflare)
-if not DEBUG:
+# Disable SSL redirect during tests to avoid 301 redirects in test client
+if not DEBUG and not TESTING:
     SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
