@@ -57,10 +57,23 @@ class SolutionCreationTestCase(TestCase):
             }
         )
         
-        self.assertEqual(response.status_code, 302)  # Redirect after success
-        self.assertEqual(Solution.objects.count(), 1)
+        # Verify we have a redirect (solution was created successfully)
+        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
         
+        # Debug: Check if solution was actually created
+        if Solution.objects.count() == 0:
+            print(f"\nSolution not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
+            print(f"Status code: {response.status_code}")
+        
+        self.assertEqual(Solution.objects.count(), 1)
         solution = Solution.objects.first()
+        
+        # Verify redirect URL
+        self.assertRedirects(
+            response,
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            fetch_redirect_response=False
+        )
         self.assertEqual(solution.title, 'My Analysis Blog Post')
         self.assertEqual(solution.solution_type, SolutionType.BLOG)
         self.assertEqual(solution.author, self.user)
@@ -78,8 +91,17 @@ class SolutionCreationTestCase(TestCase):
             }
         )
         
-        self.assertEqual(response.status_code, 302)
+        # Verify we have a redirect (solution was created successfully)
+        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
+        
         solution = Solution.objects.first()
+        
+        # Verify redirect URL
+        self.assertRedirects(
+            response,
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            fetch_redirect_response=False
+        )
         self.assertEqual(solution.solution_type, SolutionType.VIDEO)
     
     def test_create_onsite_solution_redirects_to_editor(self):
@@ -112,9 +134,9 @@ class SolutionCreationTestCase(TestCase):
             }
         )
         
-        # Should redirect to login
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        # Should redirect to login - assertRedirects handles 301 and 302
+        expected_url = f"/login/?next=/sample/{self.task.sha256}/{self.task.id}/solution/add/"
+        self.assertRedirects(response, expected_url, fetch_redirect_response=False)
         self.assertEqual(Solution.objects.count(), 0)
 
 
@@ -294,8 +316,12 @@ class SolutionPermissionsTestCase(TestCase):
             })
         )
         
-        # Should redirect with error message
-        self.assertEqual(response.status_code, 302)
+        # Should redirect with error - assertRedirects handles 301 and 302
+        self.assertRedirects(
+            response,
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            fetch_redirect_response=False
+        )
     
     def test_staff_can_edit_any_solution(self):
         """Test that staff users can edit any solution"""
@@ -323,7 +349,12 @@ class SolutionPermissionsTestCase(TestCase):
             })
         )
         
-        self.assertEqual(response.status_code, 302)
+        # Should redirect to task detail - assertRedirects handles 301 and 302
+        self.assertRedirects(
+            response,
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            fetch_redirect_response=False
+        )
         self.assertEqual(Solution.objects.count(), 1)  # One reference solution remains
     
     def test_non_author_cannot_delete_solution(self):
@@ -338,8 +369,12 @@ class SolutionPermissionsTestCase(TestCase):
             })
         )
         
-        # Should redirect with error
-        self.assertEqual(response.status_code, 302)
+        # Should redirect with error - assertRedirects handles 301 and 302
+        self.assertRedirects(
+            response,
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            fetch_redirect_response=False
+        )
         self.assertEqual(Solution.objects.count(), 2)  # Both solutions remain
 
 
@@ -555,9 +590,26 @@ The malware appears to be...
             }
         )
         
-        self.assertEqual(response.status_code, 302)
+        # Verify we have a redirect (solution was created successfully)
+        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
         
+        # Debug: Check if solution was actually created
         solution = Solution.objects.first()
+        if solution is None:
+            print(f"\nSolution not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
+            print(f"Status code: {response.status_code}")
+            self.fail("Solution was not created")
+        
+        # Verify redirect URL - should redirect to view the published solution
+        self.assertRedirects(
+            response,
+            reverse('view_onsite_solution', kwargs={
+                'sha256': self.task.sha256,
+                'task_id': self.task.id,
+                'solution_id': solution.id
+            }),
+            fetch_redirect_response=False
+        )
         self.assertEqual(solution.solution_type, SolutionType.ONSITE)
         self.assertEqual(solution.content, markdown_content.strip())
         self.assertIsNone(solution.url)  # No URL for onsite
@@ -577,7 +629,8 @@ The malware appears to be...
                 'sha256': self.task.sha256,
                 'task_id': self.task.id,
                 'solution_id': solution.id
-            })
+            }),
+            follow=True  # Follow redirects (301 from SECURE_SSL_REDIRECT in production)
         )
         
         self.assertEqual(response.status_code, 200)
