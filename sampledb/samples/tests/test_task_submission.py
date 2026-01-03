@@ -257,6 +257,11 @@ class TaskSubmissionViewTestCase(TestCase):
         # Verify we have a redirect (task was created successfully)
         self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
         
+        # Debug: Check if task was actually created
+        if not AnalysisTask.objects.filter(sha256='b' * 64).exists():
+            print(f"\nTask not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
+            print(f"Status code: {response.status_code}")
+        
         # Task should be created
         task = AnalysisTask.objects.get(sha256='b' * 64)
         
@@ -304,6 +309,11 @@ class TaskSubmissionViewTestCase(TestCase):
         # Verify we have a redirect (task was created successfully)
         self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
         
+        # Debug: Check if task was actually created
+        if not AnalysisTask.objects.filter(sha256='c' * 64).exists():
+            print(f"\nTask not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
+            print(f"Status code: {response.status_code}")
+        
         # Task should be created
         task = AnalysisTask.objects.get(sha256='c' * 64)
         
@@ -343,6 +353,11 @@ class TaskSubmissionViewTestCase(TestCase):
         
         # Verify we have a redirect (task was created successfully)
         self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
+        
+        # Debug: Check if task was actually created
+        if not AnalysisTask.objects.filter(sha256='d' * 64).exists():
+            print(f"\nTask not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
+            print(f"Status code: {response.status_code}")
         
         # Task should be created
         task = AnalysisTask.objects.get(sha256='d' * 64)

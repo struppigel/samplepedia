@@ -60,6 +60,11 @@ class SolutionCreationTestCase(TestCase):
         # Verify we have a redirect (solution was created successfully)
         self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
         
+        # Debug: Check if solution was actually created
+        if Solution.objects.count() == 0:
+            print(f"\nSolution not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
+            print(f"Status code: {response.status_code}")
+        
         self.assertEqual(Solution.objects.count(), 1)
         solution = Solution.objects.first()
         
@@ -588,7 +593,12 @@ The malware appears to be...
         # Verify we have a redirect (solution was created successfully)
         self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
         
+        # Debug: Check if solution was actually created
         solution = Solution.objects.first()
+        if solution is None:
+            print(f"\nSolution not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
+            print(f"Status code: {response.status_code}")
+            self.fail("Solution was not created")
         
         # Verify redirect URL - should redirect to view the published solution
         self.assertRedirects(
