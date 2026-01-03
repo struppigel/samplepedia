@@ -5,18 +5,13 @@
 {% block title %}Latest Solutions{% endblock %}
 
 {% block content %}
+{% with card_height=210 %}
 
 <section class="content-header">
   <div class="container-fluid">
     <div class="row mb-2">
       <div class="col-sm-6">
         <h1>Latest Solutions</h1>
-      </div>
-      <div class="col-sm-6">
-        <ol class="breadcrumb float-sm-right">
-          <li class="breadcrumb-item"><a href="{% url 'sample_list' %}">Home</a></li>
-          <li class="breadcrumb-item active">Solutions</li>
-        </ol>
       </div>
     </div>
   </div>
@@ -34,7 +29,7 @@
     <div class="solutions-container">
       <div class="row">
         {% for solution in solutions %}
-        <div class="col-lg-6 col-md-12 mb-4">
+        <div class="col-lg-6 col-md-12 mb-1">
         <div class="card h-100 shadow-sm hover-shadow">
           <div class="row g-0 align-items-center">
             <!-- Image Thumbnail (Left Side) -->
@@ -46,7 +41,7 @@
                 <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
               {% endif %}
               {% if solution.analysis_task.image %}
-                  {% cloudinary_url solution.analysis_task.image width=500 height=500 crop='fill' gravity='center' quality='auto' fetch_format='auto' as image_url %}
+                  {% cloudinary_url solution.analysis_task.image width=card_height|add:25 height=card_height|add:25 crop='fill' gravity='center' quality='auto' fetch_format='auto' as image_url %}
                   <div class="card-image-container">
                     <img src="{{ image_url }}" alt="{{ solution.title }}" class="card-image">
                     {% if solution.solution_type != 'onsite' %}
@@ -135,7 +130,7 @@
     </div>
     
     <!-- View All Solutions Link -->
-    <div class="text-center mt-4">
+    <div class="text-center mt-0">
       <a href="{% url 'solution_list' %}" class="btn btn-outline-danger">
         <i class="fas fa-list"></i> Browse All Solutions
       </a>
@@ -148,10 +143,21 @@
     
   </div>
 </section>
+{% endwith %}
 
 <style>
+:root {
+  --card-height: {{ card_height }}px;
+}
+
 /* Solutions container with max-width and centering */
 .solutions-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.content-header .container-fluid {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 15px;
@@ -179,20 +185,28 @@
 .col-md-4 {
   display: flex;
   flex-direction: column;
+  min-height: var(--card-height);
+  max-width: 33.333333%;
+  flex: 0 0 33.333333%;
 }
 
 .card-image-container {
-
   height: 100%;
+  width: 100%;
   overflow: hidden;
   border-right: 3px solid #dc3545;
   flex: 1;
+  min-height: var(--card-height);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .card-image {
-  width: 100%;
+  width: auto;
   height: 100%;
   object-fit: cover;
+  object-position: center;
 }
 
 .opacity-50 {
@@ -223,8 +237,18 @@
   position: relative;
 }
 
-.card-image-container {
-  position: relative;
+.card-body {
+  padding-bottom: 0.55rem !important;
+}
+
+.card-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.5em;
+  line-height: 1.25em;
 }
 </style>
 
