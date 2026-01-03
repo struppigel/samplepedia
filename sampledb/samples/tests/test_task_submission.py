@@ -254,10 +254,13 @@ class TaskSubmissionViewTestCase(TestCase):
             if response.context and 'form' in response.context:
                 print(f"\nForm errors: {response.context['form'].errors}")
         
+        # Verify we have a redirect (task was created successfully)
+        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
+        
         # Task should be created
         task = AnalysisTask.objects.get(sha256='b' * 64)
         
-        # Should redirect to task detail page - assertRedirects handles 301 and 302
+        # Verify redirect URL
         self.assertRedirects(
             response,
             reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id}),
@@ -298,10 +301,13 @@ class TaskSubmissionViewTestCase(TestCase):
             if response.context and 'form' in response.context:
                 print(f"\nForm errors: {response.context['form'].errors}")
         
+        # Verify we have a redirect (task was created successfully)
+        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
+        
         # Task should be created
         task = AnalysisTask.objects.get(sha256='c' * 64)
         
-        # Should redirect to task detail page - assertRedirects handles 301 and 302
+        # Verify redirect URL
         self.assertRedirects(
             response,
             reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id}),
@@ -335,10 +341,13 @@ class TaskSubmissionViewTestCase(TestCase):
             if response.context and 'form' in response.context:
                 print(f"\nForm errors: {response.context['form'].errors}")
         
+        # Verify we have a redirect (task was created successfully)
+        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
+        
         # Task should be created
         task = AnalysisTask.objects.get(sha256='d' * 64)
         
-        # Should redirect to task detail page - assertRedirects handles 301 and 302
+        # Verify redirect URL
         self.assertRedirects(
             response,
             reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id}),

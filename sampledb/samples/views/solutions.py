@@ -270,7 +270,8 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
             )
             messages.success(request, 'Solution added successfully!')
         
-        return redirect('sample_detail', sha256=sha256, task_id=task_id)
+        # Redirect to view the published solution
+        return redirect('view_onsite_solution', sha256=sha256, task_id=task_id, solution_id=solution.id)
     
     # Prepare initial values for the form
     initial_title = solution.title if solution else ''

@@ -57,10 +57,13 @@ class SolutionCreationTestCase(TestCase):
             }
         )
         
+        # Verify we have a redirect (solution was created successfully)
+        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
+        
         self.assertEqual(Solution.objects.count(), 1)
         solution = Solution.objects.first()
         
-        # Should redirect to task detail - assertRedirects handles 301 and 302
+        # Verify redirect URL
         self.assertRedirects(
             response,
             reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
@@ -83,9 +86,12 @@ class SolutionCreationTestCase(TestCase):
             }
         )
         
+        # Verify we have a redirect (solution was created successfully)
+        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
+        
         solution = Solution.objects.first()
         
-        # Should redirect to task detail - assertRedirects handles 301 and 302
+        # Verify redirect URL
         self.assertRedirects(
             response,
             reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
@@ -579,9 +585,12 @@ The malware appears to be...
             }
         )
         
+        # Verify we have a redirect (solution was created successfully)
+        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
+        
         solution = Solution.objects.first()
         
-        # Should redirect to view onsite solution - assertRedirects handles 301 and 302
+        # Verify redirect URL - should redirect to view the published solution
         self.assertRedirects(
             response,
             reverse('view_onsite_solution', kwargs={
