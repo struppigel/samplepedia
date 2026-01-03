@@ -31,20 +31,22 @@
     </div>
     {% else %}
     
-    <div class="row">
-      {% for solution in solutions %}
-      <div class="col-lg-6 col-md-12 mb-4">
+    <div class="solutions-container">
+      <div class="row">
+        {% for solution in solutions %}
+        <div class="col-lg-6 col-md-12 mb-4">
         <div class="card h-100 shadow-sm hover-shadow">
-          <div class="row g-0">
+          <div class="row g-0 align-items-center">
             <!-- Image Thumbnail (Left Side) -->
             <div class="col-md-4">
+              <!-- Image Link -->
               {% if solution.solution_type == 'onsite' %}
                 <a href="{% url 'view_onsite_solution' sha256=solution.analysis_task.sha256 task_id=solution.analysis_task.id solution_id=solution.id %}" class="text-decoration-none">
               {% else %}
                 <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
               {% endif %}
-                {% if solution.analysis_task.image %}
-                  {% cloudinary_url solution.analysis_task.image width=400 height=400 crop='fill' gravity='center' quality='auto' fetch_format='auto' as image_url %}
+              {% if solution.analysis_task.image %}
+                  {% cloudinary_url solution.analysis_task.image width=500 height=500 crop='fill' gravity='center' quality='auto' fetch_format='auto' as image_url %}
                   <div class="card-image-container">
                     <img src="{{ image_url }}" alt="{{ solution.title }}" class="card-image">
                     {% if solution.solution_type != 'onsite' %}
@@ -53,12 +55,12 @@
                       </div>
                     {% endif %}
                   </div>
-                {% else %}
+              {% else %}
                   <div class="card-image-container bg-gradient-dark d-flex align-items-center justify-content-center">
                     <i class="fas fa-file-alt fa-3x text-white opacity-50"></i>
                   </div>
-                {% endif %}
-              </a>
+              {% endif %}
+                </a>
             </div>
             
             <!-- Card Content (Right Side) -->
@@ -79,9 +81,8 @@
             
             <!-- Analysis Task Reference -->
             <p class="small text-muted mb-2">
-              <i class="fas fa-link"></i>
               <a href="{% url 'sample_detail' sha256=solution.analysis_task.sha256 task_id=solution.analysis_task.id %}">
-                {{ solution.analysis_task.sha256|slice:":12" }}...
+                {{ solution.analysis_task.sha256 }}
               </a>
             </p>
             
@@ -89,7 +90,7 @@
             <div class="mb-2">
               {% difficulty_badge solution.analysis_task.difficulty solution.analysis_task.difficulty %}
             </div>
-            
+    
             <!-- Author and Date -->
             <p class="small text-muted mb-3">
               <i class="fas fa-user"></i> 
@@ -97,15 +98,7 @@
               •
               <i class="fas fa-calendar"></i> {{ solution.created_at|date:"M d, Y" }}
               •
-              {% if solution.solution_type == 'blog' %}
-                <i class="fas fa-blog text-info"></i> Blog Post
-              {% elif solution.solution_type == 'paper' %}
-                <i class="fas fa-file-alt text-success"></i> Paper
-              {% elif solution.solution_type == 'video' %}
-                <i class="fas fa-video text-danger"></i> Video
-              {% elif solution.solution_type == 'onsite' %}
-                <i class="fas fa-pen-fancy text-primary"></i> Article
-              {% endif %}
+              <i class="fas {{ solution.solution_type|solution_icon }}"></i> {{ solution.get_solution_type_display }}
             </p>
             
             <!-- Spacer -->
@@ -114,9 +107,9 @@
               
               <!-- Footer Actions -->
               <div class="d-flex justify-content-between align-items-center">
-                <!-- Like Count -->
-                <div class="text-muted small">
-                  <i class="fas fa-heart"></i> {{ solution.like_count }} {{ solution.like_count|pluralize:"like,likes" }}
+                <!-- Like Button -->
+                <div class="small">
+                  {% solution_like_button solution user_liked_solution_ids %}
                 </div>
                 
                 <!-- Read More Button -->
@@ -137,15 +130,19 @@
           </div>
         </div>
       </div>
-      {% endfor %}
+        {% endfor %}
+      </div>
     </div>
     
     <!-- View All Solutions Link -->
     <div class="text-center mt-4">
-      <a href="{% url 'sample_list' %}" class="btn btn-outline-danger">
-        <i class="fas fa-list"></i> Browse All Tasks & Solutions
+      <a href="{% url 'solution_list' %}" class="btn btn-outline-danger">
+        <i class="fas fa-list"></i> Browse All Solutions
       </a>
     </div>
+    
+    <!-- Spacer to push footer down without showing white background -->
+    <div style="height: 2rem;"></div>
     
     {% endif %}
     
@@ -153,6 +150,13 @@
 </section>
 
 <style>
+/* Solutions container with max-width and centering */
+.solutions-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
 .hover-shadow {
   transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
@@ -160,6 +164,15 @@
 .hover-shadow:hover {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
   transform: translateY(-3px);
+}
+
+/* Match card height to image height */
+.card.h-100 {
+  height: auto !important;
+}
+
+.row.g-0 {
+  height: 100%;
 }
 
 .card-image-container {
@@ -198,6 +211,10 @@
   padding: 4px 8px;
   font-size: 12px;
   z-index: 10;
+}
+
+.card-image-container {
+  position: relative;
 }
 
 .card-image-container {

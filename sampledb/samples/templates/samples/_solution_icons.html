@@ -1,17 +1,8 @@
 {% load user_tags %}
 {% if has_any %}
-  {% if has_blog %}
-    <i class="fas {{ 'blog'|solution_icon }}" title="Blog post"></i>
-  {% endif %}
-  {% if has_paper %}
-    <i class="fas {{ 'paper'|solution_icon }}" title="Paper"></i>
-  {% endif %}
-  {% if has_video %}
-    <i class="fas {{ 'video'|solution_icon }}" title="Video"></i>
-  {% endif %}
-  {% if has_onsite %}
-    <i class="fas {{ 'onsite'|solution_icon }}" title="On-Site Article"></i>
-  {% endif %}
+  {% for solution_type in solution_types %}
+    <i class="fas {{ solution_type|solution_icon }}"></i>
+  {% endfor %}
   <span class="text-muted" style="font-size: 0.9em;">{{ total_count }}</span>
 {% else %}
   <span class="text-muted">—</span>
