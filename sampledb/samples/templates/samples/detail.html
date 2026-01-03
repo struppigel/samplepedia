@@ -6,13 +6,14 @@
 {% block title %}{{ sample.sha256 }}{% endblock %}
 
 {% block content %}
+{% with max_width_with_sidebar=1600 max_width_no_sidebar=1200 %}
 
 <section class="content">
   <div class="container-fluid">
 
     <!-- Title -->
     <div class="row justify-content-center mb-3">
-      <div class="col-md-12" style="max-width: 1600px;">
+      <div class="col-md-12" style="max-width: {% if sample.image or sample.youtube_id or youtube_solution %}{{ max_width_with_sidebar }}px{% else %}{{ max_width_no_sidebar }}px{% endif %};">
         <div class="content-header">
           <h1>Sample</h1>
         </div>
@@ -22,7 +23,7 @@
     <!-- Main Layout: Left (Metadata + Analysis) | Right (Image + Video) -->
     <div class="row justify-content-center">
       <!-- LEFT COLUMN: Metadata and Analysis -->
-      <div class="{% if sample.image or sample.youtube_id or youtube_solution %}col-md-8{% else %}col-md-12{% endif %}" style="max-width: 1200px;">
+      <div class="{% if sample.image or sample.youtube_id or youtube_solution %}col-md-8{% else %}col-md-12{% endif %}" style="max-width: {{ max_width_no_sidebar }}px;">
         
         <!-- Metadata Card -->
         <div class="card">
@@ -233,7 +234,7 @@
 
     <!-- Back Button -->
     <div class="row justify-content-center mt-3">
-      <div class="col-md-12" style="max-width: {% if sample.image or sample.youtube_id or youtube_solution %}1600px{% else %}1200px{% endif %};">
+      <div class="col-md-12" style="max-width: {% if sample.image or sample.youtube_id or youtube_solution %}{{ max_width_with_sidebar }}px{% else %}{{ max_width_no_sidebar }}px{% endif %};">
         <button onclick="smartBack()" class="btn-back">
           ← Back to list
         </button>
@@ -242,7 +243,7 @@
 
     <!-- Comments Section -->
     <div class="row mt-3 justify-content-center">
-      <div class="col-md-12" style="max-width: {% if sample.image or sample.youtube_id or youtube_solution %}1600px{% else %}1200px{% endif %};">
+      <div class="col-md-12" style="max-width: {% if sample.image or sample.youtube_id or youtube_solution %}{{ max_width_with_sidebar }}px{% else %}{{ max_width_no_sidebar }}px{% endif %};">
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Comments</h3>
@@ -275,6 +276,7 @@
 
   </div>
 </section>
+{% endwith %}
 
 <script>
 // Smart back navigation - avoid going back to submission form
