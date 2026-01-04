@@ -74,7 +74,8 @@
                       <th>Difficulty</th>
                       <th>Type</th>
                       <th>Title</th>
-                      <th>Created</th>
+                      <th>Likes</th>
+                      <th>Date</th>
                       <th>Link</th>
                       {% if user.is_authenticated and user.username == profile_user.username %}
                       <th>Actions</th>
@@ -129,8 +130,13 @@
                             </span>
                           {% endif %}
                         </td>
+                        
+                        <!-- Likes -->
+                        <td>
+                          {% solution_like_button solution user_liked_solution_ids %}
+                        </td>
 
-                        <!-- Created Date -->
+                         <!-- Created Date -->
                         <td>
                           <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}" class="text-muted">
                             {{ solution.created_at|date:"d M Y" }}
@@ -263,7 +269,7 @@
                         <!-- Goal -->
                         <td>
                         <a href="{% url 'sample_detail' task.sha256 task.id %}" class="text-muted">
-                          {{ task.goal|truncatechars:60 }}
+                          {{ task.goal|truncatechars:40 }}
                         </a>
                         </td>
                         

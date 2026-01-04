@@ -44,7 +44,9 @@ def sample_list(request):
     ).values('count')
 
     # Annotate with favorite count and difficulty order for sorting
-    samples = AnalysisTask.objects.annotate(
+    samples = AnalysisTask.objects.select_related('author').prefetch_related(
+        'tags', 'tools'
+    ).annotate(
         favorite_count_annotated=Count('favorited_by'),
         solution_count_annotated=Count('solutions'),
         comment_count_annotated=Subquery(comment_count_subquery, output_field=IntegerField()),
