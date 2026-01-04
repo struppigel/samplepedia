@@ -277,9 +277,13 @@ def user_profile(request, username):
     
     # Get current user's favorited sample IDs for display
     user_favorited_ids = set()
+    user_liked_solution_ids = set()
     if request.user.is_authenticated:
         user_favorited_ids = set(
             request.user.favorite_samples.values_list('id', flat=True)
+        )
+        user_liked_solution_ids = set(
+            request.user.liked_solutions.values_list('id', flat=True)
         )
     
     # Calculate user score
@@ -316,6 +320,7 @@ def user_profile(request, username):
         'solutions': solutions,
         'analysis_tasks': analysis_tasks,
         'user_favorited_ids': user_favorited_ids,
+        'user_liked_solution_ids': user_liked_solution_ids,
         'user_score': user_score,
         'user_rank': user_rank,
     }
