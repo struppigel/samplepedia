@@ -42,9 +42,11 @@
                         <a href="{% url 'mark_notification_read' notification.id %}" class="text-decoration-none">
                           {% if notification.verb == 'liked' %}
                             <i class="fas fa-heart text-danger mr-2"></i>
+                          {% elif notification.verb == 'liked_solution' %}
+                            <i class="fas fa-heart text-danger mr-2"></i>
                           {% elif notification.verb == 'commented' %}
                             <i class="fas fa-comment text-info mr-2"></i>
-                          {% elif notification.verb == 'added_solution' %}
+                          {% elif notification.verb == 'submitted a solution' %}
                             <i class="fas fa-lightbulb text-warning mr-2"></i>
                           {% endif %}
                           <strong>{{ notification.description }}</strong>
