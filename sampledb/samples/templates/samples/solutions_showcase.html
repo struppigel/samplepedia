@@ -37,18 +37,11 @@
               <!-- Image Link -->
               {% if solution.solution_type == 'onsite' %}
                 <a href="{% url 'view_onsite_solution' sha256=solution.analysis_task.sha256 task_id=solution.analysis_task.id solution_id=solution.id %}" class="text-decoration-none">
-              {% else %}
-                <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
               {% endif %}
               {% if solution.analysis_task.image %}
                   {% cloudinary_url solution.analysis_task.image width=card_height|add:25 height=card_height|add:25 crop='fill' gravity='center' quality='auto' fetch_format='auto' as image_url %}
                   <div class="card-image-container">
                     <img src="{{ image_url }}" alt="{{ solution.title }}" class="card-image">
-                    {% if solution.solution_type != 'onsite' %}
-                      <div class="external-badge">
-                        <i class="fas fa-external-link-alt"></i>
-                      </div>
-                    {% endif %}
                   </div>
               {% else %}
                   <div class="card-image-container bg-gradient-dark d-flex align-items-center justify-content-center">
@@ -68,7 +61,7 @@
                   {{ solution.title }}
                 </a>
               {% else %}
-                <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="text-dark">
+                <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="text-dark" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
                   {{ solution.title }} <i class="fas fa-external-link-alt fa-xs text-muted"></i>
                 </a>
               {% endif %}
@@ -113,9 +106,14 @@
                     <i class="fas fa-book-open"></i> Read
                   </a>
                 {% else %}
-                  <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-danger">
-                    <i class="fas fa-external-link-alt"></i> View
-                  </a>
+                  <div>
+                    <a href="{% url 'sample_detail' sha256=solution.analysis_task.sha256 task_id=solution.analysis_task.id %}" class="btn btn-sm btn-secondary mr-1">
+                      <i class="fas fa-file-alt"></i> Sample
+                    </a>
+                    <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-danger" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
+                      <i class="fas fa-external-link-alt"></i> View
+                    </a>
+                  </div>
                 {% endif %}
               </div>
             </div>
@@ -249,6 +247,18 @@
   text-overflow: ellipsis;
   min-height: 2.5em;
   line-height: 1.25em;
+}
+
+.card-title a.text-dark:hover {
+  color: var(--primary-red) !important;
+}
+
+.dark-mode .card-title a.text-dark {
+  color: var(--text-primary) !important;
+}
+
+.dark-mode .card-title a.text-dark:hover {
+  color: var(--primary-red) !important;
 }
 </style>
 
