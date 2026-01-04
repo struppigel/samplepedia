@@ -7,6 +7,7 @@ from django.db.models import Count, Case, When, IntegerField, CharField, Q, Oute
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 from taggit.models import Tag
 import re
 from django.contrib.contenttypes.models import ContentType
@@ -147,6 +148,20 @@ def sample_detail(request, sha256, task_id):
     # Get solutions for this sample
     solutions = sample.solutions.select_related('author').all()
     
+    # Filter out hidden solutions for non-staff users (but allow seeing own solutions)
+    if not request.user.is_staff and request.user != sample.author:
+        if request.user.is_authenticated:
+            solutions = solutions.filter(
+                Q(hidden_until__isnull=True) | 
+                Q(hidden_until__lte=timezone.now()) |
+                Q(author=request.user)
+            )
+        else:
+            solutions = solutions.filter(
+                Q(hidden_until__isnull=True) | 
+                Q(hidden_until__lte=timezone.now())
+            )
+    
     # Get user's liked solution IDs
     user_liked_solution_ids = set()
     if request.user.is_authenticated:
@@ -156,6 +171,11 @@ def sample_detail(request, sha256, task_id):
     
     # Count reference solutions (by task author) for delete permission check
     reference_solution_count = solutions.filter(author=sample.author).count()
+    
+    # Add flag to each solution for whether user can see hidden status
+    solutions_list = list(solutions)
+    for solution in solutions_list:
+        solution.user_can_see_hidden_status = solution.user_can_see_hidden_status(request.user)
     
     # Find first YouTube solution if sample doesn't have youtube_id
     youtube_solution = None
@@ -173,7 +193,7 @@ def sample_detail(request, sha256, task_id):
     return render(request, "samples/detail.html", {
         "sample": sample,
         "user_has_liked": user_has_favorited,
-        "solutions": solutions,
+        "solutions": solutions_list,
         "youtube_solution": youtube_solution,
         "user_can_edit": sample.user_can_edit(request.user),
         "user_liked_solution_ids": user_liked_solution_ids,
@@ -245,8 +265,16 @@ def submit_task(request):
                 ref_type = form.cleaned_data.get('reference_solution_type')
                 ref_url = form.cleaned_data.get('reference_solution_url')
                 ref_content = form.cleaned_data.get('reference_solution_content')
+                hide_weeks = form.cleaned_data.get('hide_weeks', 0)
                 
                 if ref_title and ref_type:
+                    # Calculate hidden_until if hide_weeks > 0
+                    from datetime import timedelta
+                    hidden_until = None
+                    
+                    if hide_weeks and hide_weeks > 0:
+                        hidden_until = timezone.now() + timedelta(weeks=hide_weeks)
+                    
                     # Create solution based on type
                     if ref_type == 'onsite':
                         Solution.objects.create(
@@ -254,7 +282,8 @@ def submit_task(request):
                             title=ref_title,
                             solution_type=ref_type,
                             content=ref_content or '',
-                            author=request.user
+                            author=request.user,
+                            hidden_until=hidden_until
                         )
                     elif ref_url:
                         Solution.objects.create(
@@ -262,7 +291,8 @@ def submit_task(request):
                             title=ref_title,
                             solution_type=ref_type,
                             url=ref_url,
-                            author=request.user
+                            author=request.user,
+                            hidden_until=hidden_until
                         )
             
             # Transaction committed, Discord notification will fire now with correct data

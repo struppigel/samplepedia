@@ -405,9 +405,29 @@ class Solution(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     
+    # Hiding feature for reference solutions
+    hidden_until = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Hidden until",
+        help_text="Date and time when this solution becomes visible. Leave blank for immediate visibility."
+    )
+    
     @property
     def like_count(self):
         return self.liked_by.count()
+    
+    def is_currently_hidden(self):
+        """Check if solution is currently hidden based on hidden_until timestamp"""
+        if not self.hidden_until:
+            return False
+        return timezone.now() < self.hidden_until
+    
+    def user_can_see_hidden_status(self, user):
+        """Check if user should see the hidden badge/status (staff, task author, or solution author)"""
+        if not user or not user.is_authenticated:
+            return False
+        return user.is_staff or user == self.analysis_task.author or user == self.author
     
     class Meta:
         unique_together = ['title', 'analysis_task']

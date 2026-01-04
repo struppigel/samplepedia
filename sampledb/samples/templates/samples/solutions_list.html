@@ -89,6 +89,11 @@
                     {{ solution.title }}
                   </a>
                 {% endif %}
+                {% if solution.hidden_until and solution.user_can_see_hidden_status %}
+                  <span class="badge badge-warning ml-1" title="Hidden until {{ solution.hidden_until|date:'M d, Y H:i' }}">
+                    <i class="fas fa-eye-slash"></i> Hidden
+                  </span>
+                {% endif %}
               </td>
 
               <!-- Related Sample -->
