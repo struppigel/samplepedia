@@ -21,7 +21,7 @@
             <h3 class="card-title">Task Details</h3>
           </div>
           <div class="card-body">
-            <form method="post" novalidate>
+            <form method="post" enctype="multipart/form-data" novalidate>
               {% csrf_token %}
               
               {% if form.errors %}
@@ -150,10 +150,34 @@
 
               <div class="form-group">
                 <label>Sample Image (Optional)</label>
-                <input type="hidden" id="selected_image" name="image_id" value="">
-                <div>
-                  <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#imageGalleryModal">
-                    <i class="fas fa-images"></i> Select Image
+                
+                <!-- Upload option -->
+                <div class="image-upload-section" id="upload-section">
+                  <label class="d-block mb-1"><i class="fas fa-upload"></i> <strong>Upload Your Own</strong></label>
+                  {{ form.image_upload }}
+                  {% if form.image_upload.errors %}
+                    <div class="text-danger small mt-1">
+                      {{ form.image_upload.errors }}
+                    </div>
+                  {% else %}
+                    <small class="form-text text-muted">
+                      <i class="fas fa-info-circle"></i> Size: 125x125 to 1024x1024 pixels, 1:1 aspect ratio (square). Non-square images will be center-cropped.
+                    </small>
+                  {% endif %}
+                  <div id="upload_image_preview" class="mt-2" style="display: none;">
+                    <img id="upload_preview_img" src="" alt="Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                    <button type="button" class="btn btn-sm btn-link text-danger" onclick="clearUploadPreview()">
+                      <i class="fas fa-times"></i> Remove
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Gallery option -->
+                <div class="image-gallery-section mt-3 pt-3" id="gallery-section" style="border-top: 1px dashed var(--form-border);">
+                  <label class="d-block mb-2"><i class="fas fa-images"></i> <strong>Or Choose from Gallery</strong></label>
+                  <input type="hidden" id="selected_image" name="image_id" value="">
+                  <button type="button" class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#imageGalleryModal">
+                    <i class="fas fa-image"></i> Browse Gallery
                   </button>
                   <div id="selected_image_preview" class="mt-2" style="display: none;">
                     <img id="preview_img" src="" alt="Selected" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
@@ -162,7 +186,6 @@
                     </button>
                   </div>
                 </div>
-                <small class="form-text text-muted">Choose an image from gallery</small>
               </div>
 
               {% if not is_edit %}
@@ -380,6 +403,9 @@
       }
     });
     
+    // Hide upload section when gallery is selected
+    document.getElementById('upload-section').style.display = 'none';
+    
     // Close modal
     $('#imageGalleryModal').modal('hide');
   }
@@ -390,6 +416,21 @@
     document.querySelectorAll('.image-select-card').forEach(card => {
       card.classList.remove('selected');
     });
+    // Show upload section again
+    document.getElementById('upload-section').style.display = 'block';
+  }
+  
+  function clearUploadPreview() {
+    const uploadInput = document.getElementById('id_image_upload');
+    const previewDiv = document.getElementById('upload_image_preview');
+    if (uploadInput) {
+      uploadInput.value = '';
+    }
+    if (previewDiv) {
+      previewDiv.style.display = 'none';
+    }
+    // Show gallery section again
+    document.getElementById('gallery-section').style.display = 'block';
   }
   
   function confirmDelete() {
@@ -397,6 +438,57 @@
       document.getElementById('deleteForm').submit();
     }
   }
+  
+  // Handle image upload preview with validation
+  document.addEventListener('DOMContentLoaded', function() {
+    const uploadInput = document.getElementById('id_image_upload');
+    if (uploadInput) {
+      uploadInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+              const width = this.width;
+              const height = this.height;
+              
+              // Validate dimensions
+              if (width < 125 || height < 125) {
+                alert(`Image is too small (${width}x${height}px). Minimum size is 125x125 pixels.`);
+                uploadInput.value = '';
+                return;
+              }
+              
+              if (width > 1024 || height > 1024) {
+                alert(`Image is too large (${width}x${height}px). Maximum size is 1024x1024 pixels.`);
+                uploadInput.value = '';
+                return;
+              }
+              
+              // Show preview
+              const previewImg = document.getElementById('upload_preview_img');
+              const previewDiv = document.getElementById('upload_image_preview');
+              if (previewImg && previewDiv) {
+                previewImg.src = e.target.result;
+                previewDiv.style.display = 'block';
+                // Hide gallery section when upload is selected
+                document.getElementById('gallery-section').style.display = 'none';
+                
+                // Warn if non-square (will be cropped)
+                if (width !== height) {
+                  const cropSize = Math.min(width, height);
+                  alert(`Image will be center-cropped to ${cropSize}x${cropSize}px to maintain 1:1 aspect ratio.`);
+                }
+              }
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+  });
   
   // Auto-fill SHA256 from download link
   document.addEventListener('DOMContentLoaded', function() {
