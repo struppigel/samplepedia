@@ -107,6 +107,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise for static files
+    'django.middleware.gzip.GZipMiddleware',  # Compress responses
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -208,6 +209,22 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # WhiteNoise configuration for efficient static file serving
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Cache static files for 1 year (they have content hashes in filenames)
+WHITENOISE_MAX_AGE = 31536000  # 1 year in seconds
+
+# Cache-Control headers for different content types
+# These help Cloudflare know what to cache and for how long
+WHITENOISE_MIMETYPES = {
+    '.css': {'cache-control': 'public, max-age=31536000, immutable'},
+    '.js': {'cache-control': 'public, max-age=31536000, immutable'},
+    '.woff': {'cache-control': 'public, max-age=31536000, immutable'},
+    '.woff2': {'cache-control': 'public, max-age=31536000, immutable'},
+    '.ttf': {'cache-control': 'public, max-age=31536000, immutable'},
+    '.png': {'cache-control': 'public, max-age=31536000, immutable'},
+    '.jpg': {'cache-control': 'public, max-age=31536000, immutable'},
+    '.svg': {'cache-control': 'public, max-age=31536000, immutable'},
+}
 
 # Cloudinary configuration for media file storage (required)
 cloudinary.config(
