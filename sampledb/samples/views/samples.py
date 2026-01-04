@@ -327,6 +327,7 @@ def edit_task(request, sha256, task_id):
         initial_data = {
             'tags': ', '.join(task.tags.values_list('name', flat=True)),
             'tools': ', '.join(task.tools.values_list('name', flat=True)),
+            'difficulty': task.difficulty,
         }
         form = AnalysisTaskForm(instance=task, initial=initial_data, user=request.user, is_edit=True)
     
