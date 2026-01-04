@@ -19,16 +19,18 @@ from markdownx.utils import markdownify
 
 
 def sample_list(request):
-    # Show landing page to non-authenticated users (unless they want to browse)
-    browse = request.GET.get("browse", "")
-    if not request.user.is_authenticated and not browse:
-        return render(request, "samples/landing.html")
-    
+    # Get search/filter parameters first
     q = request.GET.get("q", "")
     tag = request.GET.get("tag")
     difficulty = request.GET.get("difficulty")
     favorites_only = request.GET.get("favorites") == "true"
     sort = request.GET.get("sort", "-id")  # Default to reverse chronological
+    browse = request.GET.get("browse", "")
+    
+    # Show landing page to non-authenticated users (unless they want to browse or are filtering)
+    has_filters = bool(q or tag or difficulty or browse)
+    if not request.user.is_authenticated and not has_filters:
+        return render(request, "samples/landing.html")
 
     # Get ContentType for AnalysisTask
     analysistask_ct = ContentType.objects.get_for_model(AnalysisTask)

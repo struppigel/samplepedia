@@ -6,6 +6,37 @@ This directory contains comprehensive tests for the Samplepedia application, foc
 
 ## Test Files
 
+### `test_sample_list.py`
+
+Test suite for sample list view functionality with 4 main test classes:
+
+#### 1. **SampleListUnauthenticatedTestCase** - Unauthenticated User Tests
+Tests behavior for users who are not logged in:
+- ✅ Landing page shown when accessing root without parameters
+- ✅ Browse parameter shows sample list
+- ✅ Search/filter shows list (regression test for redirect bug)
+- ✅ Difficulty filter works for unauthenticated users
+- ✅ Tag filter works for unauthenticated users
+- ✅ Multiple filters work together
+
+#### 2. **SampleListAuthenticatedTestCase** - Authenticated User Tests
+Tests behavior for logged-in users:
+- ✅ Authenticated users see list directly without params
+- ✅ Favorites filter works for authenticated users
+- ✅ Search and filter work together for authenticated users
+
+#### 3. **SampleListSortingTestCase** - Sorting Tests
+Tests sorting functionality:
+- ✅ Sort by SHA256 ascending
+- ✅ Sort by SHA256 descending
+- ✅ Sort by difficulty
+
+#### 4. **SampleListPaginationTestCase** - Pagination Tests
+Tests pagination behavior:
+- ✅ First page has 25 items
+- ✅ Second page has remaining items
+- ✅ Pagination preserves filters
+
 ### `test_task_submission.py`
 
 Comprehensive test suite for task submission workflow with 4 main test classes:
@@ -50,17 +81,21 @@ python manage.py test samples
 
 ### Run specific test file:
 ```bash
-python manage.py test samples.test_task_submission
+python manage.py test samples.tests.test_task_submission
+python manage.py test samples.tests.test_sample_list
+python manage.py test samples.tests.test_solutions
 ```
 
 ### Run specific test class:
 ```bash
-python manage.py test samples.test_task_submission.AnalysisTaskFormTestCase
+python manage.py test samples.tests.test_task_submission.AnalysisTaskFormTestCase
+python manage.py test samples.tests.test_sample_list.SampleListUnauthenticatedTestCase
 ```
 
 ### Run specific test method:
 ```bash
-python manage.py test samples.test_task_submission.AnalysisTaskFormTestCase.test_form_requires_core_fields
+python manage.py test samples.tests.test_task_submission.AnalysisTaskFormTestCase.test_form_requires_core_fields
+python manage.py test samples.tests.test_sample_list.SampleListUnauthenticatedTestCase.test_search_shows_list_for_unauthenticated
 ```
 
 ### Run with verbose output:
@@ -82,7 +117,12 @@ Current test coverage focuses on:
 - ✅ Form validation logic
 - ✅ User permission handling
 - ✅ Reference solution requirements
-- ✅ Data normalization (lowercase tags/tools)
+- ✅ Data normalization (lowercase
+- ✅ Sample list filtering and search (unauthenticated users)
+- ✅ Landing page vs list view routing
+- ✅ Sorting and pagination
+- ✅ Solution CRUD operations and permissions
+- ✅ Solution hiding functionality (hidden_until field) tags/tools)
 - ✅ URL validation for download links
 - ✅ SHA256 uniqueness constraints
 
@@ -122,6 +162,53 @@ The tests use the following conventions:
 - **SHA256 hashes**: Single character repeated 64 times (e.g., 'a' * 64, 'b' * 64) for easy identification
 - **User credentials**: All test users use password 'testpass123'
 - **Download URLs**: Use bazaar.abuse.ch with test SHA256s
+
+## Testing Redirects in Production-like Environments
+
+**IMPORTANT**: When testing redirects with `assertRedirects()`, always use `fetch_redirect_response=False` parameter:
+
+```python
+self.assertRedirects(
+    response,
+    reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+    fetch_redirect_response=False  # Required for production-like settings
+)
+```
+
+**Why this is necessary:**
+- In production, `DEBUG=False` is set along with security settings like `SECURE_SSL_REDIRECT`
+- When `fetch_redirect_response=True` (default), Django tries to follow the redirect and fetch the target page
+- With `SECURE_SSL_REDIRECT=True`, this can cause SSL-related errors in test environments
+- Using `fetch_redirect_response=False` only verifies that the redirect happens to the correct URL without fetching it
+
+**When to use:**
+- ✅ All `assertRedirects()` calls should use `fetch_redirect_response=False`
+- ✅ Even for simple redirects like login redirects
+- ✅ Especially for redirects after POST requests (form submissions, deletions, etc.)
+
+**Example from test_solutions.py:**
+```python
+def test_unauthenticated_cannot_create_solution(self):
+    """Test that unauthenticated users cannot create solutions"""
+    response = self.client.post(
+        reverse('create_solution', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+        {
+            'title': 'Test',
+            'solution_type': SolutionType.BLOG,
+            'url': 'https://example.com'
+        }
+    )
+    
+    # Should redirect to login - fetch_redirect_response=False for production compatibility
+    expected_url = f"/login/?next=/sample/{self.task.sha256}/{self.task.id}/solution/add/"
+    self.assertRedirects(response, expected_url, fetch_redirect_response=False)
+    self.assertEqual(Solution.objects.count(), 0)
+```
+
+**Don't use `follow=True` as a workaround:**
+- `follow=True` follows all redirects and returns the final page
+- This is useful when you need to test the final rendered page content
+- But for redirect testing, use `assertRedirects()` with `fetch_redirect_response=False` instead
 
 ## Continuous Integration
 
