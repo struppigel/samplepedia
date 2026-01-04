@@ -11,6 +11,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.utils import timezone
 
 from ..models import Solution, AnalysisTask, get_user_score, DIFFICULTY_POINTS
 from ..forms import (
@@ -227,6 +228,24 @@ def user_profile(request, username):
     # Get user's submitted solutions with related analysis tasks
     solutions_list = Solution.objects.filter(author=profile_user).select_related('analysis_task').order_by('-created_at')
     
+    # Filter hidden solutions if not staff/task author
+    # Profile users always see their own solutions (since solutions_list is already filtered by profile_user)
+    # But we still need to filter if viewing another user's profile
+    if request.user != profile_user:
+        if not request.user.is_authenticated:
+            # Anonymous users: hide all hidden solutions
+            solutions_list = solutions_list.filter(
+                Q(hidden_until__isnull=True) | Q(hidden_until__lte=timezone.now())
+            )
+        elif not request.user.is_staff:
+            # Authenticated non-staff: hide hidden solutions unless they're the task author
+            solutions_list = solutions_list.filter(
+                Q(hidden_until__isnull=True) | 
+                Q(hidden_until__lte=timezone.now()) | 
+                Q(analysis_task__author=request.user)
+            )
+        # Staff see everything (no filter needed)
+    
     # Get user's submitted analysis tasks
     analysis_tasks_list = AnalysisTask.objects.filter(author=profile_user).order_by('-created_at')
     
@@ -236,6 +255,7 @@ def user_profile(request, username):
     solutions = solutions_paginator.get_page(solutions_page)
     
     # Mark solutions that cannot be deleted (last reference solution)
+    # AND add user_can_see_hidden_status flag for template
     for solution in solutions:
         is_reference = solution.author == solution.analysis_task.author
         if is_reference:
@@ -246,6 +266,9 @@ def user_profile(request, username):
             solution.is_undeletable = ref_count <= 1
         else:
             solution.is_undeletable = False
+        
+        # Add flag for hidden status visibility
+        solution.user_can_see_hidden_status = solution.user_can_see_hidden_status(request.user)
     
     # Pagination for analysis tasks
     tasks_page = request.GET.get('tasks_page', 1)

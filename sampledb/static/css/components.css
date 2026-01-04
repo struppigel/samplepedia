@@ -246,33 +246,40 @@ body .btn.btn-outline-primary:active {
   margin-bottom: 0;
 }
 
-.spoiler-text p {
+.spoiler-text p,
+.markdown-content p {
   margin-bottom: 0.75rem;
 }
 
 .spoiler-text ul,
-.spoiler-text ol {
+.markdown-content ul,
+.spoiler-text ol,
+.markdown-content ol {
   margin-bottom: 0.75rem;
   padding-left: 1.5rem;
 }
 
-.spoiler-text li {
+.spoiler-text li,
+.markdown-content li {
   margin-bottom: 0.25rem;
 }
 
-.spoiler-text code {
+.spoiler-text code,
+.markdown-content code {
   background-color: rgba(0, 0, 0, 0.1);
   padding: 0.2em 0.4em;
   border-radius: 3px;
   font-size: 0.9em;
 }
 
-.spoiler-text del {
+.spoiler-text del,
+.markdown-content del {
   text-decoration: line-through;
   opacity: 0.7;
 }
 
-.spoiler-text pre {
+.spoiler-text pre,
+.markdown-content pre {
   background-color: rgba(0, 0, 0, 0.1);
   padding: 0.75rem;
   border-radius: 4px;
@@ -280,19 +287,22 @@ body .btn.btn-outline-primary:active {
   margin: 0.75rem 0;
 }
 
-.spoiler-text pre code {
+.spoiler-text pre code,
+.markdown-content pre code {
   background-color: transparent;
   padding: 0;
 }
 
-.spoiler-text blockquote {
+.spoiler-text blockquote,
+.markdown-content blockquote {
   border-left: 4px solid var(--primary-red);
   padding-left: 1rem;
   margin: 0.75rem 0;
   color: var(--text-muted);
 }
 
-.spoiler-text img {
+.spoiler-text img,
+.markdown-content img {
   max-width: 100%;
   height: auto;
   display: block;
@@ -300,13 +310,19 @@ body .btn.btn-outline-primary:active {
   border-radius: 4px;
 }
 
-.spoiler-text a {
+/* Markdown content links - both in spoilers and regular content */
+.spoiler-text a,
+.markdown-content a {
   color: var(--link-color);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: rgba(230, 57, 70, 0.3);
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.2s ease;
 }
 
-.spoiler-text a:hover {
-  text-decoration: underline;
+.spoiler-text a:hover,
+.markdown-content a:hover {
+  text-decoration-color: var(--blue-primary);
 }
 
 .spoiler-text hr {

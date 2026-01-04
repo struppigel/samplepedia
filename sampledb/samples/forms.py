@@ -96,6 +96,17 @@ class AnalysisTaskForm(forms.ModelForm):
         label='Reference Solution Content'
     )
     
+    # Hiding options for reference solution
+    hide_weeks = forms.IntegerField(
+        required=False,
+        initial=0,
+        min_value=0,
+        max_value=52,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'max': '52', 'placeholder': '0'}),
+        label='Hide solution for (weeks)',
+        help_text='Set to 0 to make solution visible immediately, or 1-52 to hide temporarily'
+    )
+    
     class Meta:
         model = AnalysisTask
         fields = ['sha256', 'download_link', 'description', 'goal', 'difficulty', 'tags', 'tools']
@@ -136,6 +147,7 @@ class AnalysisTaskForm(forms.ModelForm):
             del self.fields['reference_solution_type']
             del self.fields['reference_solution_url']
             del self.fields['reference_solution_content']
+            del self.fields['hide_weeks']
         else:
             # Make reference solution fields required for non-staff users when creating
             if self.user and not self.user.is_staff:

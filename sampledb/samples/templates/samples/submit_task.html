@@ -211,6 +211,18 @@
                 <textarea id="reference_solution_content" name="reference_solution_content" class="form-control" rows="10" placeholder="Paste your markdown content here..."></textarea>
                 <small class="form-text text-muted">Markdown content for on-site solutions.</small>
               </div>
+              
+              <div class="form-group">
+                <label for="{{ form.hide_weeks.id_for_label }}">{{ form.hide_weeks.label }}</label>
+                {{ form.hide_weeks }}
+                {% if form.hide_weeks.errors %}
+                  <div class="text-danger small">
+                    {{ form.hide_weeks.errors }}
+                  </div>
+                {% else %}
+                  <small class="form-text text-muted">{{ form.hide_weeks.help_text }}</small>
+                {% endif %}
+              </div>
               {% endif %}
 
               {% if form.non_field_errors %}

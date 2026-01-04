@@ -89,7 +89,7 @@
           <div class="card-body">
             {% if sample.goal %}
               <h6>Goal</h6>
-              <p>{{ sample.goal|markdownify}}</p>
+              <div class="markdown-content">{{ sample.goal|markdownify}}</div>
             {% endif %}
 
             {% if sample.description %}
@@ -138,6 +138,11 @@
                     {% if solution.author == sample.author %}
                       <span class="badge badge-info ml-2" title="Reference solution by task author">
                         <i class="fas fa-star"></i> Reference
+                      </span>
+                    {% endif %}
+                    {% if solution.hidden_until and solution.user_can_see_hidden_status %}
+                      <span class="badge badge-warning ml-2" title="Hidden until {{ solution.hidden_until|date:'M d, Y H:i' }}">
+                        <i class="fas fa-eye-slash"></i> Hidden
                       </span>
                     {% endif %}
                     <span class="text-muted small ml-2">by <a href="{% url 'user_profile' solution.author.username %}">{{ solution.author.username }}</a></span>

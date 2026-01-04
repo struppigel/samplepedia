@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.utils import timezone
+from django.db.models import Q
 from markdownx.utils import markdownify
 
 from ..models import AnalysisTask, Solution, SolutionType
@@ -27,6 +29,20 @@ def solution_list(request):
             output_field=IntegerField(),
         )
     )
+    
+    # Filter out hidden solutions for non-staff users (but allow seeing own solutions)
+    if not request.user.is_staff:
+        if request.user.is_authenticated:
+            solutions = solutions.filter(
+                Q(hidden_until__isnull=True) | 
+                Q(hidden_until__lte=timezone.now()) |
+                Q(author=request.user)
+            )
+        else:
+            solutions = solutions.filter(
+                Q(hidden_until__isnull=True) | 
+                Q(hidden_until__lte=timezone.now())
+            )
     
     # Filter by solution type if specified
     if solution_type:
@@ -63,6 +79,10 @@ def solution_list(request):
     paginator = Paginator(solutions, 25)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+    
+    # Add flag to each solution for whether user can see hidden status
+    for solution in page_obj:
+        solution.user_can_see_hidden_status = solution.user_can_see_hidden_status(request.user)
     
     # Get user's liked solution IDs for display
     user_liked_solution_ids = set()
@@ -178,6 +198,13 @@ def view_onsite_solution(request, sha256, task_id, solution_id):
     sample = get_object_or_404(AnalysisTask, id=task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type='onsite')
     
+    # Check if solution is hidden and user has permission to view
+    if solution.hidden_until and timezone.now() < solution.hidden_until:
+        if not (request.user.is_authenticated and 
+                (request.user.is_staff or request.user == solution.author or request.user == sample.author)):
+            messages.error(request, 'This solution is not yet available.')
+            return redirect('sample_detail', sha256=sha256, task_id=task_id)
+    
     # Check if user liked this solution
     user_has_liked = False
     if request.user.is_authenticated:
@@ -288,8 +315,12 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
 def solutions_showcase(request):
     """Display the newest solutions (all types) in a card grid layout"""
     # Get the 6 most recent solutions with their related data
+    # Exclude all hidden solutions from showcase
     solutions = Solution.objects.select_related(
         'analysis_task', 'author'
+    ).filter(
+        Q(hidden_until__isnull=True) | 
+        Q(hidden_until__lte=timezone.now())
     ).order_by('-created_at')[:6]
     
     # Get user's liked solution IDs for display

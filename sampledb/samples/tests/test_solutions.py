@@ -12,6 +12,15 @@ This test suite covers:
 8. Solution listing and filtering
 9. Solution type icon display
 10. Author attribution and notifications
+11. Solution hiding functionality (hidden_until field):
+    - Anonymous and regular users cannot see hidden solutions
+    - Solution authors can see their own hidden solutions
+    - Task authors can see hidden solutions on their tasks
+    - Staff can see all hidden solutions
+    - Direct URL access protection for hidden onsite solutions
+    - Hidden solutions excluded from showcase (no exceptions)
+    - Hidden solutions filtered on profile views
+    - Expired hidden solutions become visible to all
 """
 
 from django.test import TestCase, Client
@@ -636,3 +645,353 @@ The malware appears to be...
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, solution.title)
         self.assertContains(response, 'This is a test.')
+
+
+class SolutionHidingTestCase(TestCase):
+    """Test solution hiding functionality"""
+    
+    def setUp(self):
+        """Create test users and analysis tasks"""
+        from datetime import timedelta
+        from django.utils import timezone
+        
+        self.task_author = User.objects.create_user(
+            username='taskauthor',
+            password='testpass123'
+        )
+        self.solution_author = User.objects.create_user(
+            username='solutionauth',
+            password='testpass123'
+        )
+        self.staff_user = User.objects.create_user(
+            username='staffuser',
+            password='testpass123',
+            is_staff=True
+        )
+        self.regular_user = User.objects.create_user(
+            username='regularuser',
+            password='testpass123'
+        )
+        
+        self.task = AnalysisTask.objects.create(
+            sha256='c' * 64,
+            goal='Test hidden solutions',
+            difficulty=Difficulty.EASY,
+            author=self.task_author
+        )
+        
+        # Create visible solution
+        self.visible_solution = Solution.objects.create(
+            analysis_task=self.task,
+            title='PublicBlog Solution',
+            solution_type=SolutionType.BLOG,
+            url='https://example.com/visible',
+            author=self.solution_author,
+            hidden_until=None
+        )
+        
+        # Create hidden solution (hidden for 2 weeks from now)
+        self.hidden_solution = Solution.objects.create(
+            analysis_task=self.task,
+            title='TemporarilyHidden Solution',
+            solution_type=SolutionType.BLOG,
+            url='https://example.com/hidden',
+            author=self.solution_author,
+            hidden_until=timezone.now() + timedelta(weeks=2)
+        )
+        
+        # Create expired hidden solution (was hidden but now visible)
+        self.expired_solution = Solution.objects.create(
+            analysis_task=self.task,
+            title='PreviouslyHidden Solution',
+            solution_type=SolutionType.PAPER,
+            url='https://example.com/expired',
+            author=self.solution_author,
+            hidden_until=timezone.now() - timedelta(days=1)
+        )
+        
+        # Create onsite hidden solution
+        self.hidden_onsite = Solution.objects.create(
+            analysis_task=self.task,
+            title='NotYetPublic Onsite',
+            solution_type=SolutionType.ONSITE,
+            content='# Secret Analysis\n\nThis is hidden.',
+            author=self.solution_author,
+            hidden_until=timezone.now() + timedelta(weeks=1)
+        )
+        
+        self.client = Client()
+    
+    def test_anonymous_user_cannot_see_hidden_solutions_in_detail_view(self):
+        """Anonymous users should not see currently hidden solutions in task detail"""
+        response = self.client.get(
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.visible_solution.title)
+        self.assertContains(response, self.expired_solution.title)
+        self.assertNotContains(response, self.hidden_solution.title)
+        self.assertNotContains(response, self.hidden_onsite.title)
+    
+    def test_regular_user_cannot_see_hidden_solutions_in_detail_view(self):
+        """Regular users should not see hidden solutions in task detail"""
+        self.client.login(username='regularuser', password='testpass123')
+        
+        response = self.client.get(
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.visible_solution.title)
+        self.assertContains(response, self.expired_solution.title)
+        self.assertNotContains(response, self.hidden_solution.title)
+    
+    def test_solution_author_can_see_own_hidden_solution(self):
+        """Solution authors should see their own hidden solutions"""
+        self.client.login(username='solutionauth', password='testpass123')
+        
+        response = self.client.get(
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.visible_solution.title)
+        self.assertContains(response, self.hidden_solution.title)
+        self.assertContains(response, self.hidden_onsite.title)
+        # Should also see the "Hidden" badge
+        self.assertContains(response, 'fa-eye-slash')
+    
+    def test_task_author_can_see_all_hidden_solutions_on_own_task(self):
+        """Task authors should see all hidden solutions on their tasks"""
+        self.client.login(username='taskauthor', password='testpass123')
+        
+        response = self.client.get(
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.visible_solution.title)
+        self.assertContains(response, self.hidden_solution.title)
+        self.assertContains(response, self.hidden_onsite.title)
+        # Should see the "Hidden" badge
+        self.assertContains(response, 'fa-eye-slash')
+    
+    def test_staff_user_can_see_all_hidden_solutions(self):
+        """Staff users should see all hidden solutions everywhere"""
+        self.client.login(username='staffuser', password='testpass123')
+        
+        response = self.client.get(
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.visible_solution.title)
+        self.assertContains(response, self.hidden_solution.title)
+        self.assertContains(response, self.hidden_onsite.title)
+    
+    def test_direct_access_to_hidden_onsite_solution_blocked_for_anonymous(self):
+        """Anonymous users cannot directly access hidden onsite solutions"""
+        response = self.client.get(
+            reverse('view_onsite_solution', kwargs={
+                'sha256': self.task.sha256,
+                'task_id': self.task.id,
+                'solution_id': self.hidden_onsite.id
+            }),
+            follow=True
+        )
+        
+        # Should redirect to task detail with error message
+        self.assertRedirects(
+            response,
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            fetch_redirect_response=False
+        )
+    
+    def test_direct_access_to_hidden_onsite_solution_blocked_for_regular_user(self):
+        """Regular users cannot directly access hidden onsite solutions"""
+        self.client.login(username='regularuser', password='testpass123')
+        
+        response = self.client.get(
+            reverse('view_onsite_solution', kwargs={
+                'sha256': self.task.sha256,
+                'task_id': self.task.id,
+                'solution_id': self.hidden_onsite.id
+            }),
+            follow=True
+        )
+        
+        # Should redirect to task detail with error message
+        self.assertRedirects(
+            response,
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            fetch_redirect_response=False
+        )
+    
+    def test_direct_access_to_hidden_onsite_solution_allowed_for_author(self):
+        """Solution author can directly access their hidden onsite solution"""
+        self.client.login(username='solutionauth', password='testpass123')
+        
+        response = self.client.get(
+            reverse('view_onsite_solution', kwargs={
+                'sha256': self.task.sha256,
+                'task_id': self.task.id,
+                'solution_id': self.hidden_onsite.id
+            }),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.hidden_onsite.title)
+        self.assertContains(response, 'Secret Analysis')
+    
+    def test_direct_access_to_hidden_onsite_solution_allowed_for_task_author(self):
+        """Task author can directly access hidden solutions on their task"""
+        self.client.login(username='taskauthor', password='testpass123')
+        
+        response = self.client.get(
+            reverse('view_onsite_solution', kwargs={
+                'sha256': self.task.sha256,
+                'task_id': self.task.id,
+                'solution_id': self.hidden_onsite.id
+            }),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.hidden_onsite.title)
+    
+    def test_direct_access_to_hidden_onsite_solution_allowed_for_staff(self):
+        """Staff can directly access any hidden solution"""
+        self.client.login(username='staffuser', password='testpass123')
+        
+        response = self.client.get(
+            reverse('view_onsite_solution', kwargs={
+                'sha256': self.task.sha256,
+                'task_id': self.task.id,
+                'solution_id': self.hidden_onsite.id
+            }),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.hidden_onsite.title)
+    
+    def test_hidden_solutions_excluded_from_solutions_showcase(self):
+        """Hidden solutions should never appear in solutions showcase"""
+        # Even staff shouldn't see hidden solutions in showcase
+        self.client.login(username='staffuser', password='testpass123')
+        
+        response = self.client.get(reverse('solutions_showcase'), follow=True)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.visible_solution.title)
+        self.assertContains(response, self.expired_solution.title)
+        self.assertNotContains(response, self.hidden_solution.title)
+        self.assertNotContains(response, self.hidden_onsite.title)
+    
+    def test_hidden_solutions_excluded_from_profile_for_other_users(self):
+        """Hidden solutions should not appear on profile when viewed by others"""
+        # Regular user viewing solution author's profile
+        self.client.login(username='regularuser', password='testpass123')
+        
+        response = self.client.get(
+            reverse('user_profile', kwargs={'username': self.solution_author.username}),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.visible_solution.title)
+        self.assertNotContains(response, self.hidden_solution.title)
+    
+    def test_hidden_solutions_visible_on_own_profile(self):
+        """Users should see their own hidden solutions on their profile"""
+        self.client.login(username='solutionauth', password='testpass123')
+        
+        response = self.client.get(
+            reverse('user_profile', kwargs={'username': self.solution_author.username}),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.visible_solution.title)
+        self.assertContains(response, self.hidden_solution.title)
+        self.assertContains(response, self.hidden_onsite.title)
+        # Should see the "Hidden" badge
+        self.assertContains(response, 'fa-eye-slash')
+    
+    def test_task_author_sees_hidden_solutions_on_contributor_profile(self):
+        """Task authors should see hidden solutions on their tasks even on other profiles"""
+        self.client.login(username='taskauthor', password='testpass123')
+        
+        response = self.client.get(
+            reverse('user_profile', kwargs={'username': self.solution_author.username}),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        # Task author should see hidden solutions since they're for their own task
+        self.assertContains(response, self.hidden_solution.title)
+    
+    def test_hidden_solutions_excluded_from_solution_list_for_others(self):
+        """Hidden solutions should not appear in solutions_list view for other users"""
+        self.client.login(username='regularuser', password='testpass123')
+        
+        response = self.client.get(reverse('solution_list'), follow=True)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.visible_solution.title)
+        self.assertNotContains(response, self.hidden_solution.title)
+    
+    def test_own_hidden_solutions_visible_in_solution_list(self):
+        """Users should see their own hidden solutions in solutions_list view"""
+        self.client.login(username='solutionauth', password='testpass123')
+        
+        response = self.client.get(reverse('solution_list'), follow=True)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.visible_solution.title)
+        self.assertContains(response, self.hidden_solution.title)
+        # Should see the "Hidden" badge
+        self.assertContains(response, 'fa-eye-slash')
+    
+    def test_expired_hidden_solution_becomes_visible_to_all(self):
+        """Solutions with hidden_until in the past should be visible to everyone"""
+        # Anonymous user
+        response = self.client.get(
+            reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            follow=True
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.expired_solution.title)
+        # Should NOT see "Hidden" badge since it's no longer hidden
+        
+        # Verify in solutions showcase too
+        response = self.client.get(reverse('solutions_showcase'), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.expired_solution.title)
+    
+    def test_user_can_see_hidden_status_method(self):
+        """Test the user_can_see_hidden_status model method"""
+        from django.contrib.auth.models import AnonymousUser
+        
+        # Anonymous user cannot see hidden status
+        self.assertFalse(self.hidden_solution.user_can_see_hidden_status(AnonymousUser()))
+        
+        # Regular user cannot see hidden status
+        self.assertFalse(self.hidden_solution.user_can_see_hidden_status(self.regular_user))
+        
+        # Solution author can see hidden status
+        self.assertTrue(self.hidden_solution.user_can_see_hidden_status(self.solution_author))
+        
+        # Task author can see hidden status
+        self.assertTrue(self.hidden_solution.user_can_see_hidden_status(self.task_author))
+        
+        # Staff can see hidden status
+        self.assertTrue(self.hidden_solution.user_can_see_hidden_status(self.staff_user))
