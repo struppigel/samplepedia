@@ -29,6 +29,8 @@
   --sha256-valid-border: var(--teal-border);
   --sha256-valid-color: var(--teal-text);
   --image-bg: #1a1a1a;
+  --link-color: var(--primary-red);
+  --link-hover-color: var(--accent-red);
 }
 
 .dark-mode {

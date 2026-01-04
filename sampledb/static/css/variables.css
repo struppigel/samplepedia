@@ -56,6 +56,8 @@
   --alert-info-text: #333;
   --alert-link-color: var(--primary-red);
   --alert-link-hover: var(--blue-primary);
+  --link-color: var(--primary-red);
+  --link-hover-color: var(--accent-red);
   --footer-bg: var(--gray-800);
   --sha256-readonly-bg: var(--light-bg);
   --sha256-readonly-color: var(--body-color);

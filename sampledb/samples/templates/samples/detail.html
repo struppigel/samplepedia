@@ -89,7 +89,7 @@
           <div class="card-body">
             {% if sample.goal %}
               <h6>Goal</h6>
-              <p>{{ sample.goal|markdownify}}</p>
+              <div class="markdown-content">{{ sample.goal|markdownify}}</div>
             {% endif %}
 
             {% if sample.description %}
