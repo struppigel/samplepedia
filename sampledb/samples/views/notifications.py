@@ -43,6 +43,7 @@ def notification_dropdown(request):
         
         notifications_data.append({
             'id': n.id,
+            'verb': n.verb,
             'description': description,
             'timestamp': n.timestamp.isoformat(),
             'url': url,
