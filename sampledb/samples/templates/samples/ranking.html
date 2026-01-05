@@ -12,7 +12,7 @@
           <i class="fas fa-trophy"></i> User Ranking
         </h1>
         <p class="text-muted mt-2">
-          Users ranked by total score. Score is calculated from likes on submitted analysis tasks and solutions, with higher difficulty samples earning more points.
+          Users ranked by total score.
         </p>
       </div>
     </div>
@@ -202,9 +202,6 @@
               <li>{% difficulty_badge 'advanced' 'Advanced' %} {{ difficulty_points.advanced }} points per like</li>
               <!-- <li>{% difficulty_badge 'expert' 'Expert' %} {{ difficulty_points.expert }} points per like</li> temp disabled until it is implemented completely -->
             </ul>
-            <p class="text-muted small mb-0">
-              <em>Note: Likes on solutions are weighted by the difficulty of the analysis task they solve.</em>
-            </p>
           </div>
         </div>
       </div>

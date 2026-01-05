@@ -467,25 +467,33 @@ def ranking(request):
             task_count = user.analysis_tasks.count()
             solution_count = user.solutions.count()
             
-            # Calculate likes per difficulty from tasks
-            task_likes_easy = user.analysis_tasks.filter(difficulty='easy').aggregate(
-                total=Count('favorited_by', distinct=True))['total'] or 0
-            task_likes_medium = user.analysis_tasks.filter(difficulty='medium').aggregate(
-                total=Count('favorited_by', distinct=True))['total'] or 0
-            task_likes_advanced = user.analysis_tasks.filter(difficulty='advanced').aggregate(
-                total=Count('favorited_by', distinct=True))['total'] or 0
-            task_likes_expert = user.analysis_tasks.filter(difficulty='expert').aggregate(
-                total=Count('favorited_by', distinct=True))['total'] or 0
+            # Calculate likes per difficulty from tasks (sum of all likes, not distinct users)
+            task_likes_easy = sum(
+                task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='easy')
+            )
+            task_likes_medium = sum(
+                task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='medium')
+            )
+            task_likes_advanced = sum(
+                task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='advanced')
+            )
+            task_likes_expert = sum(
+                task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='expert')
+            )
             
-            # Calculate likes per difficulty from solutions
-            solution_likes_easy = user.solutions.filter(analysis_task__difficulty='easy').aggregate(
-                total=Count('liked_by', distinct=True))['total'] or 0
-            solution_likes_medium = user.solutions.filter(analysis_task__difficulty='medium').aggregate(
-                total=Count('liked_by', distinct=True))['total'] or 0
-            solution_likes_advanced = user.solutions.filter(analysis_task__difficulty='advanced').aggregate(
-                total=Count('liked_by', distinct=True))['total'] or 0
-            solution_likes_expert = user.solutions.filter(analysis_task__difficulty='expert').aggregate(
-                total=Count('liked_by', distinct=True))['total'] or 0
+            # Calculate likes per difficulty from solutions (sum of all likes, not distinct users)
+            solution_likes_easy = sum(
+                solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='easy')
+            )
+            solution_likes_medium = sum(
+                solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='medium')
+            )
+            solution_likes_advanced = sum(
+                solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='advanced')
+            )
+            solution_likes_expert = sum(
+                solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='expert')
+            )
             
             user_scores.append({
                 'user': user,
