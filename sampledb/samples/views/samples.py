@@ -28,8 +28,9 @@ def sample_list(request):
     browse = request.GET.get("browse", "")
     
     # Show landing page to non-authenticated users (unless they want to browse or are filtering)
-    has_filters = bool(q or tag or difficulty or browse)
-    if not request.user.is_authenticated and not has_filters:
+    # Check if any filter parameters are present in the URL (even if empty)
+    has_filter_params = any(param in request.GET for param in ['q', 'tag', 'difficulty', 'browse', 'sort', 'page'])
+    if not request.user.is_authenticated and not has_filter_params:
         return render(request, "samples/landing.html")
 
     # Get ContentType for AnalysisTask
@@ -109,7 +110,7 @@ def sample_list(request):
     sort_field = valid_sorts.get(sort, '-id')
     samples = samples.order_by(sort_field, '-id')  # Secondary sort by ID for consistency
 
-    paginator = Paginator(samples, 25)
+    paginator = Paginator(samples, 18)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
     
