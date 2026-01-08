@@ -385,7 +385,8 @@ def edit_task(request, sha256, task_id):
     current_image_id = None
     if task.image:
         try:
-            current_image = SampleImage.objects.get(image=task.image)
+            # Convert CloudinaryResource to string for database query
+            current_image = SampleImage.objects.get(image=str(task.image))
             current_image_id = current_image.id
         except SampleImage.DoesNotExist:
             pass
