@@ -17,6 +17,7 @@ function clearFormDrafts() {
     'draft_form_download_link',
     'draft_form_image_id',
     'draft_form_image_url',
+    'draft_form_uploaded_image',
     'draft_form_tags',
     'draft_form_tools',
     'draft_form_difficulty'
