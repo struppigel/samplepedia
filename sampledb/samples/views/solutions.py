@@ -15,12 +15,13 @@ def solution_list(request):
     from django.db.models import Q, Count, Case, When, IntegerField
     from django.db.models.functions import Lower
     from taggit.models import Tag
-    from ..models import Difficulty
+    from ..models import Difficulty, Platform
     
     solution_type = request.GET.get("solution_type", "")
     q = request.GET.get("q", "").strip()
     tag = request.GET.get("tag")
     difficulty = request.GET.get("difficulty")
+    platform = request.GET.get("platform")
     sort = request.GET.get("sort", "-created")
     
     # Get all solutions with like count and difficulty order annotations
@@ -68,6 +69,10 @@ def solution_list(request):
     # Filter by difficulty if specified
     if difficulty:
         solutions = solutions.filter(analysis_task__difficulty=difficulty)
+    
+    # Filter by platform if specified
+    if platform:
+        solutions = solutions.filter(analysis_task__platform=platform)
     
     # Ensure distinct results after filtering
     solutions = solutions.distinct()
@@ -122,8 +127,10 @@ def solution_list(request):
         'solution_types': SolutionType.choices,
         'selected_tag': tag,
         'selected_difficulty': difficulty,
+        'selected_platform': platform,
         'all_tags': all_tags,
         'difficulties': Difficulty.choices,
+        'platforms': Platform.choices,
         'user_liked_solution_ids': user_liked_solution_ids,
         'sort': sort,
     })

@@ -23,6 +23,7 @@ def sample_list(request):
     q = request.GET.get("q", "")
     tag = request.GET.get("tag")
     difficulty = request.GET.get("difficulty")
+    platform = request.GET.get("platform")
     favorites_only = request.GET.get("favorites") == "true"
     sort = request.GET.get("sort", "-id")  # Default to reverse chronological
     browse = request.GET.get("browse", "")
@@ -80,6 +81,9 @@ def sample_list(request):
     if difficulty:
         samples = samples.filter(difficulty=difficulty)
     
+    if platform:
+        samples = samples.filter(platform=platform)
+    
     # Filter by favorites if requested and user is authenticated
     if favorites_only and request.user.is_authenticated:
         samples = samples.filter(favorited_by=request.user)
@@ -129,13 +133,17 @@ def sample_list(request):
         taggit_taggeditem_items__content_type__model='analysistask'
     ).distinct().order_by(Lower('name'))
 
+    from ..models import Platform
+    
     return render(request, "samples/list.html", {
         "page_obj": page_obj,
         "q": q,
         "selected_tag": tag,
         "selected_difficulty": difficulty,
+        "selected_platform": platform,
         "all_tags": all_tags,
         "difficulties": Difficulty.choices,
+        "platforms": Platform.choices,
         "favorites_only": favorites_only,
         "user_favorited_ids": user_favorited_ids,
         "sort": sort,

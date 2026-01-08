@@ -42,6 +42,15 @@
               {% endfor %}
             </select>
             
+            <select name="platform" class="form-control form-control-sm mr-2" style="width: 120px;" onchange="this.form.submit()">
+              <option value="">All Platforms</option>
+              {% for value, label in platforms %}
+                <option value="{{ value }}" {% if selected_platform == value %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endfor %}
+            </select>
+            
             <select name="tag" class="form-control form-control-sm mr-2" style="width: 120px;" onchange="this.form.submit()">
               <option value="">All Tags</option>
               {% for tag in all_tags %}
@@ -54,14 +63,14 @@
             {% if user.is_authenticated %}
               <input type="hidden" name="favorites" value="{{ favorites_only|yesno:'true,false' }}">
               <button type="button" class="btn btn-sm mr-2 {% if favorites_only %}btn-danger{% else %}btn-default{% endif %}" onclick="toggleFavorites(this.form)">
-                <i class="fas fa-heart"></i> My Likes
+                My <i class="fas fa-heart"></i>
               </button>
             {% endif %}
             
             <button type="submit" class="btn btn-default btn-sm mr-2">
               Filter
             </button>
-            {% if q or selected_tag or selected_difficulty or favorites_only %}
+            {% if q or selected_tag or selected_difficulty or selected_platform or favorites_only %}
               <a href="/?browse=true" class="btn btn-sm btn-secondary mr-2">Clear</a>
             {% endif %}
             {% if user.is_authenticated %}

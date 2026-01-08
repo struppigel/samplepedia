@@ -88,7 +88,7 @@
                         <!-- SHA256 and Link -->
                         <td style="padding: 0.3rem 0.75rem;">
                           <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}" class="d-flex align-items-center" style="min-width: 0;">
-                            <i class="fas fa-file-code mr-1"></i>
+                            <i class="{{ solution.analysis_task.platform|platform_icon }} mr-1"></i>
                             <code style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="{{ solution.analysis_task.sha256 }}"> 
                               {{ solution.analysis_task.sha256|slice:":8" }}…
                             </code>
@@ -249,7 +249,7 @@
                         <!-- SHA256 and Link -->
                         <td style="padding: 0.3rem 0.75rem;">
                           <a href="{% url 'sample_detail' task.sha256 task.id %}" class="d-flex align-items-center" style="min-width: 0;">
-                            <i class="fas fa-file-code mr-1"></i>
+                            <i class="{{ task.platform|platform_icon }} mr-1"></i>
                             <code style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="{{ task.sha256 }}"> 
                               {{ task.sha256|slice:":8" }}…
                             </code>
