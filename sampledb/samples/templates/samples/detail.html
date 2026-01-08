@@ -53,6 +53,12 @@
                 {% difficulty_badge sample.difficulty sample.difficulty %}
               </dd>
 
+              <dt class="col-sm-3">Platform</dt>
+              <dd class="col-sm-9">
+                <i class="{{ sample.platform|platform_icon }}"></i>
+                <span class="ml-2">{{ sample.get_platform_display }}</span>
+              </dd>
+
               <dt class="col-sm-3">Tags</dt>
               <dd class="col-sm-9">
                 {% for tag in sample.tags.all %}

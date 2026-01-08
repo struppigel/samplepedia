@@ -23,7 +23,7 @@
 
         <div class="card-tools">
           <form method="get" class="form-inline">
-            <div class="input-group input-group-sm mr-2" style="width: 520px;">
+            <div class="input-group input-group-sm mr-2" style="width: 300px;">
               <input
                 type="text"
                 name="q"
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
               <!-- SHA256 and Link -->
               <td style="max-width: 200px; padding: 0.3rem 0.75rem;">
                 <a href="{% url 'sample_detail' s.sha256 s.id %}" class="d-flex align-items-center" style="min-width: 0;">
-                  <i class="fas fa-file-code mr-1" style="flex-shrink: 0; font-size: 1.2rem;"></i>
+                  <i class="{{ s.platform|platform_icon }} mr-1" style="flex-shrink: 0; font-size: 1.0rem;"></i>
                   <code style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="{{ s.sha256 }}">{{ s.sha256 }}</code>
                 </a>
               </td>
