@@ -39,10 +39,28 @@
               {% endfor %}
             </select>
             
+            <select name="difficulty" class="form-control form-control-sm mr-2" style="width: 120px;" onchange="this.form.submit()">
+              <option value="">All Levels</option>
+              {% for value, label in difficulties %}
+                <option value="{{ value }}" {% if selected_difficulty == value %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endfor %}
+            </select>
+            
+            <select name="tag" class="form-control form-control-sm mr-2" style="width: 120px;" onchange="this.form.submit()">
+              <option value="">All Tags</option>
+              {% for tag in all_tags %}
+                <option value="{{ tag.name }}" {% if selected_tag == tag.name %}selected{% endif %}>
+                  {{ tag.name }}
+                </option>
+              {% endfor %}
+            </select>
+            
             <button type="submit" class="btn btn-default btn-sm mr-2">
               Filter
             </button>
-            {% if q or selected_type %}
+            {% if q or selected_type or selected_tag or selected_difficulty %}
               <a href="{% url 'solution_list' %}" class="btn btn-sm btn-secondary mr-2">Clear</a>
             {% endif %}
           </form>
@@ -106,12 +124,12 @@
 
               <!-- Difficulty Badge -->
               <td>
-                {% difficulty_badge solution.analysis_task.difficulty solution.analysis_task.get_difficulty_display %}
+                {% include 'samples/_difficulty_badge.html' with difficulty=solution.analysis_task.difficulty difficulty_display=solution.analysis_task.get_difficulty_display filter_url='/solutions/' %}
               </td>
 
               <!-- Tags -->
               <td>
-                {% include 'samples/_expandable_tag_list.html' with tags=solution.analysis_task.tags.all max_width='200px' %}
+                {% include 'samples/_expandable_tag_list.html' with tags=solution.analysis_task.tags.all max_width='200px' filter_url='/solutions/' %}
               </td>
 
               <!-- Author -->

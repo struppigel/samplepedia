@@ -1,6 +1,8 @@
 {% load user_tags %}
-<a href="/?difficulty={{ difficulty }}"
+{% with base_url=filter_url|default:'/' %}
+<a href="{{ base_url }}?difficulty={{ difficulty }}"
    class="badge {{ difficulty|difficulty_badge_class }}"
    style="color: white; text-decoration: none;">
    {{ difficulty_display }}
 </a>
+{% endwith %}

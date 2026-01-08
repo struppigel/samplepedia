@@ -1,17 +1,18 @@
 {% comment %}
   Reusable tag list component with overflow handling
-  Usage: {% include 'samples/_tag_list.html' with tags=s.tags.all max_width='200px' %}
+  Usage: {% include 'samples/_tag_list.html' with tags=s.tags.all max_width='200px' filter_url='/' %}
   Parameters:
     - tags: QuerySet or list of tag objects
     - max_width: Maximum width before truncation (default: 200px)
+    - filter_url: Base URL for tag filtering (default: '/')
 {% endcomment %}
 
-{% with tag_list=tags|default:None width=max_width|default:'200px' %}
+{% with tag_list=tags|default:None width=max_width|default:'200px' base_url=filter_url|default:'/' %}
   {% if tag_list %}
     <div class="tag-list-wrapper" style="max-width: {{ width }};" data-initialized="false">
       <div class="tag-list-content">
         {% for tag in tag_list %}
-          <a href="/?tag={{ tag.name|urlencode }}" class="badge badge-tag" data-tag-index="{{ forloop.counter0 }}">
+          <a href="{{ base_url }}?tag={{ tag.name|urlencode }}" class="badge badge-tag" data-tag-index="{{ forloop.counter0 }}">
             {{ tag.name }}
           </a>
         {% endfor %}
