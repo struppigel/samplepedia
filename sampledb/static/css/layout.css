@@ -33,6 +33,43 @@ a.text-muted:hover {
   letter-spacing: -0.5px;
 }
 
+/* Mobile navbar optimization - hide text labels, keep icons */
+@media (max-width: 767px) {
+  /* Hide nav link text on mobile, keep icons */
+  .navbar-nav .nav-link:not(.navbar-brand) {
+    font-size: 0;
+  }
+  
+  .navbar-nav .nav-link i {
+    font-size: 1.1rem;
+    margin: 0;
+  }
+  
+  /* Keep icon visible */
+  .navbar-nav .nav-link i::before {
+    font-size: 1.1rem;
+  }
+  
+  /* Hide username text but keep icon and caret */
+  .navbar-nav .dropdown > .nav-link {
+    font-size: 0;
+  }
+  
+  .navbar-nav .dropdown > .nav-link i {
+    font-size: 1.1rem;
+  }
+  
+  /* Hide "Samplepedia" text on mobile, keep logo only */
+  .navbar-brand span {
+    display: none;
+  }
+  
+  /* Remove right margin from logo when text is hidden */
+  .navbar-brand img {
+    margin-right: 0 !important;
+  }
+}
+
 /* Footer - uses context-aware variables */
 .main-footer {
   border-top: 1px solid var(--primary-red-alpha-30);

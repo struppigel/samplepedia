@@ -97,6 +97,24 @@ def solution_icon(solution_type):
     }
     return icons.get(solution_type, 'fa-link text-primary')
 
+@register.filter
+def platform_icon(platform):
+    """
+    Return the Font Awesome icon class for a platform type.
+    Returns full class string like "fab fa-windows" or "fas fa-mobile-screen".
+    
+    For unknown platforms, returns a generic file-code icon as fallback.
+    """
+    icons = {
+        'windows': 'fab fa-windows',
+        'linux': 'fab fa-linux',
+        'macos': 'fab fa-apple',
+        'ios': 'fas fa-mobile-screen',
+        'android': 'fab fa-android',
+        'other': 'fas fa-file-code',
+    }
+    return icons.get(platform, 'fas fa-file-code')
+
 @register.inclusion_tag('samples/_solution_icons.html')
 def solution_icons(task):
     """

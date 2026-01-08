@@ -23,6 +23,7 @@ def sample_list(request):
     q = request.GET.get("q", "")
     tag = request.GET.get("tag")
     difficulty = request.GET.get("difficulty")
+    platform = request.GET.get("platform")
     favorites_only = request.GET.get("favorites") == "true"
     sort = request.GET.get("sort", "-id")  # Default to reverse chronological
     browse = request.GET.get("browse", "")
@@ -80,6 +81,9 @@ def sample_list(request):
     if difficulty:
         samples = samples.filter(difficulty=difficulty)
     
+    if platform:
+        samples = samples.filter(platform=platform)
+    
     # Filter by favorites if requested and user is authenticated
     if favorites_only and request.user.is_authenticated:
         samples = samples.filter(favorited_by=request.user)
@@ -129,13 +133,17 @@ def sample_list(request):
         taggit_taggeditem_items__content_type__model='analysistask'
     ).distinct().order_by(Lower('name'))
 
+    from ..models import Platform
+    
     return render(request, "samples/list.html", {
         "page_obj": page_obj,
         "q": q,
         "selected_tag": tag,
         "selected_difficulty": difficulty,
+        "selected_platform": platform,
         "all_tags": all_tags,
         "difficulties": Difficulty.choices,
+        "platforms": Platform.choices,
         "favorites_only": favorites_only,
         "user_favorited_ids": user_favorited_ids,
         "sort": sort,
@@ -238,21 +246,27 @@ def extract_youtube_id(url):
 def submit_task(request):
     """Allow users to submit their own analysis task"""
     if request.method == 'POST':
-        form = AnalysisTaskForm(request.POST, user=request.user, is_edit=False)
+        form = AnalysisTaskForm(request.POST, request.FILES, user=request.user, is_edit=False)
         if form.is_valid():
             # Use atomic transaction to ensure tags/tools are saved before Discord notification
             with transaction.atomic():
                 sample = form.save(commit=False)
                 sample.author = request.user
                 
-                # Handle image selection
-                image_id = request.POST.get('image_id')
-                if image_id:
-                    try:
-                        sample_image = SampleImage.objects.get(id=image_id)
-                        sample.image = sample_image.image
-                    except SampleImage.DoesNotExist:
-                        pass
+                # Handle uploaded image (priority over gallery selection)
+                uploaded_image = form.cleaned_data.get('image_upload')
+                if uploaded_image:
+                    # Upload directly to AnalysisTask.image (NOT to SampleImage gallery)
+                    sample.image = uploaded_image
+                else:
+                    # Handle image selection from gallery
+                    image_id = request.POST.get('image_id')
+                    if image_id:
+                        try:
+                            sample_image = SampleImage.objects.get(id=image_id)
+                            sample.image = sample_image.image
+                        except SampleImage.DoesNotExist:
+                            pass
                 
                 sample.save()
                 
@@ -327,22 +341,28 @@ def edit_task(request, sha256, task_id):
         return redirect('sample_detail', sha256=task.sha256, task_id=task.id)
     
     if request.method == 'POST':
-        form = AnalysisTaskForm(request.POST, instance=task, user=request.user, is_edit=True)
+        form = AnalysisTaskForm(request.POST, request.FILES, instance=task, user=request.user, is_edit=True)
         if form.is_valid():
             # Use atomic transaction
             with transaction.atomic():
                 sample = form.save(commit=False)
                 
-                # Handle image selection
-                image_id = request.POST.get('image_id')
-                if image_id:
-                    try:
-                        sample_image = SampleImage.objects.get(id=image_id)
-                        sample.image = sample_image.image
-                    except SampleImage.DoesNotExist:
-                        pass
-                elif request.POST.get('clear_image'):
-                    sample.image = None
+                # Handle uploaded image (priority over gallery selection)
+                uploaded_image = form.cleaned_data.get('image_upload')
+                if uploaded_image:
+                    # Upload directly to AnalysisTask.image (NOT to SampleImage gallery)
+                    sample.image = uploaded_image
+                else:
+                    # Handle image selection from gallery
+                    image_id = request.POST.get('image_id')
+                    if image_id:
+                        try:
+                            sample_image = SampleImage.objects.get(id=image_id)
+                            sample.image = sample_image.image
+                        except SampleImage.DoesNotExist:
+                            pass
+                    elif request.POST.get('clear_image'):
+                        sample.image = None
                 
                 sample.save()
                 
@@ -373,7 +393,8 @@ def edit_task(request, sha256, task_id):
     current_image_id = None
     if task.image:
         try:
-            current_image = SampleImage.objects.get(image=task.image)
+            # Convert CloudinaryResource to string for database query
+            current_image = SampleImage.objects.get(image=str(task.image))
             current_image_id = current_image.id
         except SampleImage.DoesNotExist:
             pass

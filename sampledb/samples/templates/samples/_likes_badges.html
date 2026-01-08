@@ -1,0 +1,26 @@
+{% load user_tags %}
+{# Display likes badges by difficulty level #}
+{# Parameters: likes_easy, likes_medium, likes_advanced, likes_expert, label (e.g., "Easy", "Medium") #}
+{% if likes_easy > 0 %}
+  <span class="badge {{ 'easy'|difficulty_badge_class }}" style="color: white;" title="Easy: {{ likes_easy }} likes">
+    <i class="fas fa-heart"></i> {{ likes_easy }}
+  </span>
+{% endif %}
+{% if likes_medium > 0 %}
+  <span class="badge {{ 'medium'|difficulty_badge_class }}" style="color: white;" title="Medium: {{ likes_medium }} likes">
+    <i class="fas fa-heart"></i> {{ likes_medium }}
+  </span>
+{% endif %}
+{% if likes_advanced > 0 %}
+  <span class="badge {{ 'advanced'|difficulty_badge_class }}" style="color: white;" title="Advanced: {{ likes_advanced }} likes">
+    <i class="fas fa-heart"></i> {{ likes_advanced }}
+  </span>
+{% endif %}
+{% if likes_expert > 0 %}
+  <span class="badge {{ 'expert'|difficulty_badge_class }}" style="color: white;" title="Expert: {{ likes_expert }} likes">
+    <i class="fas fa-heart"></i> {{ likes_expert }}
+  </span>
+{% endif %}
+{% if likes_easy == 0 and likes_medium == 0 and likes_advanced == 0 and likes_expert == 0 %}
+  <span class="text-muted">-</span>
+{% endif %}

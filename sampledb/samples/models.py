@@ -183,6 +183,14 @@ class Difficulty(models.TextChoices):
     ADVANCED = "advanced", "advanced"
     EXPERT = "expert", "expert"
 
+class Platform(models.TextChoices):
+    WINDOWS = "windows", "Windows"
+    LINUX = "linux", "Linux"
+    MACOS = "macos", "MacOS"
+    IOS = "ios", "iOS"
+    ANDROID = "android", "Android" 
+    MULTIPLE = "multiple", "Multiple"
+    OTHER = "other", "Other"
 
 class Course(models.Model):
     name = models.CharField(
@@ -275,6 +283,13 @@ class AnalysisTask(models.Model):
         choices=Difficulty.choices,
         default=Difficulty.EASY,
         verbose_name="Difficulty level"
+    )
+
+    platform = models.CharField(
+        max_length=20,
+        choices=Platform.choices,
+        default=Platform.WINDOWS,
+        verbose_name="Platform"
     )
     
     tags = TaggableManager(blank=True, verbose_name="Tags", related_name='tagged_samples')
@@ -410,6 +425,13 @@ class Solution(models.Model):
     class Meta:
         unique_together = ['title', 'analysis_task']
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['solution_type'], name='idx_solution_type'),
+            models.Index(fields=['analysis_task', 'solution_type'], name='idx_task_type'),
+            models.Index(fields=['-created_at'], name='idx_solution_created'),
+            models.Index(fields=['author'], name='idx_solution_author'),
+            models.Index(fields=['hidden_until'], name='idx_hidden_until'),
+        ]
     
     def __str__(self):
         return f"{self.title} ({self.get_solution_type_display()}) for {self.analysis_task.sha256}"

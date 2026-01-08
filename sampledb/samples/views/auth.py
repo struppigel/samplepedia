@@ -24,6 +24,51 @@ from ..forms import (
 )
 
 
+def calculate_user_likes_by_difficulty(user):
+    """
+    Calculate likes per difficulty from tasks and solutions for a given user.
+    Returns a dictionary with task_likes and solution_likes broken down by difficulty.
+    """
+    # Calculate likes per difficulty from tasks
+    task_likes_easy = sum(
+        task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='easy')
+    )
+    task_likes_medium = sum(
+        task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='medium')
+    )
+    task_likes_advanced = sum(
+        task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='advanced')
+    )
+    task_likes_expert = sum(
+        task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='expert')
+    )
+    
+    # Calculate likes per difficulty from solutions
+    solution_likes_easy = sum(
+        solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='easy')
+    )
+    solution_likes_medium = sum(
+        solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='medium')
+    )
+    solution_likes_advanced = sum(
+        solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='advanced')
+    )
+    solution_likes_expert = sum(
+        solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='expert')
+    )
+    
+    return {
+        'task_likes_easy': task_likes_easy,
+        'task_likes_medium': task_likes_medium,
+        'task_likes_advanced': task_likes_advanced,
+        'task_likes_expert': task_likes_expert,
+        'solution_likes_easy': solution_likes_easy,
+        'solution_likes_medium': solution_likes_medium,
+        'solution_likes_advanced': solution_likes_advanced,
+        'solution_likes_expert': solution_likes_expert,
+    }
+
+
 def login_view(request):
     """Custom login view with Turnstile CAPTCHA protection"""
     if request.method == 'POST':
@@ -315,6 +360,9 @@ def user_profile(request, username):
     else:
         user_rank = None
     
+    # Calculate likes by difficulty
+    likes_data = calculate_user_likes_by_difficulty(profile_user)
+    
     context = {
         'profile_user': profile_user,
         'solutions': solutions,
@@ -323,6 +371,7 @@ def user_profile(request, username):
         'user_liked_solution_ids': user_liked_solution_ids,
         'user_score': user_score,
         'user_rank': user_rank,
+        **likes_data,  # Unpacks all task_likes and solution_likes variables
     }
     
     return render(request, 'samples/profile.html', context)
@@ -467,47 +516,15 @@ def ranking(request):
             task_count = user.analysis_tasks.count()
             solution_count = user.solutions.count()
             
-            # Calculate likes per difficulty from tasks (sum of all likes, not distinct users)
-            task_likes_easy = sum(
-                task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='easy')
-            )
-            task_likes_medium = sum(
-                task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='medium')
-            )
-            task_likes_advanced = sum(
-                task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='advanced')
-            )
-            task_likes_expert = sum(
-                task.favorited_by.count() for task in user.analysis_tasks.filter(difficulty='expert')
-            )
-            
-            # Calculate likes per difficulty from solutions (sum of all likes, not distinct users)
-            solution_likes_easy = sum(
-                solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='easy')
-            )
-            solution_likes_medium = sum(
-                solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='medium')
-            )
-            solution_likes_advanced = sum(
-                solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='advanced')
-            )
-            solution_likes_expert = sum(
-                solution.liked_by.count() for solution in user.solutions.filter(analysis_task__difficulty='expert')
-            )
+            # Calculate likes by difficulty
+            likes_data = calculate_user_likes_by_difficulty(user)
             
             user_scores.append({
                 'user': user,
                 'score': score,
                 'task_count': task_count,
                 'solution_count': solution_count,
-                'task_likes_easy': task_likes_easy,
-                'task_likes_medium': task_likes_medium,
-                'task_likes_advanced': task_likes_advanced,
-                'task_likes_expert': task_likes_expert,
-                'solution_likes_easy': solution_likes_easy,
-                'solution_likes_medium': solution_likes_medium,
-                'solution_likes_advanced': solution_likes_advanced,
-                'solution_likes_expert': solution_likes_expert,
+                **likes_data,  # Unpacks all task_likes and solution_likes variables
             })
     
     # Sort by score (descending)

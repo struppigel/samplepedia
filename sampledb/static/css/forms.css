@@ -149,6 +149,45 @@
   margin-bottom: 0;
 }
 
+/* Image source tabs (upload vs gallery) */
+.image-source-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.image-tab {
+  border: 1px solid var(--form-border) !important;
+  background-color: var(--form-bg) !important;
+  color: var(--text-muted) !important;
+  transition: all 0.15s ease;
+}
+
+.image-tab:hover {
+  color: var(--body-color) !important;
+  border-color: var(--primary-red) !important;
+  background-color: var(--form-bg-focus) !important;
+}
+
+.image-tab.active {
+  color: var(--primary-red) !important;
+  border-color: var(--primary-red) !important;
+  background-color: var(--form-bg-focus) !important;
+  font-weight: 500;
+}
+
+.image-tab-content {
+  position: relative;
+}
+
+.image-pane {
+  display: none;
+}
+
+.image-pane.active {
+  display: block;
+}
+
 /* Markdown content styling in preview */
 .markdown-preview-content h1,
 .markdown-preview-content h2,

@@ -13,13 +13,21 @@ from ..forms import SolutionForm
 def solution_list(request):
     """List all solutions with optional filtering by solution type, search, and sorting"""
     from django.db.models import Q, Count, Case, When, IntegerField
+    from django.db.models.functions import Lower
+    from taggit.models import Tag
+    from ..models import Difficulty, Platform
     
     solution_type = request.GET.get("solution_type", "")
     q = request.GET.get("q", "").strip()
+    tag = request.GET.get("tag")
+    difficulty = request.GET.get("difficulty")
+    platform = request.GET.get("platform")
     sort = request.GET.get("sort", "-created")
     
     # Get all solutions with like count and difficulty order annotations
-    solutions = Solution.objects.select_related('analysis_task', 'author').annotate(
+    solutions = Solution.objects.select_related('analysis_task', 'author').prefetch_related(
+        'analysis_task__tags'
+    ).annotate(
         like_count_annotated=Count('liked_by'),
         difficulty_order=Case(
             When(analysis_task__difficulty='easy', then=1),
@@ -53,6 +61,21 @@ def solution_list(request):
         solutions = solutions.filter(
             Q(title__icontains=q) | Q(analysis_task__sha256__icontains=q)
         )
+    
+    # Filter by tag if specified
+    if tag:
+        solutions = solutions.filter(analysis_task__tags__name=tag)
+    
+    # Filter by difficulty if specified
+    if difficulty:
+        solutions = solutions.filter(analysis_task__difficulty=difficulty)
+    
+    # Filter by platform if specified
+    if platform:
+        solutions = solutions.filter(analysis_task__platform=platform)
+    
+    # Ensure distinct results after filtering
+    solutions = solutions.distinct()
     
     # Handle sorting
     sort_mapping = {
@@ -91,11 +114,23 @@ def solution_list(request):
             request.user.liked_solutions.values_list('id', flat=True)
         )
     
+    # Get all tags used in solutions (through analysis tasks)
+    all_tags = Tag.objects.filter(
+        taggit_taggeditem_items__content_type__model='analysistask',
+        taggit_taggeditem_items__object_id__in=Solution.objects.values_list('analysis_task_id', flat=True)
+    ).distinct().order_by(Lower('name'))
+    
     return render(request, 'samples/solutions_list.html', {
         'page_obj': page_obj,
         'q': q,
         'selected_type': solution_type,
         'solution_types': SolutionType.choices,
+        'selected_tag': tag,
+        'selected_difficulty': difficulty,
+        'selected_platform': platform,
+        'all_tags': all_tags,
+        'difficulties': Difficulty.choices,
+        'platforms': Platform.choices,
         'user_liked_solution_ids': user_liked_solution_ids,
         'sort': sort,
     })
