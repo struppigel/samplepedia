@@ -17,7 +17,7 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
-from samples.models import AnalysisTask, SampleImage, Difficulty
+from samples.models import AnalysisTask, SampleImage, Difficulty, Platform
 from io import BytesIO
 from PIL import Image as PILImage
 from unittest.mock import patch, MagicMock
@@ -168,6 +168,7 @@ class ImagePreviewTestCase(TestCase):
             'description': 'Test with gallery image',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'test',
             'tools': 'ghidra',
             'image_id': self.gallery_image1.id,  # Gallery image selected
@@ -199,6 +200,7 @@ class ImagePreviewTestCase(TestCase):
             'description': 'Test with uploaded image',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'test',
             'tools': 'ghidra',
             'image_upload': test_image,
@@ -226,6 +228,7 @@ class ImagePreviewTestCase(TestCase):
             'description': self.task_with_gallery.description,
             'goal': self.task_with_gallery.goal,
             'difficulty': self.task_with_gallery.difficulty,
+            'platform': self.task_with_gallery.platform,
             'tags': 'test',
             'tools': 'ghidra',
             'clear_image': 'true',  # Flag to clear image
@@ -268,6 +271,7 @@ class ImagePreviewTestCase(TestCase):
             'description': self.task_with_gallery.description,
             'goal': self.task_with_gallery.goal,
             'difficulty': self.task_with_gallery.difficulty,
+            'platform': self.task_with_gallery.platform,
             'tags': 'test',
             'tools': 'ghidra',
             'image_upload': test_image,
@@ -304,6 +308,7 @@ class ImagePreviewTestCase(TestCase):
             'description': self.task_with_upload.description,
             'goal': self.task_with_upload.goal,
             'difficulty': self.task_with_upload.difficulty,
+            'platform': self.task_with_upload.platform,
             'tags': 'test',
             'tools': 'ghidra',
             'image_id': self.gallery_image2.id,  # Select gallery image
@@ -361,6 +366,7 @@ class ImageValidationTestCase(TestCase):
             'description': 'Test',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'test',
             'tools': 'ghidra',
             'image_upload': small_image,
@@ -381,6 +387,7 @@ class ImageValidationTestCase(TestCase):
             'description': 'Test',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'test',
             'tools': 'ghidra',
             'image_upload': large_image,
@@ -408,6 +415,7 @@ class ImageValidationTestCase(TestCase):
             'description': 'Test',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'test',
             'tools': 'ghidra',
             'image_upload': valid_image,
@@ -444,6 +452,7 @@ class ImageValidationTestCase(TestCase):
             'description': 'Test',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'test',
             'tools': 'ghidra',
             'image_upload': rect_image,

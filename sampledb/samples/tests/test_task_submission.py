@@ -16,7 +16,7 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User, Group, Permission
 from django.urls import reverse
 from django.db import IntegrityError
-from samples.models import AnalysisTask, Solution, SampleImage, SolutionType, Difficulty
+from samples.models import AnalysisTask, Solution, SampleImage, SolutionType, Difficulty, Platform
 from samples.forms import AnalysisTaskForm
 from cloudinary.models import CloudinaryResource
 
@@ -55,6 +55,7 @@ class AnalysisTaskFormTestCase(TestCase):
             'description': 'Test description',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'malware, test',
             'tools': 'ghidra',
         }
@@ -71,6 +72,7 @@ class AnalysisTaskFormTestCase(TestCase):
             'description': 'Test description',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'malware, test',
             'tools': 'ghidra',
         }
@@ -86,6 +88,7 @@ class AnalysisTaskFormTestCase(TestCase):
             'description': 'Test description',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'malware, test',
             'tools': 'ghidra',
             'reference_solution_title': 'My Solution',
@@ -105,6 +108,7 @@ class AnalysisTaskFormTestCase(TestCase):
             'description': 'Test description',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'malware, test',
             'tools': 'ghidra',
             'reference_solution_title': 'My Blog Post',
@@ -124,6 +128,7 @@ class AnalysisTaskFormTestCase(TestCase):
             'description': 'Test description',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'malware, test',
             'tools': 'ghidra',
             'reference_solution_title': 'My Solution',
@@ -142,6 +147,7 @@ class AnalysisTaskFormTestCase(TestCase):
             'description': 'Test description',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'malware, test',
             'tools': 'ghidra',
             'reference_solution_title': 'My Solution',
@@ -160,6 +166,7 @@ class AnalysisTaskFormTestCase(TestCase):
             'description': 'Test description',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'malware, test',
             'tools': 'ghidra',
             'reference_solution_title': 'My Solution',
@@ -180,6 +187,7 @@ class AnalysisTaskFormTestCase(TestCase):
             'description': 'Test description',
             'goal': 'Test goal',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'malware, test',
             'tools': 'ghidra',
         }
@@ -240,6 +248,7 @@ class TaskSubmissionViewTestCase(TestCase):
             'description': 'Test malware description',
             'goal': 'Find the C2 server',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'ransomware, c2',
             'tools': 'ghidra, x64dbg',
             'reference_solution_title': 'My Writeup',
@@ -292,6 +301,7 @@ class TaskSubmissionViewTestCase(TestCase):
             'description': 'Test malware description',
             'goal': 'Find the encryption key',
             'difficulty': Difficulty.MEDIUM,
+            'platform': Platform.WINDOWS,
             'tags': 'ransomware, crypto',
             'tools': 'ghidra',
             'reference_solution_title': 'My Analysis',
@@ -340,6 +350,7 @@ class TaskSubmissionViewTestCase(TestCase):
             'description': 'Test malware description',
             'goal': 'Analyze the malware',
             'difficulty': Difficulty.ADVANCED,
+            'platform': Platform.WINDOWS,
             'tags': 'apt, evasion',
             'tools': 'ida, wireshark',
         }
@@ -383,6 +394,7 @@ class TaskSubmissionViewTestCase(TestCase):
             'description': 'Test',
             'goal': 'Test',
             'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
             'tags': 'RaNsOmWaRe, APT, C2',
             'tools': 'Ghidra, IDA',
         }
