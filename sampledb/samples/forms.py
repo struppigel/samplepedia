@@ -72,6 +72,14 @@ class SolutionForm(forms.ModelForm):
 
 # for submitting analysis tasks
 class AnalysisTaskForm(forms.ModelForm):
+    # Image upload field (optional alternative to gallery selection)
+    image_upload = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(attrs={'class': 'form-control-file', 'accept': 'image/*'}),
+        label='Upload Image',
+        help_text='Image must be 125x125 to 1024x1024 pixels with 1:1 aspect ratio (square). Non-square images will be center-cropped.'
+    )
+    
     # Reference solution fields (required for non-staff users)
     reference_solution_title = forms.CharField(
         max_length=200,
@@ -182,6 +190,65 @@ class AnalysisTaskForm(forms.ModelForm):
                 )
         
         return download_link
+    
+    def clean_image_upload(self):
+        """Validate uploaded image dimensions and aspect ratio"""
+        image = self.cleaned_data.get('image_upload')
+        
+        if image:
+            from PIL import Image
+            import io
+            
+            # Open image to check dimensions
+            img = Image.open(image)
+            width, height = img.size
+            
+            # Check minimum dimensions
+            if width < 125 or height < 125:
+                raise forms.ValidationError(
+                    f'Image is too small ({width}x{height}px). Minimum size is 125x125 pixels.'
+                )
+            
+            # Check maximum dimensions
+            if width > 1024 or height > 1024:
+                raise forms.ValidationError(
+                    f'Image is too large ({width}x{height}px). Maximum size is 1024x1024 pixels.'
+                )
+            
+            # Check if image needs to be cropped (not 1:1 aspect ratio)
+            if width != height:
+                # Center crop to square
+                size = min(width, height)
+                left = (width - size) // 2
+                top = (height - size) // 2
+                right = left + size
+                bottom = top + size
+                
+                img = img.crop((left, top, right, bottom))
+                
+                # Save cropped image back to file
+                output = io.BytesIO()
+                img_format = image.content_type.split('/')[-1].upper()
+                if img_format == 'JPG':
+                    img_format = 'JPEG'
+                img.save(output, format=img_format)
+                output.seek(0)
+                
+                # Update the uploaded file with cropped version
+                from django.core.files.uploadedfile import InMemoryUploadedFile
+                image = InMemoryUploadedFile(
+                    output,
+                    'ImageField',
+                    image.name,
+                    image.content_type,
+                    output.getbuffer().nbytes,
+                    None
+                )
+            
+            # Reset file pointer
+            image.seek(0)
+        
+        return image
     
     def clean(self):
         """Validate reference solution fields for non-staff users when creating (not editing)"""
