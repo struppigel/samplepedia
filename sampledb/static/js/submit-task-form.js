@@ -3,6 +3,66 @@
  * Handles image selection, upload, preview, and localStorage draft persistence
  */
 
+/**
+ * Form Draft Manager - Centralized localStorage handling
+ */
+const FormDraftManager = {
+  keys: {
+    title: 'draft_reference_solution_title',
+    content: 'draft_reference_solution',
+    solutionType: 'draft_form_solution_type',
+    sha256: 'draft_form_sha256',
+    goal: 'draft_form_goal',
+    description: 'draft_form_description',
+    downloadLink: 'draft_form_download_link',
+    imageId: 'draft_form_image_id',
+    imageUrl: 'draft_form_image_url',
+    uploadedImage: 'draft_form_uploaded_image',
+    tags: 'draft_form_tags',
+    tools: 'draft_form_tools',
+    difficulty: 'draft_form_difficulty'
+  },
+
+  getField(key) {
+    return localStorage.getItem(this.keys[key]);
+  },
+
+  setField(key, value) {
+    if (value) {
+      localStorage.setItem(this.keys[key], value);
+    }
+  },
+
+  removeField(key) {
+    localStorage.removeItem(this.keys[key]);
+  },
+
+  save(data) {
+    Object.keys(data).forEach(key => {
+      if (data[key] && this.keys[key]) {
+        this.setField(key, data[key]);
+      }
+    });
+  },
+
+  restore() {
+    const restored = {};
+    Object.keys(this.keys).forEach(key => {
+      const value = this.getField(key);
+      if (value) {
+        restored[key] = value;
+      }
+    });
+    return restored;
+  },
+
+  clear() {
+    Object.values(this.keys).forEach(key => {
+      localStorage.removeItem(key);
+    });
+  }
+};
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
   initializeEditModeImages();
@@ -157,10 +217,10 @@ function initializeImageUpload() {
               hideImageSelectionSections();
               
               // Clear gallery selection and save upload
-              localStorage.removeItem('draft_form_image_id');
-              localStorage.removeItem('draft_form_image_url');
+              FormDraftManager.removeField('imageId');
+              FormDraftManager.removeField('imageUrl');
               document.getElementById('selected_image').value = '';
-              localStorage.setItem('draft_form_uploaded_image', e.target.result);
+              FormDraftManager.setField('uploadedImage', e.target.result);
               
               // Warn if non-square
               if (width !== height) {
@@ -191,7 +251,7 @@ function clearUploadPreview() {
     previewDiv.style.display = 'none';
   }
   
-  localStorage.removeItem('draft_form_uploaded_image');
+  FormDraftManager.removeField('uploadedImage');
   clearAllPreviews();
 }
 
@@ -290,21 +350,7 @@ function initializeMarkdownEditorIntegration() {
  * Restore form data from localStorage
  */
 function restoreFormData(elements, isEditMode) {
-  const saved = {
-    title: localStorage.getItem('draft_reference_solution_title'),
-    content: localStorage.getItem('draft_reference_solution'),
-    solutionType: localStorage.getItem('draft_form_solution_type'),
-    sha256: localStorage.getItem('draft_form_sha256'),
-    goal: localStorage.getItem('draft_form_goal'),
-    description: localStorage.getItem('draft_form_description'),
-    downloadLink: localStorage.getItem('draft_form_download_link'),
-    imageId: localStorage.getItem('draft_form_image_id'),
-    imageUrl: localStorage.getItem('draft_form_image_url'),
-    uploadedImage: localStorage.getItem('draft_form_uploaded_image'),
-    tags: localStorage.getItem('draft_form_tags'),
-    tools: localStorage.getItem('draft_form_tools'),
-    difficulty: localStorage.getItem('draft_form_difficulty')
-  };
+  const saved = FormDraftManager.restore();
   
   // Restore text fields
   if (saved.title && elements.titleInput && !elements.titleInput.value) {
@@ -398,43 +444,28 @@ function restoreImageFromLocalStorage(saved, elements) {
  * Save form data to localStorage
  */
 function saveFormDataToLocalStorage(elements) {
-  if (elements.titleInput) {
-    localStorage.setItem('draft_reference_solution_title', elements.titleInput.value);
-  }
-  if (elements.contentTextarea) {
-    localStorage.setItem('draft_reference_solution', elements.contentTextarea.value);
-  }
-  if (elements.solutionTypeSelect) {
-    localStorage.setItem('draft_form_solution_type', elements.solutionTypeSelect.value);
-  }
-  if (elements.sha256Input) {
-    localStorage.setItem('draft_form_sha256', elements.sha256Input.value);
-  }
-  if (elements.goalInput) {
-    localStorage.setItem('draft_form_goal', elements.goalInput.value);
-  }
-  if (elements.descriptionTextarea) {
-    localStorage.setItem('draft_form_description', elements.descriptionTextarea.value);
-  }
-  if (elements.downloadLinkInput) {
-    localStorage.setItem('draft_form_download_link', elements.downloadLinkInput.value);
-  }
-  if (elements.tagsInput) {
-    localStorage.setItem('draft_form_tags', elements.tagsInput.value);
-  }
-  if (elements.toolsInput) {
-    localStorage.setItem('draft_form_tools', elements.toolsInput.value);
-  }
-  if (elements.difficultySelect) {
-    localStorage.setItem('draft_form_difficulty', elements.difficultySelect.value);
-  }
-  if (elements.selectedImageInput && elements.selectedImageInput.value) {
-    localStorage.setItem('draft_form_image_id', elements.selectedImageInput.value);
+  const data = {
+    title: elements.titleInput?.value,
+    content: elements.contentTextarea?.value,
+    solutionType: elements.solutionTypeSelect?.value,
+    sha256: elements.sha256Input?.value,
+    goal: elements.goalInput?.value,
+    description: elements.descriptionTextarea?.value,
+    downloadLink: elements.downloadLinkInput?.value,
+    tags: elements.tagsInput?.value,
+    tools: elements.toolsInput?.value,
+    difficulty: elements.difficultySelect?.value
+  };
+  
+  if (elements.selectedImageInput?.value) {
+    data.imageId = elements.selectedImageInput.value;
     const previewImg = document.getElementById('preview_img');
-    if (previewImg && previewImg.src) {
-      localStorage.setItem('draft_form_image_url', previewImg.src);
+    if (previewImg?.src) {
+      data.imageUrl = previewImg.src;
     }
   }
+  
+  FormDraftManager.save(data);
 }
 
 /**
@@ -531,7 +562,12 @@ function initializeFormSubmission() {
   const form = document.querySelector('form[method="post"]');
   if (form) {
     form.addEventListener('submit', function() {
-      clearFormDrafts();
+      // Use external clearFormDrafts if available, otherwise use FormDraftManager
+      if (typeof clearFormDrafts === 'function') {
+        clearFormDrafts();
+      } else {
+        FormDraftManager.clear();
+      }
     });
   }
 }
