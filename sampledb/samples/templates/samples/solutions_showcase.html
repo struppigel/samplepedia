@@ -68,9 +68,9 @@
             </h5>
             
             <!-- Analysis Task Reference -->
-            <p class="small text-muted mb-2">
+            <p class="small text-muted mb-2" style="overflow: hidden; text-overflow: ellipsis;">
               <a href="{% url 'sample_detail' sha256=solution.analysis_task.sha256 task_id=solution.analysis_task.id %}">
-                {{ solution.analysis_task.sha256 }}
+                <i class="{{ solution.analysis_task.platform|platform_icon }} mr-1" style="display: inline-block;"></i><span style="word-break: break-all;">{{ solution.analysis_task.sha256 }}</span>
               </a>
             </p>
             

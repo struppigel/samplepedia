@@ -47,8 +47,18 @@
                 <p class="mb-2"><strong>Score:</strong> <a href="{% url 'ranking' %}">{{ user_score }}</a> {% if user_rank %}{% rank_medal user_rank 'small' %}{% endif %}</p>
               </div>
               <div class="col-md-6">
-                <p class="mb-2"><strong>Samples:</strong> {{ analysis_tasks.paginator.count }}</p>
-                <p class="mb-2"><strong>Solutions:</strong> {{ solutions.paginator.count }}</p>
+                <p class="mb-2">
+                  <strong>Samples:</strong> {{ analysis_tasks.paginator.count }}
+                  <span class="ml-2">
+                    {% include 'samples/_likes_badges.html' with likes_easy=task_likes_easy likes_medium=task_likes_medium likes_advanced=task_likes_advanced likes_expert=task_likes_expert %}
+                  </span>
+                </p>
+                <p class="mb-2">
+                  <strong>Solutions:</strong> {{ solutions.paginator.count }}
+                  <span class="ml-2">
+                    {% include 'samples/_likes_badges.html' with likes_easy=solution_likes_easy likes_medium=solution_likes_medium likes_advanced=solution_likes_advanced likes_expert=solution_likes_expert %}
+                  </span>
+                </p>
                 
               </div>
             </div>
