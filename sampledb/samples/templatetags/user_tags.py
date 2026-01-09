@@ -1,4 +1,7 @@
+from django.utils import timezone
 from django import template
+
+from django.db.models import Q
 
 register = template.Library()
 
@@ -124,7 +127,10 @@ def solution_icons(task):
     """
     from collections import Counter
     
-    solutions = task.solutions.all()
+    # Filter out currently hidden solutions
+    solutions = task.solutions.filter(
+        Q(hidden_until__isnull=True) | Q(hidden_until__lte=timezone.now())
+    )
     total_count = solutions.count()
     
     # Get all solution types present (ordered by the keys in solution_icon for consistency)

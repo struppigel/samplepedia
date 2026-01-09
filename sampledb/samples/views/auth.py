@@ -273,23 +273,20 @@ def user_profile(request, username):
     # Get user's submitted solutions with related analysis tasks
     solutions_list = Solution.objects.filter(author=profile_user).select_related('analysis_task').order_by('-created_at')
     
-    # Filter hidden solutions if not staff/task author
-    # Profile users always see their own solutions (since solutions_list is already filtered by profile_user)
-    # But we still need to filter if viewing another user's profile
-    if request.user != profile_user:
-        if not request.user.is_authenticated:
-            # Anonymous users: hide all hidden solutions
-            solutions_list = solutions_list.filter(
-                Q(hidden_until__isnull=True) | Q(hidden_until__lte=timezone.now())
-            )
-        elif not request.user.is_staff:
-            # Authenticated non-staff: hide hidden solutions unless they're the task author
-            solutions_list = solutions_list.filter(
-                Q(hidden_until__isnull=True) | 
-                Q(hidden_until__lte=timezone.now()) | 
-                Q(analysis_task__author=request.user)
-            )
-        # Staff see everything (no filter needed)
+    # Filter hidden solutions based on viewer permissions
+    if request.user == profile_user:
+        # Users always see their own solutions (no filtering)
+        pass
+    elif request.user.is_staff:
+        # Staff see everything (no filtering)
+        pass
+    else:
+        # Other authenticated users: hide hidden solutions
+        solutions_list = solutions_list.filter(
+            Q(hidden_until__isnull=True) | 
+            Q(hidden_until__lte=timezone.now()) |
+            Q(author=request.user)
+        )
     
     # Get user's submitted analysis tasks
     analysis_tasks_list = AnalysisTask.objects.filter(author=profile_user).order_by('-created_at')
@@ -321,16 +318,9 @@ def user_profile(request, username):
     analysis_tasks = tasks_paginator.get_page(tasks_page)
     
     # Get current user's favorited sample IDs for display
-    user_favorited_ids = set()
-    user_liked_solution_ids = set()
-    if request.user.is_authenticated:
-        user_favorited_ids = set(
-            request.user.favorite_samples.values_list('id', flat=True)
-        )
-        user_liked_solution_ids = set(
-            request.user.liked_solutions.values_list('id', flat=True)
-        )
-    
+    user_favorited_ids = set(request.user.favorite_samples.values_list('id', flat=True))
+    user_liked_solution_ids = set(request.user.liked_solutions.values_list('id', flat=True))
+
     # Calculate user score
     from ..models import get_user_score
     user_score = get_user_score(profile_user)

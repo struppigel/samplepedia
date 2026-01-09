@@ -349,8 +349,8 @@ class SolutionType(models.TextChoices):
     VIDEO = "video", "Video"
     ONSITE = "onsite", "On-Site Article"
 
-
 class Solution(models.Model):
+
     analysis_task = models.ForeignKey(
         AnalysisTask,
         on_delete=models.CASCADE,
@@ -409,12 +409,6 @@ class Solution(models.Model):
     @property
     def like_count(self):
         return self.liked_by.count()
-    
-    def is_currently_hidden(self):
-        """Check if solution is currently hidden based on hidden_until timestamp"""
-        if not self.hidden_until:
-            return False
-        return timezone.now() < self.hidden_until
     
     def user_can_see_hidden_status(self, user):
         """Check if user should see the hidden badge/status (staff, task author, or solution author)"""
