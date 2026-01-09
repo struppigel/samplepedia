@@ -124,9 +124,6 @@ def sample_list(request):
         user_favorited_ids = set(
             request.user.favorite_samples.values_list('id', flat=True)
         )
-        print(f"DEBUG VIEW: User authenticated: {request.user.username}, favorited_ids: {user_favorited_ids}")
-    else:
-        print(f"DEBUG VIEW: User not authenticated")
     
     # Get all tags used in samples
     all_tags = Tag.objects.filter(

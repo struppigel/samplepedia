@@ -3,9 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils import timezone
-from django.db.models import Q
 from markdownx.utils import markdownify
-
+from django.db.models import Q
+from django.db.models.functions import Coalesce
 from ..models import AnalysisTask, Solution, SolutionType
 from ..forms import SolutionForm
 
@@ -199,7 +199,7 @@ def delete_solution(request, sha256, task_id, solution_id):
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample)
     
     # Only allow the author to delete their own solution
-    if solution.author != request.user:
+    if solution.author != request.user and not request.user.is_staff:
         messages.error(request, 'You can only delete your own solutions.')
         return redirect('sample_detail', sha256=sha256, task_id=task_id)
     
@@ -351,12 +351,15 @@ def solutions_showcase(request):
     """Display the newest solutions (all types) in a card grid layout"""
     # Get the 6 most recent solutions with their related data
     # Exclude all hidden solutions from showcase
+    # make sure the hidden_until is considered for ordering
     solutions = Solution.objects.select_related(
         'analysis_task', 'author'
     ).filter(
         Q(hidden_until__isnull=True) | 
         Q(hidden_until__lte=timezone.now())
-    ).order_by('-created_at')[:6]
+    ).annotate(
+        visible_date=Coalesce('hidden_until', 'created_at')
+    ).order_by('-visible_date')[:6]
     
     # Get user's liked solution IDs for display
     user_liked_solution_ids = set()

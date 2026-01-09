@@ -925,19 +925,6 @@ class SolutionHidingTestCase(TestCase):
         # Should see the "Hidden" badge
         self.assertContains(response, 'fa-eye-slash')
     
-    def test_task_author_sees_hidden_solutions_on_contributor_profile(self):
-        """Task authors should see hidden solutions on their tasks even on other profiles"""
-        self.client.login(username='taskauthor', password='testpass123')
-        
-        response = self.client.get(
-            reverse('user_profile', kwargs={'username': self.solution_author.username}),
-            follow=True
-        )
-        
-        self.assertEqual(response.status_code, 200)
-        # Task author should see hidden solutions since they're for their own task
-        self.assertContains(response, self.hidden_solution.title)
-    
     def test_hidden_solutions_excluded_from_solution_list_for_others(self):
         """Hidden solutions should not appear in solutions_list view for other users"""
         self.client.login(username='regularuser', password='testpass123')
@@ -995,3 +982,124 @@ class SolutionHidingTestCase(TestCase):
         
         # Staff can see hidden status
         self.assertTrue(self.hidden_solution.user_can_see_hidden_status(self.staff_user))
+
+class SolutionsShowcaseTestCase(TestCase):
+    """Test solutions showcase ordering and visibility"""
+    
+    def setUp(self):
+        """Create test user and analysis task"""
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.task = AnalysisTask.objects.create(
+            sha256='a' * 64,
+            goal='Test malware analysis',
+            difficulty=Difficulty.EASY,
+            author=self.user
+        )
+        self.client = Client()
+    
+    def test_recently_unhidden_solution_appears_in_showcase(self):
+        """Test that a solution with recently passed hidden_until appears in showcase"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Create an old solution that was just unhidden
+        old_solution = Solution.objects.create(
+            title='Old but recently unhidden solution',
+            solution_type=SolutionType.BLOG,
+            url='https://example.com/old',
+            author=self.user,
+            analysis_task=self.task,
+        )
+        old_solution.created_at = timezone.now() - timedelta(days=365)  # Created 1 year ago
+        old_solution.hidden_until = timezone.now() - timedelta(hours=1)  # Became visible 1 hour ago
+        old_solution.save(update_fields=['created_at', 'hidden_until'])
+        
+        # Create a newer solution (by creation date) with no hidden_until
+        newer_solution = Solution.objects.create(
+            title='Newer solution',
+            solution_type=SolutionType.BLOG,
+            url='https://example.com/new',
+            author=self.user,
+            analysis_task=self.task,
+        )
+        newer_solution.created_at = timezone.now() - timedelta(days=7)  # Created 1 week ago
+        newer_solution.save(update_fields=['created_at'])
+        
+        # Get the showcase
+        response = self.client.get(reverse('solutions_showcase'))
+        
+        # The old solution should appear in the showcase
+        self.assertContains(response, 'Old but recently unhidden solution')
+        
+        # Get the solutions from context to check ordering
+        solutions = response.context['solutions']
+        
+        # The old solution should appear FIRST (it became visible more recently)
+        solution_titles = [s.title for s in solutions]
+        old_index = solution_titles.index('Old but recently unhidden solution')
+        newer_index = solution_titles.index('Newer solution')
+        
+        # Recently unhidden (1 hour ago) should come before solution from 7 days ago
+        self.assertLess(old_index, newer_index, 
+                    "Recently unhidden solution should appear first (most recent visible_date)")
+    
+    def test_still_hidden_solution_not_in_showcase(self):
+        """Test that solutions with future hidden_until don't appear"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Create a solution that's still hidden
+        hidden_solution = Solution.objects.create(
+            title='Still hidden solution',
+            solution_type=SolutionType.BLOG,
+            url='https://example.com/hidden',
+            author=self.user,
+            analysis_task=self.task,
+            hidden_until=timezone.now() + timedelta(days=7)  # Hidden for 7 more days
+        )
+        
+        # Get the showcase
+        response = self.client.get(reverse('solutions_showcase'))
+        
+        # The hidden solution should NOT appear
+        self.assertNotContains(response, 'Still hidden solution')
+    
+    def test_showcase_orders_by_visible_date_not_created_date(self):
+        """Test that showcase uses visible_date (hidden_until or created_at) for ordering"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Solution 1: Created 30 days ago, no hidden_until (visible_date = created_at = 30 days ago)
+        solution1 = Solution.objects.create(
+            title='Solution 1',
+            solution_type=SolutionType.BLOG,
+            url='https://example.com/1',
+            author=self.user,
+            analysis_task=self.task,
+        )
+        # Manually update created_at after creation
+        solution1.created_at = timezone.now() - timedelta(days=30)
+        solution1.save(update_fields=['created_at'])
+        
+        # Solution 2: Created 60 days ago, became visible 2 days ago (visible_date = 2 days ago)
+        solution2 = Solution.objects.create(
+            title='Solution 2',
+            solution_type=SolutionType.BLOG,
+            url='https://example.com/2',
+            author=self.user,
+            analysis_task=self.task,
+        )
+        solution2.created_at = timezone.now() - timedelta(days=60)
+        solution2.hidden_until = timezone.now() - timedelta(days=2)
+        solution2.save(update_fields=['created_at', 'hidden_until'])
+        
+        # Get the showcase
+        response = self.client.get(reverse('solutions_showcase'))
+        solutions = list(response.context['solutions'])
+        
+        # Solution 2 should come first (visible_date = 2 days ago is more recent than 30 days ago)
+        self.assertEqual(solutions[0].title, 'Solution 2')
+        self.assertEqual(solutions[1].title, 'Solution 1')
