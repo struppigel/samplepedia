@@ -143,21 +143,6 @@ body .btn.btn-outline-primary:active {
   text-align: left;
 }
 
-/*
-.sha256-link {
-  color: #343a40 !important;
-}
-.sha256-link:hover {
-  color: var(--primary-red) !important;
-}
-.dark-mode .sha256-link {
-  color: #ced4da !important;
-}
-.dark-mode .sha256-link:hover {
-  color: var(--primary-red) !important;
-}
-  */
-
 /* Spoiler styling (both themes) */
 .spoiler {
   display: block;
@@ -234,6 +219,7 @@ body .btn.btn-outline-primary:active {
 
 /* Markdown content styling */
 /* General markdown elements */
+
 .spoiler-text h1,
 .spoiler-text h2,
 .spoiler-text h3,
@@ -281,7 +267,7 @@ body .btn.btn-outline-primary:active {
 
 .spoiler-text code,
 .markdown-content code {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: white;
   padding: 0.2em 0.4em;
   border-radius: 3px;
   font-size: 0.9em;
@@ -295,7 +281,7 @@ body .btn.btn-outline-primary:active {
 
 .spoiler-text pre,
 .markdown-content pre {
-  background-color: rgba(0, 0, 0, 0.1);
+  /*background-color: white !important;*/
   padding: 0.75rem;
   border-radius: 4px;
   overflow-x: auto;
@@ -305,6 +291,7 @@ body .btn.btn-outline-primary:active {
 .spoiler-text pre code,
 .markdown-content pre code {
   background-color: transparent;
+  background-color: white;
   padding: 0;
 }
 
@@ -324,6 +311,7 @@ body .btn.btn-outline-primary:active {
   margin: 1rem 0;
   border-radius: 4px;
 }
+
 
 /* Markdown content links - both in spoilers and regular content */
 .spoiler-text a,
@@ -397,6 +385,7 @@ body .btn.btn-outline-primary:active {
 .dark-mode .spoiler-text table tr:nth-child(even) {
   background-color: rgba(255, 255, 255, 0.02);
 }
+
 /* Blog Article Styles */
 .blog-article {
   max-width: 100%;
@@ -477,7 +466,7 @@ body .btn.btn-outline-primary:active {
 }
 
 .article-content pre {
-  background-color: var(--code-bg);
+  background-color: rgba(0, 0, 0, 0);
   border-radius: 6px;
   padding: 1rem;
   overflow-x: auto;
