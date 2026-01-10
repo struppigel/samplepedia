@@ -1,6 +1,17 @@
 // Dark mode toggle functionality
 const key = "adminlte-dark";
 
+const hljsTheme = document.getElementById("hljsTheme");
+const hljsDark = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css";
+const hljsLight = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css";
+
+
+function updateHighlightTheme(isDark) {
+  if (hljsTheme) {
+    hljsTheme.href = isDark ? hljsDark : hljsLight;
+  }
+}
+
 function updateIcon() {
   const body = document.body;
   const darkIcon = document.getElementById("darkIcon");
@@ -37,6 +48,7 @@ document.addEventListener("DOMContentLoaded", function() {
         body.classList.contains("dark-mode") ? "on" : "off"
       );
       updateIcon();
+      updateHighlightTheme(body.classList.contains("dark-mode"));
     };
   }
 });

@@ -27,6 +27,8 @@
   <link rel="stylesheet" href="{% static 'css/components.css' %}">
   <link rel="stylesheet" href="{% static 'css/forms.css' %}">
   <link rel="stylesheet" href="{% static 'css/tables.css' %}">
+  <!-- For highlight.js -->
+  <link id="hljsTheme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="{% static 'myhegebatlogo_white.png' %}">
@@ -37,6 +39,16 @@
 
 <!-- Apply dark mode immediately before page renders -->
 <script src="{% static 'js/dark-mode-init.js' %}"></script>
+
+<!-- For markdown code highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', (event) => {
+    document.querySelectorAll('pre code').forEach((block) => {
+      hljs.highlightElement(block);
+    });
+  });
+</script>
 
 <div class="wrapper">
 
