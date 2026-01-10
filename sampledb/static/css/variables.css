@@ -36,6 +36,8 @@
   --brown-text: #c0a0a0;
   
   /* Context-aware variables (change in dark mode) */
+  --text-lightmode: #343a40;
+  --text-darkmode: #ced4da;
   --body-bg: #ffffff;
   --body-color: #212529;
   --form-bg: rgba(0, 0, 0, 0.02);

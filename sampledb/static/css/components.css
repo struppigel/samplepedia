@@ -84,7 +84,7 @@ a.badge:hover {
   color: var(--primary-red);
   background: none;
   border: none;
-  padding: 0;
+  padding: 1rem 1rem;
   cursor: pointer;
   text-decoration: none;
 }
@@ -142,6 +142,21 @@ body .btn.btn-outline-primary:active {
   min-width: 1.5rem;
   text-align: left;
 }
+
+/*
+.sha256-link {
+  color: #343a40 !important;
+}
+.sha256-link:hover {
+  color: var(--primary-red) !important;
+}
+.dark-mode .sha256-link {
+  color: #ced4da !important;
+}
+.dark-mode .sha256-link:hover {
+  color: var(--primary-red) !important;
+}
+  */
 
 /* Spoiler styling (both themes) */
 .spoiler {

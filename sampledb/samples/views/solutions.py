@@ -98,8 +98,8 @@ def solution_list(request):
     else:
         solutions = solutions.order_by('-created_at')
     
-    # Paginate the results (25 per page)
-    paginator = Paginator(solutions, 25)
+    # Paginate the results (18 per page)
+    paginator = Paginator(solutions, 18)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
     
