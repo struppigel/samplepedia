@@ -244,9 +244,9 @@
                       <th>Difficulty</th>
                       <th>Tags</th>
                       <th>Goal</th>
-                      <th>Solutions</th>
-                      <th>Likes</th>
-                      <th>Comments</th>
+                      <th style="text-align: center;">Solutions</th>
+                      <th style="text-align: center;">Likes</th>
+                      <th style="text-align: center;">Comments</th>
                       <th>Date</th>
                       {% if user.is_authenticated and user.username == profile_user.username %}
                       <th>Actions</th>
@@ -291,7 +291,7 @@
                         </td>
 
                         <!-- Likes -->
-                        <td>
+                        <td style="text-align: center;">
                          {% favorite_button task user_favorited_ids %}
                         </td>
 
@@ -304,7 +304,7 @@
                         </td>
 
                         <!-- Created Date -->
-                        <td>
+                        <td style="text-align: left;">
                           <a href="{% url 'sample_detail' task.sha256 task.id %}" class="text-muted">
                             {{ task.created_at|date:"d M Y" }}
                           </a>

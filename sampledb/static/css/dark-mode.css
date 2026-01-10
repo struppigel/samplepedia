@@ -114,6 +114,11 @@ body:not(.dark-mode) .spoiler::after {
   color: white;
 }
 
+/* Override hover color for dark mode */
+.dark-mode .text-dark:hover {
+  color: var(--primary-red) !important;
+}
+
 /* Dark mode button overrides */
 body.dark-mode .btn.btn-success,
 body.dark-mode a.btn.btn-success,
