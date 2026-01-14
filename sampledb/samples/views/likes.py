@@ -11,7 +11,7 @@ def toggle_like(request, sha256, task_id):
     if not request.user.is_authenticated:
         return JsonResponse({
             'error': 'Login required',
-            'redirect': '/accounts/login/'
+            'redirect': '/login/'
         }, status=401)
     
     sample = get_object_or_404(AnalysisTask, id=task_id)
