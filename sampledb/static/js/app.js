@@ -32,6 +32,59 @@ function getCookie(name) {
   return cookieValue;
 }
 
+// Favorite button filled functionality
+document.querySelectorAll('.favorite-btn-filled').forEach(button => {
+  button.addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    const url = `/sample/${this.dataset.sha256}/${this.dataset.taskId}/like/`;
+    
+    // Send AJAX request to toggle favorite
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Check if login is required
+      if (data.error && data.redirect) {
+        window.location.href = data.redirect;
+        return;
+      }
+      
+      // Update button appearance
+      const icon = this.querySelector('i');
+      const countSpan = this.querySelector('.favorite-count');
+      
+      if (data.liked) {
+        icon.classList.remove('far');
+        icon.classList.add('fas');
+      } else {
+        icon.classList.remove('fas');
+        icon.classList.add('far');
+      }
+      
+      // Update counts
+      this.dataset.liked = data.liked;
+      this.title = `${data.like_count} favorite${data.like_count !== 1 ? 's' : ''}`;
+      
+      if (countSpan) {
+        countSpan.textContent = data.like_count;
+      }
+      
+      // Update the detail page count
+      const detailCount = document.getElementById('detail-favorite-count');
+      if (detailCount) {
+        detailCount.textContent = data.like_count;
+      }
+    })
+    .catch(error => console.error('Error:', error));
+  });
+});
+
 // Consolidated like/favorite button functionality
 document.querySelectorAll('.favorite-btn, .solution-like-btn').forEach(button => {
   button.addEventListener('click', function(e) {
@@ -82,6 +135,12 @@ document.querySelectorAll('.favorite-btn, .solution-like-btn').forEach(button =>
       countSpan.textContent = data.like_count;
       this.dataset.liked = data.liked;
       span.title = `${data.like_count} ${labelText}${data.like_count !== 1 ? 's' : ''}`;
+
+      // Update the detail page count
+    var detailCount = document.getElementById('detail-favorite-count');
+    if (detailCount) {
+      detailCount.textContent = newCount;
+    }
     })
     .catch(error => console.error('Error:', error));
   });

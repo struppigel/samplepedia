@@ -1,0 +1,17 @@
+<button class="btn btn-sm mr-2 favorite-btn-filled btn-danger" 
+        data-sha256="{{ sha256 }}"
+        data-task-id="{{ task_id }}"
+        data-liked="{% if is_liked %}true{% else %}false{% endif %}"
+        title="{{ favorite_count }} favorite{{ favorite_count|pluralize }}"
+        style="padding: 0.25rem 0.5rem;">
+  {% if is_liked %}
+    <span class="text-white">
+    <i class="fas fa-heart"></i>
+    </span>
+  {% else %}
+    <span class="text-white">
+    <i class="far fa-heart"></i>
+    </span>
+  {% endif %}
+  <span class="favorite-count" style="display: none;">{{ favorite_count }}</span>
+</button>

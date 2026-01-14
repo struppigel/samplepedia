@@ -30,12 +30,26 @@
           <div class="card-header">
             <h3 class="card-title">Metadata</h3>
             <div class="card-tools">
+              <!-- Download button -->
+            {% if sample.download_link %}
+              <a href="{{ sample.download_link }}"
+                 target="_blank"
+                 class="btn btn-danger btn-sm mr-2" title="Download Sample">
+                <i class="fas fa-download"></i> <!-- Download sample button -->
+              </a>
+            {% endif %}
+            <!-- Comments button -->
+            <a href="#commentFormSection" class="btn btn-danger btn-sm mr-2" title="Comments" onclick="scrollToComments(event)">
+            <i class="fas fa-comment"></i>
+            </a>
+            <!-- Edit button -->
               {% if user_can_edit %}
-                <a href="{% url 'edit_task' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-sm btn-secondary mr-2" title="Edit Task">
+                <a href="{% url 'edit_task' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-danger btn-sm mr-2" title="Edit Task">
                   <i class="fas fa-edit"></i>
                 </a>
               {% endif %}
-              {% favorite_button sample user_has_liked %}
+              <!-- Favorite button -->
+              {% favorite_button_filled sample user_has_liked %}
             </div>
           </div>
           <div class="card-body">
@@ -70,6 +84,11 @@
                 {% endfor %}
               </dd>
 
+              <dt class="col-sm-3">Likes</dt>
+              <dd class="col-sm-9">
+                <span id="detail-favorite-count">{{ sample.favorite_count }}</span>
+              </dd>
+
               <dt class="col-sm-3">Submitter</dt>
               <dd class="col-sm-9">
                 <a href="{% url 'user_profile' sample.author.username %}">{{ sample.author.username }}</a>
@@ -82,15 +101,7 @@
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Analysis</h3>
-            {% if sample.download_link %}
-            <div class="card-tools" style="margin-right: 0.1rem;">
-              <a href="{{ sample.download_link }}"
-                 target="_blank"
-                 class="btn btn-danger btn-sm">
-                <i class="fas fa-download"></i> <!-- Download sample button -->
-              </a>
-            </div>
-            {% endif %}
+
           </div>
           <div class="card-body">
             {% if sample.goal %}
@@ -120,14 +131,12 @@
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Solutions</h3>
-            {% if user.is_authenticated %}
             <div class="card-tools" style="margin-right: 0.1rem;">
               <a href="{% url 'create_solution' sha256=sample.sha256 task_id=sample.id %}"
                  class="btn btn-danger btn-sm">
                 <i class="fas fa-plus"></i> <!-- Add solution button -->
               </a>
             </div>
-            {% endif %}
           </div>
           <div class="card-body">
             {% if solutions %}
@@ -253,23 +262,16 @@
     </div>
 
     <!-- Comments Section -->
-    <div class="row mt-3 justify-content-center">
+    <div class="row mt-3 justify-content-center" id="comments-section">
       <div class="col-md-12" style="max-width: {% if sample.image or sample.youtube_id or youtube_solution %}{{ max_width_with_sidebar }}px{% else %}{{ max_width_no_sidebar }}px{% endif %};">
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Comments</h3>
-            {% if user.is_authenticated %}
-            <div class="card-tools" style="margin-right: 0.1rem;">
-              <button onclick="toggleCommentForm()" class="btn btn-danger btn-sm" id="addCommentBtn">
-                <i class="fas fa-plus"></i> <!-- Add comment button -->
-              </button>
-            </div>
-            {% endif %}
           </div>
           <div class="card-body">
             {% if user.is_authenticated %}
               {% render_comment_list for sample %}
-              <div id="commentFormSection" style="display: none;">
+              <div id="commentFormSection">
                 <hr class="my-4">
                 <h5 class="mb-3">Add a Comment</h5>
                 {% render_comment_form for sample %}
@@ -301,19 +303,13 @@ function smartBack() {
   }
 }
 
-// Toggle comment form visibility
-function toggleCommentForm() {
-  const formSection = document.getElementById('commentFormSection');
-  const btn = document.getElementById('addCommentBtn');
+// Scroll to comments section
+function scrollToComments(event) {
+  event.preventDefault();
   
-  if (formSection.style.display === 'none') {
-    formSection.style.display = 'block';
-    btn.innerHTML = '<i class="fas fa-minus"></i>';
-    // Scroll to the form
-    formSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  } else {
-    formSection.style.display = 'none';
-    btn.innerHTML = '<i class="fas fa-plus"></i>';
+  const commentsSection = document.getElementById('comments-section');
+  if (commentsSection) {
+    commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
