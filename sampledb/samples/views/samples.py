@@ -114,7 +114,7 @@ def sample_list(request):
     sort_field = valid_sorts.get(sort, '-id')
     samples = samples.order_by(sort_field, '-id')  # Secondary sort by ID for consistency
 
-    paginator = Paginator(samples, 18)
+    paginator = Paginator(samples, 17)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
     
