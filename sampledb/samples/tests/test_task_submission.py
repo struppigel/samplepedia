@@ -470,6 +470,35 @@ class TaskEditPermissionTestCase(TestCase):
         url = reverse('edit_task', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+    
+    def test_edit_form_preserves_difficulty(self):
+        """Test that edit form preserves the current difficulty value"""
+        # Create a task with ADVANCED difficulty
+        advanced_task = AnalysisTask.objects.create(
+            sha256='a' * 64,
+            download_link='https://bazaar.abuse.ch/sample/advanced/',
+            description='Advanced task',
+            goal='Advanced goal',
+            difficulty=Difficulty.ADVANCED,
+            platform=Platform.WINDOWS,
+            author=self.author
+        )
+        
+        # Login as author
+        self.client.login(username='author', password='testpass123')
+        
+        # Get the edit page
+        url = reverse('edit_task', kwargs={'sha256': advanced_task.sha256, 'task_id': advanced_task.id})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # Check that the form has the correct difficulty value selected
+        form = response.context['form']
+        self.assertEqual(form.instance.difficulty, Difficulty.ADVANCED)
+        
+        # Verify the form field's initial value is ADVANCED, not EASY
+        self.assertEqual(form['difficulty'].value(), Difficulty.ADVANCED)
 
 
 # Run tests with: python manage.py test samples.test_task_submission
