@@ -140,12 +140,6 @@ class AnalysisTaskForm(forms.ModelForm):
             if field_name in self.fields:
                 self.fields[field_name].required = True
         
-        # Exclude expert difficulty from choices
-        self.fields['difficulty'].choices = [
-            (value, label) for value, label in Difficulty.choices 
-            if value != Difficulty.EXPERT
-        ]
-        
         # Import SolutionType choices
         from .models import SolutionType
         self.fields['reference_solution_type'].choices = [('', '---------')] + list(SolutionType.choices)

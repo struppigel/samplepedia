@@ -194,15 +194,6 @@ class AnalysisTaskFormTestCase(TestCase):
         
         form = AnalysisTaskForm(data=form_data, user=self.staff_user, is_edit=False)
         self.assertTrue(form.is_valid())
-    
-    def test_form_excludes_expert_difficulty(self):
-        """Expert difficulty should not be available in form choices"""
-        form = AnalysisTaskForm(user=self.regular_user, is_edit=False)
-        difficulty_values = [choice[0] for choice in form.fields['difficulty'].choices]
-        self.assertNotIn(Difficulty.EXPERT, difficulty_values)
-        self.assertIn(Difficulty.EASY, difficulty_values)
-        self.assertIn(Difficulty.MEDIUM, difficulty_values)
-        self.assertIn(Difficulty.ADVANCED, difficulty_values)
 
 
 class TaskSubmissionViewTestCase(TestCase):

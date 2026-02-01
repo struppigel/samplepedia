@@ -1,6 +1,7 @@
 {% extends "samples/base.html" %}
 {% load cloudinary %}
 {% load static %}
+{% load user_tags %}
 
 {% block title %}{% if is_edit %}Edit{% else %}Submit{% endif %} Sample{% endblock %}
 
@@ -319,19 +320,35 @@
             <h3 class="card-title">Difficulty Levels</h3>
           </div>
           <div class="card-body">
+            <div class="d-flex align-items-center gap-2 mb-0">
+            {% difficulty_badge 'easy' 'Easy' %}
             <h6 class="text-info">Easy</h6>
+            </div>
             <p class="small mb-3">
               Easy samples are not packed or obfuscated or have trivial obfuscation like base64. They should only use favorable execution environments (no Rust or Go). Samples must not be self-modifying. Samples can be inside of installers (NSIS) or basic wrappers (Batch2Exe) which drop the non-packed payload to disk.
             </p>
             
+            <div class="d-flex align-items-center gap-2 mb-0">
+            {% difficulty_badge 'medium' 'Medium' %}
             <h6 class="text-warning">Medium</h6>
+            </div>
             <p class="small mb-3">
-              Medium samples are easy to unpack (if packed) and can have some obfuscation or simple anti-reversing techniques. Deobfuscation should not require to change the control flow. But deobfuscation may require to decrypt strings or data. Execution environment can be somewhat unfavorable for current tooling.
+              Medium samples are easy to unpack (if packed) and can have some obfuscation or simple anti-reversing techniques. Deobfuscation should not require to change the control flow. But deobfuscation may require to decrypt strings, data or resolve dynamically loaded imports. Execution environment can be somewhat unfavorable for current tooling. Custom scripts for decryption or deobfuscation (if needed) are basic.
             </p>
             
+            <div class="d-flex align-items-center gap-2 mb-0">
+            {% difficulty_badge 'advanced' 'Advanced' %}
             <h6 class="text-danger">Advanced</h6>
+            </div>
+            <p class="small mb-3">
+              Advanced samples may require to write more complex custom tooling for unpacking or deobfuscation. They may employ several anti-reversing mechanisms or self-modifying code. They may use control flow obfuscation. They may use unusual execution environments without good RE tooling or use packers which require more work for unpacking than just setting a few breakpoints.
+            </p>
+            
+            <div class="d-flex align-items-center gap-2 mb-0">
+            {% difficulty_badge 'expert' 'Expert' %} <h6 class="text-black">Expert</h6>
+            </div>
             <p class="small mb-0">
-              Advanced samples may require to write custom tooling for unpacking or deobfuscation. They may employ several anti-reversing mechanisms or self-modifying code. They may use control flow obfuscation. They may use unusual execution environments without good RE tooling or use packers which require more work for unpacking than just setting a few breakpoints.
+              Expert samples require a significant time investment from experienced reversers, e.g., two weeks or more. Examples are heavily obfuscated samples like Scatterbrain, or virtualized code like that of FinFisher.
             </p>
           </div>
         </div>

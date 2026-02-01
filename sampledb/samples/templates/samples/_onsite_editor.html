@@ -27,10 +27,16 @@ Parameters:
   <div class="card-header">
     <h3 class="card-title">Solution Content</h3>
     <div class="card-tools">
+      <button type="button" class="btn btn-sm btn-info mr-2" id="uploadImageBtn" title="Upload Image">
+        <i class="fas fa-image"></i> Upload Image
+      </button>
       <span class="badge badge-info" id="charCount">0 characters</span>
     </div>
   </div>
   <div class="card-body p-0">
+    
+    <!-- Hidden file input for image upload -->
+    <input type="file" id="imageFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
     
     <!-- Editor Tabs -->
     <div class="markdown-tabs">
@@ -86,7 +92,7 @@ def hello_world():
         <div class="px-3 pb-3">
           <small class="form-text text-muted">
             <i class="fas fa-info-circle"></i> 
-            Full markdown formatting supported. Images via external links are supported.
+            Full markdown formatting supported. Use the "Upload Image" button to upload and insert images.
             Press <kbd>Ctrl</kbd>+<kbd>S</kbd> to preview.
           </small>
         </div>
@@ -160,7 +166,9 @@ Ordered list:
 
           <h5 class="mt-3">Images</h5>
           <pre><code>![Alt text](https://example.com/image.jpg)
-![Image with title](https://example.com/image.jpg "Image title")</code></pre>
+![Image with title](https://example.com/image.jpg "Image title")
+
+Or use the "Upload Image" button to upload and insert images directly.</code></pre>
 
           <h5 class="mt-3">Code</h5>
           <pre><code>Inline code: `code here`
@@ -193,7 +201,7 @@ or
               <li>Use the Preview tab to see how your solution will look</li>
               <li>Press <kbd>Ctrl</kbd>+<kbd>S</kbd> (or <kbd>Cmd</kbd>+<kbd>S</kbd> on Mac) to quickly switch to preview</li>
               <li>Content is auto-saved every 5 seconds to prevent data loss</li>
-              <li>External images are supported, but file uploads are not</li>
+              <li>Click "Upload Image" to upload images directly (max 5MB, JPEG/PNG/GIF/WEBP)</li>
             </ul>
           </div>
         </div>
@@ -454,6 +462,152 @@ kbd {
       getPreviewCache: () => previewCache,
       setPreviewCache: (cache) => { previewCache = cache; }
     };
+    
+    // Image upload functionality
+    const uploadImageBtn = document.getElementById('uploadImageBtn');
+    const imageFileInput = document.getElementById('imageFileInput');
+    
+    if (uploadImageBtn && imageFileInput) {
+      // Open file dialog when upload button is clicked
+      uploadImageBtn.addEventListener('click', function() {
+        imageFileInput.click();
+      });
+      
+      // Handle file selection
+      imageFileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          alert('Invalid file type. Please select a JPEG, PNG, GIF, or WEBP image.');
+          this.value = '';
+          return;
+        }
+        
+        // Validate file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > maxSize) {
+          alert('File is too large. Maximum size is 5MB.');
+          this.value = '';
+          return;
+        }
+        
+        // Upload the image
+        uploadImage(file);
+      });
+      
+      function uploadImage(file) {
+        // Show uploading state
+        const originalBtnContent = uploadImageBtn.innerHTML;
+        uploadImageBtn.disabled = true;
+        uploadImageBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                         document.querySelector('meta[name="csrf-token"]')?.content || '';
+        
+        // Upload to server
+        fetch('{% url "upload_editor_image" %}', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrfToken
+          },
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(data => {
+              throw new Error(data.error || 'Upload failed');
+            });
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success && data.url) {
+            // Insert markdown image syntax at cursor position
+            insertImageMarkdown(data.url, file.name);
+            
+            // Clear file input
+            imageFileInput.value = '';
+            
+            // Show success message
+            showUploadMessage('Image uploaded successfully!', 'success');
+          } else {
+            throw new Error(data.error || 'Upload failed');
+          }
+        })
+        .catch(error => {
+          console.error('Upload error:', error);
+          showUploadMessage('Upload failed: ' + error.message, 'error');
+        })
+        .finally(() => {
+          // Restore button state
+          uploadImageBtn.disabled = false;
+          uploadImageBtn.innerHTML = originalBtnContent;
+        });
+      }
+      
+      function insertImageMarkdown(url, filename) {
+        const textarea = document.getElementById('markdownTextarea');
+        if (!textarea) return;
+        
+        // Get cursor position
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const value = textarea.value;
+        
+        // Create markdown image syntax with filename (without extension) as alt text
+        const altText = filename.replace(/\.[^/.]+$/, ''); // Remove file extension
+        const imageMarkdown = `![${altText}](${url})`;
+        
+        // Insert at cursor position
+        const newValue = value.substring(0, start) + imageMarkdown + value.substring(end);
+        textarea.value = newValue;
+        
+        // Move cursor after inserted text
+        const newCursorPos = start + imageMarkdown.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        
+        // Focus textarea
+        textarea.focus();
+        
+        // Update character count
+        updateCharCount();
+        
+        // Clear preview cache to force re-render
+        previewCache = '';
+      }
+      
+      function showUploadMessage(message, type) {
+        // Create temporary message element
+        const messageEl = document.createElement('div');
+        messageEl.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+        messageEl.style.position = 'fixed';
+        messageEl.style.top = '20px';
+        messageEl.style.right = '20px';
+        messageEl.style.zIndex = '9999';
+        messageEl.style.minWidth = '300px';
+        messageEl.innerHTML = `
+          <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        `;
+        
+        document.body.appendChild(messageEl);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+          messageEl.remove();
+        }, 5000);
+      }
+    }
   }
 })();
 </script>

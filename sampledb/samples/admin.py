@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AnalysisTask, CourseReference, Course, Solution, SampleImage
+from .models import AnalysisTask, CourseReference, Course, Solution, SampleImage, EditorImage
 
 @admin.register(CourseReference)
 class CourseReferenceAdmin(admin.ModelAdmin):
@@ -58,3 +58,25 @@ class SampleImageAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" style="max-width: 100px; max-height: 100px;" />', obj.image.url)
         return "No image"
     image_preview.short_description = "Preview"
+
+
+@admin.register(EditorImage)
+class EditorImageAdmin(admin.ModelAdmin):
+    list_display = ("id", "uploader", "image_preview", "created_at")
+    list_filter = ("created_at", "uploader")
+    search_fields = ("uploader__username",)
+    autocomplete_fields = ["uploader"]
+    readonly_fields = ("created_at", "image_preview", "image_url")
+    
+    def image_preview(self, obj):
+        if obj.image:
+            from django.utils.html import format_html
+            return format_html('<img src="{}" style="max-width: 100px; max-height: 100px;" />', obj.image.url)
+        return "No image"
+    image_preview.short_description = "Preview"
+    
+    def image_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return "No URL"
+    image_url.short_description = "Image URL"

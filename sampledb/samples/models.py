@@ -445,3 +445,25 @@ class SampleImage(models.Model):
     def __str__(self):
         return f"Sample Image {self.id}"
 
+
+class EditorImage(models.Model):
+    """Images uploaded through the markdown editor for use in solutions"""
+    image = CloudinaryField('editor_images')
+    
+    uploader = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='editor_images',
+        verbose_name="Uploader"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Uploaded at")
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Editor Image"
+        verbose_name_plural = "Editor Images"
+    
+    def __str__(self):
+        return f"Editor Image {self.id} by {self.uploader.username}"
+

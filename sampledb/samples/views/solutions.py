@@ -6,7 +6,9 @@ from django.utils import timezone
 from markdownx.utils import markdownify
 from django.db.models import Q
 from django.db.models.functions import Coalesce
-from ..models import AnalysisTask, Solution, SolutionType
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from ..models import AnalysisTask, Solution, SolutionType, EditorImage
 from ..forms import SolutionForm
 
 
@@ -372,3 +374,42 @@ def solutions_showcase(request):
         'solutions': solutions,
         'user_liked_solution_ids': user_liked_solution_ids,
     })
+
+
+@login_required
+@require_POST
+def upload_editor_image(request):
+    """Handle image uploads from the markdown editor"""
+    if 'image' not in request.FILES:
+        return JsonResponse({'error': 'No image file provided'}, status=400)
+    
+    image_file = request.FILES['image']
+    
+    # Validate file size (max 5MB)
+    max_size = 5 * 1024 * 1024  # 5MB in bytes
+    if image_file.size > max_size:
+        return JsonResponse({'error': 'Image file too large. Maximum size is 5MB.'}, status=400)
+    
+    # Validate file type
+    allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if image_file.content_type not in allowed_types:
+        return JsonResponse({'error': 'Invalid image type. Allowed types: JPEG, PNG, GIF, WEBP'}, status=400)
+    
+    try:
+        # Create EditorImage instance (Cloudinary will handle the upload)
+        editor_image = EditorImage.objects.create(
+            image=image_file,
+            uploader=request.user
+        )
+        
+        # Get the Cloudinary URL
+        image_url = editor_image.image.url
+        
+        return JsonResponse({
+            'success': True,
+            'url': image_url,
+            'id': editor_image.id
+        })
+    
+    except Exception as e:
+        return JsonResponse({'error': f'Upload failed: {str(e)}'}, status=500)
