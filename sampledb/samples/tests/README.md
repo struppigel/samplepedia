@@ -6,6 +6,37 @@ This directory contains comprehensive tests for the Samplepedia application, foc
 
 ## Test Files
 
+### `test_view_count.py`
+
+Test suite for view count functionality with 4 main test classes:
+
+#### 1. **AnalysisTaskViewCountTestCase** - Task View Count Tests
+Tests view count tracking for analysis tasks:
+- ✅ New tasks have view_count of 0
+- ✅ Accessing detail page increments view count
+- ✅ Multiple views increment count correctly
+- ✅ View count persists across requests
+- ✅ View count displayed in template
+
+#### 2. **SolutionViewCountTestCase** - Solution View Count Tests
+Tests view count tracking for solutions:
+- ✅ New solutions have view_count of 0
+- ✅ Accessing onsite solution view increments count
+- ✅ Multiple views increment count correctly
+- ✅ External solutions don't auto-increment (no click tracking)
+- ✅ View count displayed in onsite solution template
+- ✅ View count shown for onsite, hidden for external solutions
+
+#### 3. **ViewCountConcurrencyTestCase** - Atomic Operation Tests
+Tests thread safety and atomic operations:
+- ✅ View count uses F expressions for atomic updates
+- ✅ Rapid consecutive views all counted correctly
+
+#### 4. **ViewCountIntegrationTestCase** - Integration Tests
+Tests view count across multiple features:
+- ✅ Task and solution view counts are independent
+- ✅ Both authenticated and unauthenticated users increment counts
+
 ### `test_sample_list.py`
 
 Test suite for sample list view functionality with 4 main test classes:
@@ -84,6 +115,7 @@ python manage.py test samples
 python manage.py test samples.tests.test_task_submission
 python manage.py test samples.tests.test_sample_list
 python manage.py test samples.tests.test_solutions
+python manage.py test samples.tests.test_view_count
 ```
 
 ### Run specific test class:
@@ -122,7 +154,10 @@ Current test coverage focuses on:
 - ✅ Landing page vs list view routing
 - ✅ Sorting and pagination
 - ✅ Solution CRUD operations and permissions
-- ✅ Solution hiding functionality (hidden_until field) tags/tools)
+- ✅ Solution hiding functionality (hidden_until field)
+- ✅ View count tracking for tasks and solutions
+- ✅ Atomic view count increments using F expressions
+- ✅ View count display (onsite vs external solutions) tags/tools)
 - ✅ URL validation for download links
 - ✅ SHA256 uniqueness constraints
 
