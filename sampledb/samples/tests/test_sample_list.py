@@ -298,14 +298,14 @@ class SampleListPaginationTestCase(TestCase):
         
         self.client = Client()
     
-    def test_first_page_has_18_items(self):
-        """First page should have 18 items which is the current pagination limit"""
+    def test_first_page_has_17_items(self):
+        """First page should have 17 items which is the current pagination limit"""
         response = self.client.get(reverse('sample_list') + '?browse=1')
         
         self.assertEqual(response.status_code, 200)
         page_obj = response.context['page_obj']
         
-        self.assertEqual(len(page_obj.object_list), 18)
+        self.assertEqual(len(page_obj.object_list), 17)
         self.assertTrue(page_obj.paginator.num_pages >= 2)
         self.assertTrue(page_obj.has_next())
     
