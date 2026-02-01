@@ -101,7 +101,7 @@ def solution_list(request):
         solutions = solutions.order_by('-created_at')
     
     # Paginate the results (18 per page)
-    paginator = Paginator(solutions, 18)
+    paginator = Paginator(solutions, 17)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
     
@@ -356,7 +356,7 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
 
 def solutions_showcase(request):
     """Display the newest solutions (all types) in a card grid layout"""
-    # Get the 6 most recent solutions with their related data
+    # Get all recent solutions with their related data
     # Exclude all hidden solutions from showcase
     # make sure the hidden_until is considered for ordering
     solutions = Solution.objects.select_related(
@@ -366,7 +366,13 @@ def solutions_showcase(request):
         Q(hidden_until__lte=timezone.now())
     ).annotate(
         visible_date=Coalesce('hidden_until', 'created_at')
-    ).order_by('-visible_date')[:6]
+    ).order_by('-visible_date')
+    
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(solutions, 6)  # 6 solutions per page (3 rows of 2)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     
     # Get user's liked solution IDs for display
     user_liked_solution_ids = set()
@@ -376,7 +382,8 @@ def solutions_showcase(request):
         )
     
     return render(request, 'samples/solutions_showcase.html', {
-        'solutions': solutions,
+        'solutions': page_obj,
+        'page_obj': page_obj,
         'user_liked_solution_ids': user_liked_solution_ids,
     })
 

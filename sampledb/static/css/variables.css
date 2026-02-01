@@ -51,7 +51,7 @@
   --solution-even-bg: rgba(0, 0, 0, 0.02);
   --solution-hover-bg: rgba(0, 0, 0, 0.05);
   --page-link-bg: #ffffff;
-  --page-link-color: var(--blue-primary);
+  --page-link-color: var(--gray-700);
   --page-link-border: var(--border-light);
   --alert-info-bg: #d1ecf1;
   --alert-info-border: #bee5eb;

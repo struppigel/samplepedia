@@ -66,10 +66,23 @@
             <i class="fas fa-database"></i> Samples
           </a>
         </li>
-        <li class="nav-item">
-          <a href="{% url 'solutions_showcase' %}" class="nav-link" title="All Solutions">
-            <i class="fas fa-lightbulb"></i> Solutions
+        <li class="nav-item dropdown">
+          <a class="nav-link" data-toggle="dropdown" href="#" title="Solutions">
+            <i class="fas fa-lightbulb"></i> Solutions <i class="fas fa-caret-down"></i>
           </a>
+          <div class="dropdown-menu dropdown-menu-right">
+            <a href="{% url 'solutions_showcase' %}" class="dropdown-item">
+              <i class="fas fa-th-large"></i> Latest
+            </a>
+            <a href="{% url 'solution_list' %}" class="dropdown-item">
+              <i class="fas fa-search"></i> Search
+            </a>
+            {% if user.is_authenticated %}
+              <a href="{% url 'user_profile' user.username %}" class="dropdown-item">
+                <i class="fas fa-user"></i> My Solutions
+              </a>
+            {% endif %}
+          </div>
         </li>
         <li class="nav-item">
           <a href="{% url 'course_list' %}" class="nav-link" title="Courses">
