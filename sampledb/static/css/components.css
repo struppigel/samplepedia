@@ -36,12 +36,18 @@
 
 /* Badge hover effects */
 a.badge {
-  transition: filter 0.15s ease;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
 }
 
-a.badge:hover {
-  filter: brightness(1.2);
-  text-decoration: none;
+a.badge:hover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 /* Tag colors - generates consistent color per tag */
