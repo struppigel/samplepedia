@@ -44,20 +44,28 @@
 
   <!-- Task Reference -->
   <div class="task-reference p-3 mb-4">
-    <div class="small text-muted mb-1">Sample</div>
-    <div>
+    <div class="small text-muted mb-2">
+      <i class="fas fa-flask mr-1"></i> Analysis Task
+    </div>
+    <div class="mb-2">
+      <strong class="text-muted mr-2">SHA256:</strong>
       {% if task_url %}
-        <a href="{{ task_url }}">
+        <a href="{{ task_url }}" class="text-decoration-none" title="View full analysis task: {{ sample.sha256 }}">
           <code class="text-danger">{{ sample.sha256 }}</code>
+          <i class="fas fa-external-link-alt fa-xs ml-1"></i>
         </a>
       {% else %}
-        <code class="text-danger">{{ sample.sha256 }}</code>
-      {% endif %}
-      {% if sample.goal %}
-        <span class="text-muted">—</span> {{ sample.goal|truncatewords:15 }}
+        <code class="text-danger">{{ sample.sha256|slice:":12" }}...</code>
       {% endif %}
     </div>
-    <div class="mt-2">
+    {% if sample.goal %}
+      <div class="mb-2">
+        <strong class="text-muted mr-2">Goal:</strong>
+        <span>{{ sample.goal|truncatewords:15 }}</span>
+      </div>
+    {% endif %}
+    <div class ="mb-2">
+      <strong class="text-muted mr-2">Difficulty:</strong>
       {% difficulty_badge sample.difficulty sample.difficulty %}
     </div>
   </div>
