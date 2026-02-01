@@ -24,6 +24,9 @@
     {% if show_actions %}
       {% if solution and user_has_liked != None %}
         <div class="mr-4 mb-2">
+          <span class="text-dark mr-2" title="{{ solution.view_count }} view{{ solution.view_count|pluralize }}" style="cursor: default; pointer-events: none;">
+            <i class="fas fa-eye"></i> {{ solution.view_count }}
+          </span>
           {% solution_like_button solution user_has_liked %}
         </div>
       {% endif %}
