@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils import timezone
 from markdownx.utils import markdownify
-from django.db.models import Q
+from django.db.models import Q, F
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -234,6 +234,11 @@ def view_onsite_solution(request, sha256, task_id, solution_id):
     
     sample = get_object_or_404(AnalysisTask, id=task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type='onsite')
+    
+    # Increment view count using F expression for atomic update
+    Solution.objects.filter(id=solution_id).update(view_count=F('view_count') + 1)
+    # Refresh from database to get updated view_count
+    solution.refresh_from_db()
     
     # Check if solution is hidden and user has permission to view
     if solution.hidden_until and timezone.now() < solution.hidden_until:

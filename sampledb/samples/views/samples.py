@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower, Cast
-from django.db.models import Count, Case, When, IntegerField, CharField, Q, OuterRef, Subquery
+from django.db.models import Count, Case, When, IntegerField, CharField, Q, OuterRef, Subquery, F
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -149,6 +149,11 @@ def sample_list(request):
 
 def sample_detail(request, sha256, task_id):
     sample = get_object_or_404(AnalysisTask, id=task_id)
+    
+    # Increment view count using F expression for atomic update
+    AnalysisTask.objects.filter(id=task_id).update(view_count=F('view_count') + 1)
+    # Refresh from database to get updated view_count
+    sample.refresh_from_db()
     
     # Check if user has favorited this sample
     user_has_favorited = False

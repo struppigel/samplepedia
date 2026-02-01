@@ -297,6 +297,7 @@ class AnalysisTask(models.Model):
     youtube_id = models.CharField(max_length=32, blank=True, verbose_name="YouTube ID")
     image = CloudinaryField('image', blank=True, null=True)
     like_count = models.IntegerField(default=0, verbose_name="Like count")
+    view_count = models.IntegerField(default=0, verbose_name="View count")
     favorited_by = models.ManyToManyField(User, related_name='favorite_samples', blank=True)
     course_references = models.ManyToManyField(CourseReference, related_name='samples', blank=True, verbose_name="Course references")
     
@@ -316,6 +317,7 @@ class AnalysisTask(models.Model):
             models.Index(fields=['-created_at'], name='idx_created_desc'),
             models.Index(fields=['difficulty', '-created_at'], name='idx_diff_created'),
             models.Index(fields=['sha256'], name='idx_sha256'),
+            models.Index(fields=['-view_count'], name='idx_view_count'),
         ]
     
     @property
@@ -396,6 +398,8 @@ class Solution(models.Model):
         verbose_name="Liked by"
     )
     
+    view_count = models.IntegerField(default=0, verbose_name="View count")
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     
     # Hiding feature for reference solutions
@@ -425,6 +429,7 @@ class Solution(models.Model):
             models.Index(fields=['-created_at'], name='idx_solution_created'),
             models.Index(fields=['author'], name='idx_solution_author'),
             models.Index(fields=['hidden_until'], name='idx_hidden_until'),
+            models.Index(fields=['-view_count'], name='idx_solution_view_count'),
         ]
     
     def __str__(self):

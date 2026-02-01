@@ -84,6 +84,7 @@
                       <th>Difficulty</th>
                       <th>Type</th>
                       <th>Title</th>
+                      <th>Views</th>
                       <th>Likes</th>
                       <th>Date</th>
                       <th>Link</th>
@@ -138,6 +139,19 @@
                             <span class="badge badge-warning ml-2" title="Hidden until {{ solution.hidden_until|date:'M d, Y H:i' }}">
                               <i class="fas fa-eye-slash"></i> Hidden
                             </span>
+                          {% endif %}
+                        </td>
+                        
+                        <!-- Views -->
+                        <td>
+                          {% if solution.solution_type == 'onsite' %}
+                          <span class="text-dark" title="{{ solution.view_count }} view{{ solution.view_count|pluralize }}" style="cursor: default; pointer-events: none;">
+                            <i class="fas fa-eye"></i> {{ solution.view_count }}
+                          </span>
+                          {% else %}
+                          <span class="text-muted" title="View count only available for onsite solutions" style="cursor: default; pointer-events: none;">
+                            <i class="fas fa-eye-slash"></i>
+                          </span>
                           {% endif %}
                         </td>
                         
@@ -245,6 +259,7 @@
                       <th>Tags</th>
                       <th>Goal</th>
                       <th style="text-align: center;">Solutions</th>
+                      <th style="text-align: center;">Views</th>
                       <th style="text-align: center;">Likes</th>
                       <th style="text-align: center;">Comments</th>
                       <th>Date</th>
@@ -288,6 +303,13 @@
                           <a href="{% url 'sample_detail' task.sha256 task.id %}" class="text-dark">
                             {% solution_icons task %}
                           </a>
+                        </td>
+
+                        <!-- Views -->
+                        <td style="text-align: center;">
+                          <span class="text-dark" title="{{ task.view_count }} view{{ task.view_count|pluralize }}" style="cursor: default; pointer-events: none;">
+                            <i class="fas fa-eye"></i> {{ task.view_count }}
+                          </span>
                         </td>
 
                         <!-- Likes -->
