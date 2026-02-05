@@ -231,7 +231,13 @@ body .btn.btn-outline-primary:active {
 .spoiler-text h3,
 .spoiler-text h4,
 .spoiler-text h5,
-.spoiler-text h6 {
+.spoiler-text h6,
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
   margin-top: 1rem;
   margin-bottom: 0.5rem;
 }
@@ -241,15 +247,23 @@ body .btn.btn-outline-primary:active {
 .spoiler-text h3:first-child,
 .spoiler-text h4:first-child,
 .spoiler-text h5:first-child,
-.spoiler-text h6:first-child {
+.spoiler-text h6:first-child,
+.markdown-content h1:first-child,
+.markdown-content h2:first-child,
+.markdown-content h3:first-child,
+.markdown-content h4:first-child,
+.markdown-content h5:first-child,
+.markdown-content h6:first-child {
   margin-top: 0;
 }
 
-.spoiler-text > *:first-child {
+.spoiler-text > *:first-child,
+.markdown-content > *:first-child {
   margin-top: 0;
 }
 
-.spoiler-text > *:last-child {
+.spoiler-text > *:last-child,
+.markdown-content > *:last-child {
   margin-bottom: 0;
 }
 
@@ -273,7 +287,7 @@ body .btn.btn-outline-primary:active {
 
 .spoiler-text code,
 .markdown-content code {
-  background-color: white;
+  background-color: var(--code-bg);
   padding: 0.2em 0.4em;
   border-radius: 3px;
   font-size: 0.9em;
@@ -287,7 +301,7 @@ body .btn.btn-outline-primary:active {
 
 .spoiler-text pre,
 .markdown-content pre {
-  /*background-color: white !important;*/
+  background-color: var(--code-pre-bg);
   padding: 0.75rem;
   border-radius: 4px;
   overflow-x: auto;
@@ -297,7 +311,6 @@ body .btn.btn-outline-primary:active {
 .spoiler-text pre code,
 .markdown-content pre code {
   background-color: transparent;
-  background-color: white;
   padding: 0;
 }
 
@@ -334,7 +347,8 @@ body .btn.btn-outline-primary:active {
   text-decoration-color: var(--blue-primary);
 }
 
-.spoiler-text hr {
+.spoiler-text hr,
+.markdown-content hr {
   border: 0;
   border-top: 1px solid var(--border-color);
   margin: 1rem 0;
@@ -514,4 +528,84 @@ body .btn.btn-outline-primary:active {
   .blog-article {
     padding: 1rem 0;
   }
+}
+/* Comment Highlighting */
+.comment-highlighted {
+  animation: highlightFade 3s ease-in-out;
+  border-left-color: #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.1);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+@keyframes highlightFade {
+  0% {
+    background-color: rgba(220, 53, 69, 0.3);
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+  }
+  50% {
+    background-color: rgba(220, 53, 69, 0.2);
+  }
+  100% {
+    background-color: rgba(220, 53, 69, 0);
+    box-shadow: none;
+  }
+}
+
+.dark-mode .comment-highlighted {
+  background-color: rgba(220, 53, 69, 0.15);
+}
+
+/* @ Mention Autocomplete */
+.mention-autocomplete {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.mention-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.mention-item:hover,
+.mention-item.selected {
+  background-color: #f8f9fa;
+}
+
+.dark-mode .mention-autocomplete {
+  background-color: #343a40;
+  border-color: #495057;
+}
+
+.dark-mode .mention-item:hover,
+.dark-mode .mention-item.selected {
+  background-color: #495057;
+}
+
+/* @ Mention Links in Comments */
+.mention-link {
+  color: #007bff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.mention-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+.dark-mode .mention-link {
+  color: #4dabf7;
+}
+
+.dark-mode .mention-link:hover {
+  color: #74c0fc;
 }

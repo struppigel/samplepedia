@@ -31,6 +31,10 @@
   --image-bg: #1a1a1a;
   --link-color: var(--primary-red);
   --link-hover-color: var(--accent-red);
+  --code-bg: rgba(255, 255, 255, 0.1);
+  --code-pre-bg: rgba(255, 255, 255, 0.05);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --text-muted: #999999;
 }
 
 .dark-mode {

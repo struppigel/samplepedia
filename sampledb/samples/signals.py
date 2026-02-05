@@ -8,6 +8,7 @@ from django_comments.signals import comment_was_posted
 from .models import AnalysisTask, Solution, Notification
 from .discord_utils import send_sample_notification
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +42,7 @@ def _send_notification(instance):
 @receiver(comment_was_posted)
 def notify_on_comment(sender, comment, request, **kwargs):
     """
-    Send a notification when a comment is posted on an analysis task.
-    Notifies the task author, solution authors, and previous commenters (unless they posted this comment).
+    Send a notification when a comment is postedprevious commenters, and @mentioned users.
     Avoids duplicate notifications.
     
     Args:
@@ -68,6 +68,21 @@ def notify_on_comment(sender, comment, request, **kwargs):
     
     # Collect all users to notify (avoiding duplicates)
     recipients = set()
+    mentioned_users = set()
+    
+    # Extract @mentions from comment text
+    mention_pattern = r'@([a-zA-Z0-9_]+)'
+    mentions = re.findall(mention_pattern, comment.comment)
+    
+    # Add mentioned users
+    for username in mentions:
+        try:
+            user = User.objects.get(username=username)
+            if user != comment.user:
+                mentioned_users.add(user)
+                recipients.add(user)
+        except User.DoesNotExist:
+            continue
     
     # Add task author
     if content_object.author and content_object.author != comment.user:
@@ -99,12 +114,20 @@ def notify_on_comment(sender, comment, request, **kwargs):
     
     # Create notifications for all recipients
     for recipient in recipients:
+        # Customize notification verb based on whether user was mentioned
+        if recipient in mentioned_users:
+            verb = 'mentioned you in a comment'
+            description = f"{comment.user.username} mentioned you"
+        else:
+            verb = 'commented'
+            description = f"{comment.user.username} commented"
+        
         Notification.objects.create(
             recipient=recipient,
             actor=comment.user,
-            verb='commented',
+            verb=verb,
             target=content_object,
-            description=f"{comment.user.username} commented",
+            description=description,
             data={'sha256': content_object.sha256[:12]}
         )
         logger.info(f"Comment notification sent to {recipient.username} for sample {content_object.sha256}")

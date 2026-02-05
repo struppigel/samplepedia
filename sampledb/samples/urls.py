@@ -42,6 +42,8 @@ urlpatterns = [
     path("verify-email-change/<uidb64>/<token>/", views.verify_email_change, name="verify_email_change"),
     path("comments/<int:comment_id>/edit/", views.edit_comment, name="comments-xtd-edit"),
     path("comments/<int:comment_id>/delete/", views.delete_comment, name="comments-delete"),
+    path("comments/search-users/", views.search_users, name="search_users"),
+    path("comments/posted/", views.post_comment, name="comments-post-comment"),  # Custom comment posting - overrides default
     path(r'comments/', include('django_comments_xtd.urls')),
     # Notifications
     path("notifications/", views.notification_list, name="notification_list"),
