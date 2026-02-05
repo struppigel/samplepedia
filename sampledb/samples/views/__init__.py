@@ -19,7 +19,7 @@ from .auth import (
     ranking
 )
 from .pages import impressum, privacy_policy, markdown_editor
-from .comments import edit_comment, delete_comment, post_comment
+from .comments import edit_comment, delete_comment, post_comment, search_users
 from .notifications import (
     notification_list,
     notification_dropdown,

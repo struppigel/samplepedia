@@ -4,13 +4,16 @@ from django.contrib import messages
 from django_comments.models import Comment
 from django_comments.views.comments import CommentPostBadRequest
 from django_comments import signals
-from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.http import HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth.models import User
+from django.db.models import Q
 from ..models import AnalysisTask
 import django_comments
+import re
 
 
 @login_required
@@ -132,3 +135,23 @@ def post_comment(request):
         redirect_url = target.get_absolute_url()
     
     return HttpResponseRedirect(redirect_url)
+
+
+@require_GET
+@login_required
+def search_users(request):
+    """
+    Search for users by username for @ mentions.
+    Returns JSON list of usernames matching the query.
+    """
+    query = request.GET.get('q', '').strip()
+    
+    if not query or len(query) < 1:
+        return JsonResponse({'users': []})
+    
+    # Search for users whose username starts with or contains the query
+    users = User.objects.filter(
+        Q(username__istartswith=query) | Q(username__icontains=query)
+    ).exclude(id=request.user.id).values_list('username', flat=True)[:10]
+    
+    return JsonResponse({'users': list(users)})

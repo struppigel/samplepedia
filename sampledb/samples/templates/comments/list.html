@@ -6,7 +6,13 @@
     {% for comment in comment_list %}
       <div class="comment mb-3" id="comment-{{ comment.id }}" style="border-left: 3px solid #007bff; padding-left: 15px;">
         <div class="comment-header mb-2 clearfix">
-          <strong>{{ comment.user_name }}</strong>
+          <strong>
+            {% if comment.user %}
+              <a href="{% url 'user_profile' comment.user.username %}" style="color: inherit; text-decoration: none;">{{ comment.user_name }}</a>
+            {% else %}
+              {{ comment.user_name }}
+            {% endif %}
+          </strong>
           <span class="text-muted small">
             · {{ comment.submit_date|timesince }} ago
           </span>
