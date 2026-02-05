@@ -38,9 +38,16 @@ class AuthenticatedCommentForm(XtdCommentForm):
         if hasattr(self, 'user') and self.user and self.user.is_authenticated:
             data['user_name'] = self.user.username
             data['user_email'] = self.user.email
-            data['user'] = self.user
         
         return data
+    
+    def get_success_url(self):
+        """
+        Override success URL to redirect to the comment with highlight parameter.
+        """
+        # This method will be called after the comment is posted
+        # We'll need to get the comment ID from the saved instance
+        return None  # Will be handled by the signal instead
 
 # For submitting analysis solutions to an analysis task
 class SolutionForm(forms.ModelForm):

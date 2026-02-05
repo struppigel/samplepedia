@@ -34,3 +34,31 @@ function deleteComment(commentId, returnUrl) {
     form.submit();
   }
 }
+
+// Highlight newly posted comment
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const highlightParam = urlParams.get('highlight');
+  
+  if (highlightParam) {
+    const commentElement = document.getElementById(highlightParam);
+    if (commentElement) {
+      // Add highlight class
+      commentElement.classList.add('comment-highlighted');
+      
+      // Smooth scroll to the comment
+      setTimeout(() => {
+        commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+      
+      // Remove highlight after animation
+      setTimeout(() => {
+        commentElement.classList.remove('comment-highlighted');
+        // Clean up URL without reloading page
+        const url = new URL(window.location);
+        url.searchParams.delete('highlight');
+        window.history.replaceState({}, '', url);
+      }, 3000);
+    }
+  }
+});

@@ -4,7 +4,7 @@
 {% if comment_list %}
   <div class="comment-list mb-4">
     {% for comment in comment_list %}
-      <div class="comment mb-3" style="border-left: 3px solid #007bff; padding-left: 15px;">
+      <div class="comment mb-3" id="comment-{{ comment.id }}" style="border-left: 3px solid #007bff; padding-left: 15px;">
         <div class="comment-header mb-2 clearfix">
           <strong>{{ comment.user_name }}</strong>
           <span class="text-muted small">

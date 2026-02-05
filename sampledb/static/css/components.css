@@ -529,3 +529,29 @@ body .btn.btn-outline-primary:active {
     padding: 1rem 0;
   }
 }
+/* Comment Highlighting */
+.comment-highlighted {
+  animation: highlightFade 3s ease-in-out;
+  border-left-color: #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.1);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+@keyframes highlightFade {
+  0% {
+    background-color: rgba(220, 53, 69, 0.3);
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+  }
+  50% {
+    background-color: rgba(220, 53, 69, 0.2);
+  }
+  100% {
+    background-color: rgba(220, 53, 69, 0);
+    box-shadow: none;
+  }
+}
+
+.dark-mode .comment-highlighted {
+  background-color: rgba(220, 53, 69, 0.15);
+}
