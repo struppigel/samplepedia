@@ -67,4 +67,8 @@
   --sha256-valid-border: var(--green-border);
   --sha256-valid-color: var(--body-color);
   --image-bg: var(--light-bg);
+  --code-bg: #f5f5f5;
+  --code-pre-bg: #f8f8f8;
+  --border-color: #dee2e6;
+  --text-muted: #6c757d;
 }
