@@ -144,9 +144,9 @@
                         
                         <!-- Views -->
                         <td>
-                          {% if solution.solution_type == 'onsite' %}
-                          <span class="text-dark" title="{{ solution.view_count }} view{{ solution.view_count|pluralize }}" style="cursor: default; pointer-events: none;">
-                            <i class="fas fa-eye"></i> {{ solution.view_count }}
+                          {% if solution.solution_type == 'onsite' and solution.article %}
+                          <span class="text-dark" title="{{ solution.article.view_count }} view{{ solution.article.view_count|pluralize }}" style="cursor: default; pointer-events: none;">
+                            <i class="fas fa-eye"></i> {{ solution.article.view_count }}
                           </span>
                           {% else %}
                           <span class="text-muted" title="View count only available for onsite solutions" style="cursor: default; pointer-events: none;">

@@ -3,7 +3,7 @@ Tests for view count functionality
 
 This test suite covers:
 1. AnalysisTask view count increment on detail page access
-2. Solution view count increment on onsite solution view
+2. Article view count increment on onsite solution view
 3. View count initialization (default to 0)
 4. View count atomic increments (F expressions)
 5. View count display in templates
@@ -12,7 +12,7 @@ This test suite covers:
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from samples.models import AnalysisTask, Solution, Difficulty, SolutionType
+from samples.models import AnalysisTask, Solution, Article, Difficulty, SolutionType
 
 
 class AnalysisTaskViewCountTestCase(TestCase):
@@ -123,7 +123,7 @@ class AnalysisTaskViewCountTestCase(TestCase):
 
 
 class SolutionViewCountTestCase(TestCase):
-    """Test view count functionality for Solution model"""
+    """Test view count functionality for onsite solutions via Article model"""
     
     def setUp(self):
         """Create test data"""
@@ -140,12 +140,19 @@ class SolutionViewCountTestCase(TestCase):
             author=self.user
         )
         
-        # Create an onsite solution
+        # Create an article for onsite solution
+        self.article = Article.objects.create(
+            title='Test Onsite Solution',
+            content='# Test Solution\n\nThis is a test solution.',
+            author=self.user
+        )
+        
+        # Create an onsite solution linked to the article
         self.onsite_solution = Solution.objects.create(
             analysis_task=self.task,
             title='Test Onsite Solution',
             solution_type=SolutionType.ONSITE,
-            content='# Test Solution\n\nThis is a test solution.',
+            article=self.article,
             author=self.user
         )
         
@@ -160,14 +167,13 @@ class SolutionViewCountTestCase(TestCase):
         
         self.client = Client()
     
-    def test_solution_view_count_default_is_zero(self):
-        """New solutions should have view_count of 0"""
-        self.assertEqual(self.onsite_solution.view_count, 0)
-        self.assertEqual(self.external_solution.view_count, 0)
+    def test_article_view_count_default_is_zero(self):
+        """New articles should have view_count of 0"""
+        self.assertEqual(self.article.view_count, 0)
     
-    def test_onsite_solution_view_increments_count(self):
-        """Accessing onsite solution view should increment view count"""
-        initial_count = self.onsite_solution.view_count
+    def test_onsite_solution_view_increments_article_count(self):
+        """Accessing onsite solution view should increment article view count"""
+        initial_count = self.article.view_count
         
         # Access the onsite solution view
         response = self.client.get(
@@ -181,12 +187,12 @@ class SolutionViewCountTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         
         # Refresh from database and check count incremented
-        self.onsite_solution.refresh_from_db()
-        self.assertEqual(self.onsite_solution.view_count, initial_count + 1)
+        self.article.refresh_from_db()
+        self.assertEqual(self.article.view_count, initial_count + 1)
     
-    def test_multiple_onsite_solution_views_increment_count(self):
-        """Multiple accesses to onsite solution should increment count each time"""
-        initial_count = self.onsite_solution.view_count
+    def test_multiple_onsite_solution_views_increment_article_count(self):
+        """Multiple accesses to onsite solution should increment article count each time"""
+        initial_count = self.article.view_count
         num_views = 3
         
         # Access the onsite solution view multiple times
@@ -200,15 +206,12 @@ class SolutionViewCountTestCase(TestCase):
             )
         
         # Refresh from database and check count incremented correctly
-        self.onsite_solution.refresh_from_db()
-        self.assertEqual(self.onsite_solution.view_count, initial_count + num_views)
+        self.article.refresh_from_db()
+        self.assertEqual(self.article.view_count, initial_count + num_views)
     
-    def test_external_solution_view_count_not_incremented(self):
-        """External solutions should not have their view count incremented automatically"""
-        # External solutions are opened in new tabs via URLs, so view count stays 0
-        # unless we implement click tracking (which we haven't)
-        initial_count = self.external_solution.view_count
-        
+    def test_external_solution_no_view_count(self):
+        """External solutions don't have articles so no view count tracking"""
+        # External solutions are opened in new tabs via URLs, so no view count tracking
         # Access the task detail page (where external solutions are listed)
         self.client.get(
             reverse('sample_detail', kwargs={
@@ -217,15 +220,15 @@ class SolutionViewCountTestCase(TestCase):
             })
         )
         
-        # External solution view count should remain unchanged
-        self.external_solution.refresh_from_db()
-        self.assertEqual(self.external_solution.view_count, initial_count)
+        # Article view count should remain unchanged
+        self.article.refresh_from_db()
+        self.assertEqual(self.article.view_count, 0)
     
     def test_onsite_solution_view_count_displayed_in_template(self):
         """View count should be displayed in the onsite solution view template"""
         # Set a specific view count
-        self.onsite_solution.view_count = 25
-        self.onsite_solution.save()
+        self.article.view_count = 25
+        self.article.save()
         
         response = self.client.get(
             reverse('view_onsite_solution', kwargs={
@@ -240,10 +243,10 @@ class SolutionViewCountTestCase(TestCase):
         # Note: view count will be 26 because accessing the page increments it
         self.assertContains(response, '<i class="fas fa-eye"></i> 26')
     
-    def test_solution_view_count_in_detail_page_for_onsite(self):
-        """Onsite solution view count should be displayed in task detail page"""
-        self.onsite_solution.view_count = 10
-        self.onsite_solution.save()
+    def test_article_view_count_in_detail_page_for_onsite(self):
+        """Onsite solution article view count should be displayed in task detail page"""
+        self.article.view_count = 10
+        self.article.save()
         
         response = self.client.get(
             reverse('sample_detail', kwargs={
@@ -258,9 +261,6 @@ class SolutionViewCountTestCase(TestCase):
     
     def test_external_solution_no_view_count_in_detail_page(self):
         """External solution should not show view count in task detail page"""
-        self.external_solution.view_count = 5
-        self.external_solution.save()
-        
         response = self.client.get(
             reverse('sample_detail', kwargs={
                 'sha256': self.task.sha256,
@@ -270,7 +270,7 @@ class SolutionViewCountTestCase(TestCase):
         
         self.assertEqual(response.status_code, 200)
         # The HTML should NOT contain view count for external solution
-        # (we conditionally hide it with {% if solution.solution_type == 'onsite' %})
+        # (we conditionally hide it with {% if solution.solution_type == 'onsite' and solution.article %})
         content = response.content.decode('utf-8')
         
         # Count how many times the eye icon appears in solution list
@@ -340,18 +340,26 @@ class ViewCountIntegrationTestCase(TestCase):
             author=self.user
         )
         
+        # Create an article for onsite solution
+        self.article = Article.objects.create(
+            title='Integration Test Solution',
+            content='# Integration Test\n\nContent here.',
+            author=self.user
+        )
+        
+        # Create onsite solution linked to the article
         self.onsite_solution = Solution.objects.create(
             analysis_task=self.task,
             title='Integration Test Solution',
             solution_type=SolutionType.ONSITE,
-            content='# Integration Test\n\nContent here.',
+            article=self.article,
             author=self.user
         )
         
         self.client = Client()
     
-    def test_task_and_solution_view_counts_independent(self):
-        """Task and solution view counts should be tracked independently"""
+    def test_task_and_article_view_counts_independent(self):
+        """Task and article view counts should be tracked independently"""
         # View the task detail page
         self.client.get(
             reverse('sample_detail', kwargs={
@@ -361,12 +369,12 @@ class ViewCountIntegrationTestCase(TestCase):
         )
         
         self.task.refresh_from_db()
-        self.onsite_solution.refresh_from_db()
+        self.article.refresh_from_db()
         
         # Task view count should be incremented
         self.assertEqual(self.task.view_count, 1)
-        # Solution view count should NOT be incremented (not viewing solution directly)
-        self.assertEqual(self.onsite_solution.view_count, 0)
+        # Article view count should NOT be incremented (not viewing solution directly)
+        self.assertEqual(self.article.view_count, 0)
         
         # Now view the solution
         self.client.get(
@@ -378,12 +386,12 @@ class ViewCountIntegrationTestCase(TestCase):
         )
         
         self.task.refresh_from_db()
-        self.onsite_solution.refresh_from_db()
+        self.article.refresh_from_db()
         
         # Task view count should remain the same
         self.assertEqual(self.task.view_count, 1)
-        # Solution view count should now be incremented
-        self.assertEqual(self.onsite_solution.view_count, 1)
+        # Article view count should now be incremented
+        self.assertEqual(self.article.view_count, 1)
     
     def test_authenticated_vs_unauthenticated_view_counting(self):
         """View counts should increment for both authenticated and unauthenticated users"""
