@@ -102,6 +102,52 @@ Tests edit permissions for analysis tasks:
 - ✅ Staff users can edit any task
 - ✅ Contributors can edit any task
 
+### `test_draft_article_publishing.py`
+
+Comprehensive test suite for draft article selection and publishing functionality with 4 main test classes:
+
+#### 1. **DraftSelectionFormTestCase** - Form Validation Tests
+Tests draft article selection in the `AnalysisTaskForm`:
+- ✅ Form accepts valid unpublished drafts owned by the user
+- ✅ Form rejects drafts not owned by the submitting user
+- ✅ Form rejects already published draft articles
+- ✅ Form doesn't require manual solution fields when draft is provided
+- ✅ Form requires reference solution when no draft is provided
+- ✅ Form accepts manual solution fields without draft
+- ✅ Form rejects non-existent draft IDs
+- ✅ Draft validation happens before manual field validation
+
+#### 2. **TaskSubmissionWithDraftTestCase** - View Integration Tests
+Tests task submission view with draft article selection:
+- ✅ Submitting task with draft creates solution with draft attached
+- ✅ Draft gets marked as published (Solution.article FK created)
+- ✅ Solution inherits title from draft and uses 'onsite' type
+- ✅ After submission, redirects to task detail page
+- ✅ Published drafts cannot be used again (validation)
+- ✅ Manual solution submission still works (backward compatibility)
+- ✅ Solution.article field is None for manual submissions
+
+#### 3. **ArticleListButtonStatesTestCase** - UI State Tests
+Tests article list view button states and last reference protection:
+- ✅ Article list shows task SHA256 link for published articles
+- ✅ Task column displays first 8 chars with platform icon
+- ✅ Unpublish/delete buttons disabled for last reference solutions
+- ✅ Disabled buttons show lock icon with muted text
+- ✅ Multi-reference articles have enabled action buttons
+- ✅ Cannot unpublish last reference via POST (protection)
+- ✅ Cannot delete article with last reference via POST
+- ✅ Can unpublish article with multiple solutions
+
+#### 4. **DraftPublishingIntegrationTestCase** - End-to-End Tests
+Tests complete draft publishing workflow:
+- ✅ Full workflow: create draft → submit task → verify solution
+- ✅ Draft marked as published after submission
+- ✅ Task detail page shows solution with draft content
+- ✅ Onsite solution view displays draft article
+- ✅ AJAX endpoint returns only unpublished drafts
+- ✅ Published articles excluded from draft selection
+- ✅ Staff users can submit without draft or manual solution
+
 ## Running the Tests
 
 ### Run all tests:
@@ -116,18 +162,21 @@ python manage.py test samples.tests.test_task_submission
 python manage.py test samples.tests.test_sample_list
 python manage.py test samples.tests.test_solutions
 python manage.py test samples.tests.test_view_count
+python manage.py test samples.tests.test_draft_article_publishing
 ```
 
 ### Run specific test class:
 ```bash
 python manage.py test samples.tests.test_task_submission.AnalysisTaskFormTestCase
 python manage.py test samples.tests.test_sample_list.SampleListUnauthenticatedTestCase
+python manage.py test samples.tests.test_draft_article_publishing.DraftSelectionFormTestCase
 ```
 
 ### Run specific test method:
 ```bash
 python manage.py test samples.tests.test_task_submission.AnalysisTaskFormTestCase.test_form_requires_core_fields
 python manage.py test samples.tests.test_sample_list.SampleListUnauthenticatedTestCase.test_search_shows_list_for_unauthenticated
+python manage.py test samples.tests.test_draft_article_publishing.TaskSubmissionWithDraftTestCase.test_submit_task_with_draft_creates_solution
 ```
 
 ### Run with verbose output:
@@ -149,7 +198,9 @@ Current test coverage focuses on:
 - ✅ Form validation logic
 - ✅ User permission handling
 - ✅ Reference solution requirements
-- ✅ Data normalization (lowercase
+- ✅ Data normalization (lowercase tags/tools)
+- ✅ URL validation for download links
+- ✅ SHA256 uniqueness constraints
 - ✅ Sample list filtering and search (unauthenticated users)
 - ✅ Landing page vs list view routing
 - ✅ Sorting and pagination
@@ -157,9 +208,13 @@ Current test coverage focuses on:
 - ✅ Solution hiding functionality (hidden_until field)
 - ✅ View count tracking for tasks and solutions
 - ✅ Atomic view count increments using F expressions
-- ✅ View count display (onsite vs external solutions) tags/tools)
-- ✅ URL validation for download links
-- ✅ SHA256 uniqueness constraints
+- ✅ View count display (onsite vs external solutions)
+- ✅ **Draft article selection and publishing workflow**
+- ✅ **Draft ownership and published status validation**
+- ✅ **Task submission with draft as reference solution**
+- ✅ **Article list button states (disabled for last reference)**
+- ✅ **AJAX endpoint for fetching user's unpublished drafts**
+- ✅ **Full integration: create draft → publish → verify solution**
 
 ## Areas for Future Testing
 

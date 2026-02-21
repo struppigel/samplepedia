@@ -1,4 +1,4 @@
-from .models import AnalysisTask, Difficulty, Solution
+from .models import AnalysisTask, Difficulty, Solution, Article
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
@@ -51,6 +51,12 @@ class AuthenticatedCommentForm(XtdCommentForm):
 
 # For submitting analysis solutions to an analysis task
 class SolutionForm(forms.ModelForm):
+    draft_article_id = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput(attrs={'id': 'id_draft_article_id'}),
+        label=''
+    )
+    
     class Meta:
         model = Solution
         fields = ['title', 'solution_type', 'url', 'content']
@@ -61,15 +67,49 @@ class SolutionForm(forms.ModelForm):
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 15, 'id': 'id_content'}),
         }
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make title not required by default - we'll validate conditionally
+        self.fields['title'].required = False
+    
+    def clean_title(self):
+        title = self.cleaned_data.get('title')
+        draft_article_id = self.data.get('draft_article_id')
+        
+        # Title is not required if draft is selected
+        if draft_article_id:
+            return title
+        
+        # Title is required if no draft is selected
+        if not title:
+            raise forms.ValidationError('This field is required.')
+        
+        return title
+    
     def clean(self):
         cleaned_data = super().clean()
         solution_type = cleaned_data.get('solution_type')
         url = cleaned_data.get('url')
         content = cleaned_data.get('content')
+        draft_article_id = cleaned_data.get('draft_article_id')
         
-        # Validate that onsite solutions have content
-        if solution_type == 'onsite' and not content:
-            raise forms.ValidationError('On-site solutions must have content.')
+        # If draft article is selected, validate it
+        if draft_article_id:
+            try:
+                article = Article.objects.get(id=draft_article_id)
+                # Ensure the article is not already published
+                if article.is_published():
+                    raise forms.ValidationError('Selected draft article is already published.')
+            except Article.DoesNotExist:
+                raise forms.ValidationError('Selected draft article does not exist.')
+            
+            # If draft is selected, content should not be provided
+            if content and content.strip():
+                raise forms.ValidationError('You cannot provide both a draft article and manual content. Please choose one.')
+        
+        # For onsite solutions without draft: require content
+        if solution_type == 'onsite' and not draft_article_id and not content:
+            raise forms.ValidationError('On-site solutions must have content or a draft article selected.')
         
         # Validate that non-onsite solutions have URL
         if solution_type != 'onsite' and not url:
@@ -109,6 +149,13 @@ class AnalysisTaskForm(forms.ModelForm):
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
         label='Reference Solution Content'
+    )
+    
+    # Draft article selection (alternative to writing new content)
+    reference_draft_article_id = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput(attrs={'id': 'id_reference_draft_article_id'}),
+        label='Draft Article ID'
     )
     
     # Hiding options for reference solution
@@ -157,13 +204,10 @@ class AnalysisTaskForm(forms.ModelForm):
             del self.fields['reference_solution_type']
             del self.fields['reference_solution_url']
             del self.fields['reference_solution_content']
+            del self.fields['reference_draft_article_id']
             del self.fields['hide_weeks']
-        else:
-            # Make reference solution fields required for non-staff users when creating
-            if self.user and not self.user.is_staff:
-                self.fields['reference_solution_title'].required = True
-                self.fields['reference_solution_type'].required = True
-                # URL and content validation is handled in clean() based on type
+        # Note: For non-staff users, reference solution validation is done in clean()
+        # to allow either draft selection OR manual input
     
     def clean_download_link(self):
         download_link = self.cleaned_data.get('download_link')
@@ -261,24 +305,52 @@ class AnalysisTaskForm(forms.ModelForm):
             ref_type = cleaned_data.get('reference_solution_type')
             ref_url = cleaned_data.get('reference_solution_url')
             ref_content = cleaned_data.get('reference_solution_content')
+            draft_article_id = cleaned_data.get('reference_draft_article_id')
             
-            # Title and type are always required
-            if not ref_title or not ref_type:
-                raise forms.ValidationError(
-                    "You must provide a reference solution title and type when submitting an analysis task."
-                )
-            
-            # Validate based on solution type
-            if ref_type == 'onsite':
-                if not ref_content:
+            # If draft article is selected, validate it
+            if draft_article_id:
+                from .models import Article
+                try:
+                    article = Article.objects.get(id=draft_article_id)
+                    
+                    # Validate user owns the draft
+                    if article.author != self.user:
+                        raise forms.ValidationError(
+                            "You can only use your own draft articles."
+                        )
+                    
+                    # Validate draft is not already published
+                    if article.is_published():
+                        raise forms.ValidationError(
+                            "This draft article is already published. Please select an unpublished draft."
+                        )
+                    
+                    # Store the article for later use in view
+                    cleaned_data['_draft_article'] = article
+                    
+                except Article.DoesNotExist:
                     raise forms.ValidationError(
-                        "On-site reference solutions must have content."
+                        "Selected draft article does not exist."
                     )
             else:
-                if not ref_url:
+                # No draft selected, validate manual input is provided
+                # Title and type are required
+                if not ref_title or not ref_type:
                     raise forms.ValidationError(
-                        "External reference solutions (blog, paper, video) must have a URL."
+                        "You must provide a reference solution. Either select an existing draft article or fill in the reference solution fields (title and type required)."
                     )
+                
+                # Validate based on solution type
+                if ref_type == 'onsite':
+                    if not ref_content:
+                        raise forms.ValidationError(
+                            "On-site reference solutions must have content."
+                        )
+                else:
+                    if not ref_url:
+                        raise forms.ValidationError(
+                            "External reference solutions (blog, paper, video) must have a URL."
+                        )
         
         return cleaned_data
 

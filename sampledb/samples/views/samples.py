@@ -287,8 +287,30 @@ def submit_task(request):
                 ref_url = form.cleaned_data.get('reference_solution_url')
                 ref_content = form.cleaned_data.get('reference_solution_content')
                 hide_weeks = form.cleaned_data.get('hide_weeks', 0)
+                draft_article_id = form.cleaned_data.get('reference_draft_article_id')
                 
-                if ref_title and ref_type:
+                # Check if user selected an existing draft article
+                if draft_article_id and '_draft_article' in form.cleaned_data:
+                    draft_article = form.cleaned_data['_draft_article']
+                    
+                    # Calculate hidden_until if hide_weeks > 0
+                    from datetime import timedelta
+                    hidden_until = None
+                    
+                    if hide_weeks and hide_weeks > 0:
+                        hidden_until = timezone.now() + timedelta(weeks=hide_weeks)
+                    
+                    # Create solution with draft article
+                    Solution.objects.create(
+                        analysis_task=sample,
+                        title=draft_article.title,
+                        solution_type='onsite',
+                        article=draft_article,
+                        author=request.user,
+                        hidden_until=hidden_until
+                    )
+                elif ref_title and ref_type:
+                    # Create new solution from manual input
                     # Calculate hidden_until if hide_weeks > 0
                     from datetime import timedelta
                     hidden_until = None

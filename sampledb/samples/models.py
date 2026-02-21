@@ -345,6 +345,88 @@ class AnalysisTask(models.Model):
         super().save(*args, **kwargs)
 
 
+class Article(models.Model):
+    """Article model for draft articles and on-site solution content.
+    
+    Articles can exist as standalone drafts (not attached to any analysis task)
+    or be attached to an analysis task as an on-site solution.
+    In the future, they can also be used for wiki-like entries.
+    """
+    
+    title = models.CharField(
+        max_length=200,
+        verbose_name="Title"
+    )
+    
+    content = models.TextField(
+        verbose_name="Content",
+        help_text="Markdown content"
+    )
+    
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='articles',
+        verbose_name="Author"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
+    
+    view_count = models.IntegerField(default=0, verbose_name="View count")
+    
+    class Meta:
+        ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['author'], name='idx_article_author'),
+            models.Index(fields=['-updated_at'], name='idx_article_updated'),
+            models.Index(fields=['-created_at'], name='idx_article_created'),
+        ]
+        verbose_name = "Article"
+        verbose_name_plural = "Articles"
+    
+    def __str__(self):
+        return self.title
+    
+    def is_published(self):
+        """Check if this article is attached to a solution (published)"""
+        return hasattr(self, 'solution') and self.solution is not None
+    
+    def get_publication_date(self):
+        """Get the date when this article was published (not hidden)"""
+        if not self.is_published():
+            return None
+        
+        solution = self.solution
+        # If solution has hidden_until and it's in the future, not yet published
+        if solution.hidden_until and solution.hidden_until > timezone.now():
+            return None
+        
+        # If solution was hidden, publication date is when it became visible
+        if solution.hidden_until:
+            return solution.hidden_until
+        
+        # Otherwise, publication date is when solution was created
+        return solution.created_at
+    
+    def is_visible(self):
+        """Check if this article is visible (published and not hidden)"""
+        if not self.is_published():
+            return False
+        
+        solution = self.solution
+        if solution.hidden_until and solution.hidden_until > timezone.now():
+            return False
+        
+        return True
+    
+    def user_can_edit(self, user):
+        """Check if a user has permission to edit this article"""
+        if not user.is_authenticated:
+            return False
+        return user == self.author or user.is_staff
+
+
 class SolutionType(models.TextChoices):
     BLOG = "blog", "Blog"
     PAPER = "paper", "Paper"
@@ -378,10 +460,22 @@ class Solution(models.Model):
         null=True
     )
     
+    # Reference to Article for on-site solutions
+    article = models.OneToOneField(
+        Article,
+        on_delete=models.CASCADE,
+        related_name='solution',
+        verbose_name="Article",
+        null=True,
+        blank=True,
+        help_text="Article content for on-site solutions"
+    )
+    
+    # Deprecated: kept for backward compatibility with existing solutions
     content = models.TextField(
         verbose_name="Content",
         blank=True,
-        help_text="Markdown content for on-site solutions"
+        help_text="Markdown content for on-site solutions (deprecated, use article field)"
     )
     
     author = models.ForeignKey(
@@ -413,6 +507,20 @@ class Solution(models.Model):
     @property
     def like_count(self):
         return self.liked_by.count()
+    
+    @property
+    def get_content(self):
+        """Get content from article if available, otherwise from deprecated content field"""
+        if self.article:
+            return self.article.content
+        return self.content
+    
+    @property
+    def get_title(self):
+        """Get title - for on-site solutions, use the article title if available"""
+        if self.solution_type == SolutionType.ONSITE and self.article:
+            return self.article.title
+        return self.title
     
     def user_can_see_hidden_status(self, user):
         """Check if user should see the hidden badge/status (staff, task author, or solution author)"""

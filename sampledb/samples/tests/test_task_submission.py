@@ -249,20 +249,11 @@ class TaskSubmissionViewTestCase(TestCase):
         
         response = self.client.post(reverse('submit_task'), data=post_data)
         
-        # Debug: Print form errors if submission failed
-        if response.status_code not in (301, 302):
-            if response.context and 'form' in response.context:
-                print(f"\nForm errors: {response.context['form'].errors}")
-        
         # Verify we have a redirect (task was created successfully)
         self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
         
-        # Debug: Check if task was actually created
-        if not AnalysisTask.objects.filter(sha256='b' * 64).exists():
-            print(f"\nTask not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
-            print(f"Status code: {response.status_code}")
-        
         # Task should be created
+        self.assertTrue(AnalysisTask.objects.filter(sha256='b' * 64).exists(), "Task was not created")
         task = AnalysisTask.objects.get(sha256='b' * 64)
         
         # Verify redirect URL
@@ -302,20 +293,11 @@ class TaskSubmissionViewTestCase(TestCase):
         
         response = self.client.post(reverse('submit_task'), data=post_data)
         
-        # Debug: Print form errors if submission failed
-        if response.status_code not in (301, 302):
-            if response.context and 'form' in response.context:
-                print(f"\nForm errors: {response.context['form'].errors}")
-        
         # Verify we have a redirect (task was created successfully)
         self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
         
-        # Debug: Check if task was actually created
-        if not AnalysisTask.objects.filter(sha256='c' * 64).exists():
-            print(f"\nTask not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
-            print(f"Status code: {response.status_code}")
-        
         # Task should be created
+        self.assertTrue(AnalysisTask.objects.filter(sha256='c' * 64).exists(), "Task was not created")
         task = AnalysisTask.objects.get(sha256='c' * 64)
         
         # Verify redirect URL
@@ -348,20 +330,11 @@ class TaskSubmissionViewTestCase(TestCase):
         
         response = self.client.post(reverse('submit_task'), data=post_data)
         
-        # Debug: Print form errors if submission failed
-        if response.status_code not in (301, 302):
-            if response.context and 'form' in response.context:
-                print(f"\nForm errors: {response.context['form'].errors}")
-        
         # Verify we have a redirect (task was created successfully)
         self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
         
-        # Debug: Check if task was actually created
-        if not AnalysisTask.objects.filter(sha256='d' * 64).exists():
-            print(f"\nTask not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
-            print(f"Status code: {response.status_code}")
-        
         # Task should be created
+        self.assertTrue(AnalysisTask.objects.filter(sha256='d' * 64).exists(), "Task was not created")
         task = AnalysisTask.objects.get(sha256='d' * 64)
         
         # Verify redirect URL

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AnalysisTask, CourseReference, Course, Solution, SampleImage, EditorImage
+from .models import AnalysisTask, CourseReference, Course, Solution, SampleImage, EditorImage, Article
 
 @admin.register(CourseReference)
 class CourseReferenceAdmin(admin.ModelAdmin):
@@ -38,12 +38,26 @@ class SolutionAdmin(admin.ModelAdmin):
     list_display = ("title", "analysis_task_sha256", "solution_type", "author", "created_at")
     list_filter = ("solution_type", "created_at")
     search_fields = ("title", "analysis_task__sha256", "author__username")
-    autocomplete_fields = ["analysis_task", "author"]
+    autocomplete_fields = ["analysis_task", "author", "article"]
     readonly_fields = ("created_at",)
     
     def analysis_task_sha256(self, obj):
         return obj.analysis_task.sha256[:12] + "..."
     analysis_task_sha256.short_description = "Analysis Task"
+
+
+@admin.register(Article)
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ("title", "author", "created_at", "updated_at", "view_count", "is_published")
+    list_filter = ("created_at", "updated_at", "author")
+    search_fields = ("title", "content", "author__username")
+    autocomplete_fields = ["author"]
+    readonly_fields = ("created_at", "updated_at", "view_count")
+    
+    def is_published(self, obj):
+        return obj.is_published()
+    is_published.boolean = True
+    is_published.short_description = "Published"
 
 
 @admin.register(SampleImage)
