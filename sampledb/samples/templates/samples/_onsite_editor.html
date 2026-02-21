@@ -460,7 +460,13 @@ kbd {
       getTitleInput: () => titleInput,
       getPreviewContent: () => previewContent,
       getPreviewCache: () => previewCache,
-      setPreviewCache: (cache) => { previewCache = cache; }
+      setPreviewCache: (cache) => { previewCache = cache; },
+      // Helper methods for form submission
+      getTitle: () => titleInput ? titleInput.value : '',
+      getContent: () => textarea ? textarea.value : '',
+      setTitle: (value) => { if (titleInput) titleInput.value = value; },
+      setContent: (value) => { if (textarea) { textarea.value = value; updateCharCount(); } },
+      clearLocalStorage: () => {} // Placeholder, can be overridden by parent page
     };
     
     // Image upload functionality

@@ -3,16 +3,18 @@ Tests for solution functionality
 
 This test suite covers:
 1. Solution creation for different types (blog, paper, video, onsite)
-2. Solution form validation
-3. Solution editing and deletion permissions
-4. Solution likes/unlikes
-5. Onsite solution content validation
-6. URL validation for external solutions
-7. Title uniqueness per analysis task
-8. Solution listing and filtering
-9. Solution type icon display
-10. Author attribution and notifications
-11. Solution hiding functionality (hidden_until field):
+2. Solution creation with draft articles (publishing existing drafts)
+3. Solution form validation
+4. Solution editing and deletion permissions
+5. Solution likes/unlikes
+6. Onsite solution content validation
+7. URL validation for external solutions
+8. Title uniqueness per analysis task
+9. Solution listing and filtering
+10. Solution type icon display
+11. Author attribution and notifications
+12. Draft article publishing workflow (draft vs manual content)
+13. Solution hiding functionality (hidden_until field):
     - Anonymous and regular users cannot see hidden solutions
     - Solution authors can see their own hidden solutions
     - Task authors can see hidden solutions on their tasks
@@ -69,11 +71,7 @@ class SolutionCreationTestCase(TestCase):
         # Verify we have a redirect (solution was created successfully)
         self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
         
-        # Debug: Check if solution was actually created
-        if Solution.objects.count() == 0:
-            print(f"\nSolution not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
-            print(f"Status code: {response.status_code}")
-        
+        # Verify solution was created
         self.assertEqual(Solution.objects.count(), 1)
         solution = Solution.objects.first()
         
@@ -147,6 +145,125 @@ class SolutionCreationTestCase(TestCase):
         expected_url = f"/login/?next=/sample/{self.task.sha256}/{self.task.id}/solution/add/"
         self.assertRedirects(response, expected_url, fetch_redirect_response=False)
         self.assertEqual(Solution.objects.count(), 0)
+    
+    def test_create_onsite_solution_with_draft_article(self):
+        """Test publishing a draft article as a solution"""
+        from samples.models import Article
+        
+        self.client.login(username='testuser', password='testpass123')
+        
+        # Create a draft article
+        draft = Article.objects.create(
+            title='My Draft Analysis',
+            content='# Draft Content\n\nThis is my analysis...',
+            author=self.user
+        )
+        
+        # Publish draft as solution
+        response = self.client.post(
+            reverse('create_solution', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            {
+                'solution_type': SolutionType.ONSITE,
+                'draft_article_id': draft.id
+            }
+        )
+        
+        # Verify redirect
+        self.assertIn(response.status_code, [301, 302])
+        
+        # Verify solution created with draft article
+        solution = Solution.objects.first()
+        self.assertIsNotNone(solution)
+        self.assertEqual(solution.title, 'My Draft Analysis')
+        self.assertEqual(solution.article, draft)
+        self.assertEqual(solution.solution_type, SolutionType.ONSITE)
+        self.assertTrue(draft.is_published())
+    
+    def test_create_onsite_solution_by_writing_new(self):
+        """Test creating onsite solution creates an Article internally"""
+        from samples.models import Article
+        
+        self.client.login(username='testuser', password='testpass123')
+        
+        response = self.client.post(
+            reverse('create_solution', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            {
+                'title': 'New Analysis',
+                'solution_type': SolutionType.ONSITE,
+                'content': '# New Content\n\nWritten directly...'
+            }
+        )
+        
+        # Verify redirect
+        self.assertIn(response.status_code, [301, 302])
+        
+        # Verify solution and article created
+        solution = Solution.objects.first()
+        self.assertIsNotNone(solution)
+        self.assertEqual(solution.title, 'New Analysis')
+        self.assertIsNotNone(solution.article)
+        self.assertEqual(solution.article.title, 'New Analysis')
+        self.assertEqual(solution.article.content, '# New Content\n\nWritten directly...')
+        self.assertEqual(Article.objects.count(), 1)
+    
+    def test_cannot_provide_both_draft_and_content(self):
+        """Test validation error when providing both draft and manual content"""
+        from samples.models import Article
+        
+        self.client.login(username='testuser', password='testpass123')
+        
+        # Create a draft article
+        draft = Article.objects.create(
+            title='My Draft',
+            content='Draft content',
+            author=self.user
+        )
+        
+        # Try to submit both draft and content
+        response = self.client.post(
+            reverse('create_solution', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            {
+                'title': 'Test',
+                'solution_type': SolutionType.ONSITE,
+                'draft_article_id': draft.id,
+                'content': 'Manual content'
+            }
+        )
+        
+        # Should return form with error
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+        self.assertTrue(response.context['form'].errors)
+        self.assertEqual(Solution.objects.count(), 0)
+    
+    def test_title_not_required_when_publishing_draft(self):
+        """Test that title field is not required when publishing a draft"""
+        from samples.models import Article
+        
+        self.client.login(username='testuser', password='testpass123')
+        
+        # Create a draft article
+        draft = Article.objects.create(
+            title='Draft Title',
+            content='Draft content',
+            author=self.user
+        )
+        
+        # Submit without title (should use draft's title)
+        response = self.client.post(
+            reverse('create_solution', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
+            {
+                'solution_type': SolutionType.ONSITE,
+                'draft_article_id': draft.id
+                # No title provided
+            }
+        )
+        
+        # Should succeed
+        self.assertIn(response.status_code, [301, 302])
+        solution = Solution.objects.first()
+        self.assertIsNotNone(solution)
+        self.assertEqual(solution.title, 'Draft Title')
 
 
 class SolutionFormValidationTestCase(TestCase):
@@ -602,12 +719,9 @@ The malware appears to be...
         # Verify we have a redirect (solution was created successfully)
         self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
         
-        # Debug: Check if solution was actually created
+        # Verify solution was created
         solution = Solution.objects.first()
-        if solution is None:
-            print(f"\nSolution not created! Redirect URL: {response.url if hasattr(response, 'url') else 'No URL'}")
-            print(f"Status code: {response.status_code}")
-            self.fail("Solution was not created")
+        self.assertIsNotNone(solution, "Solution was not created")
         
         # Verify redirect URL - should redirect to view the published solution
         self.assertRedirects(
@@ -620,7 +734,9 @@ The malware appears to be...
             fetch_redirect_response=False
         )
         self.assertEqual(solution.solution_type, SolutionType.ONSITE)
-        self.assertEqual(solution.content, markdown_content.strip())
+        # Content is now stored in the Article model
+        self.assertIsNotNone(solution.article, "Article was not created")
+        self.assertEqual(solution.article.content, markdown_content.strip())
         self.assertIsNone(solution.url)  # No URL for onsite
     
     def test_view_onsite_solution(self):

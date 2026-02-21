@@ -1,6 +1,7 @@
 # Import all views for backward compatibility with urls.py
 from .samples import sample_list, sample_detail, submit_task, edit_task, delete_task, markdown_preview
 from .solutions import create_solution, edit_solution, delete_solution, solution_list, view_onsite_solution, onsite_solution_editor, solutions_showcase, upload_editor_image
+from .articles import article_list, article_editor, article_view, article_delete, article_unpublish, search_samples_ajax, get_user_drafts_ajax, publish_article, attach_draft_to_sample
 from .courses import course_list, course_samples
 from .likes import toggle_like, toggle_solution_like
 from .auth import (
@@ -46,6 +47,11 @@ __all__ = [
     'onsite_solution_editor',
     'solutions_showcase',
     'upload_editor_image',
+    # Articles
+    'article_list',
+    'article_editor',
+    'article_view',
+    'article_delete',
     # Courses
     'course_list',
     'course_samples',

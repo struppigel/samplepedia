@@ -8,7 +8,7 @@ from django.db.models import Q, F
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from ..models import AnalysisTask, Solution, SolutionType, EditorImage
+from ..models import AnalysisTask, Solution, SolutionType, EditorImage, Article
 from ..forms import SolutionForm
 
 
@@ -146,11 +146,56 @@ def create_solution(request, sha256, task_id):
     if request.method == 'POST':
         form = SolutionForm(request.POST)
         if form.is_valid():
-            solution = form.save(commit=False)
-            solution.analysis_task = sample
-            solution.author = request.user
-            solution.save()
-            messages.success(request, 'Solution added successfully!')
+            draft_article_id = form.cleaned_data.get('draft_article_id')
+            
+            # If draft article is selected, attach it to a new solution
+            if draft_article_id:
+                article = get_object_or_404(Article, id=draft_article_id, author=request.user)
+                
+                # Create solution with the article
+                solution = Solution.objects.create(
+                    analysis_task=sample,
+                    author=request.user,
+                    title=article.title,
+                    solution_type='onsite',
+                    article=article,
+                    url=''  # Not used for onsite solutions
+                )
+                messages.success(request, f'Draft article "{article.title}" has been published as a solution!')
+            else:
+                # Regular solution creation
+                solution_type = form.cleaned_data.get('solution_type')
+                
+                # For onsite solutions, create an Article to store the content
+                if solution_type == 'onsite':
+                    content = form.cleaned_data.get('content', '')
+                    title = form.cleaned_data.get('title')
+                    
+                    # Create the article
+                    article = Article.objects.create(
+                        title=title,
+                        content=content,
+                        author=request.user
+                    )
+                    
+                    # Create solution with the article
+                    solution = Solution.objects.create(
+                        analysis_task=sample,
+                        author=request.user,
+                        title=title,
+                        solution_type='onsite',
+                        article=article,
+                        url=''
+                    )
+                else:
+                    # External solution (blog, paper, video) - just save normally
+                    solution = form.save(commit=False)
+                    solution.analysis_task = sample
+                    solution.author = request.user
+                    solution.save()
+                
+                messages.success(request, 'Solution added successfully!')
+            
             return redirect('sample_detail', sha256=sha256, task_id=task_id)
     else:
         form = SolutionForm()
@@ -200,10 +245,17 @@ def delete_solution(request, sha256, task_id, solution_id):
     sample = get_object_or_404(AnalysisTask, id=task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample)
     
+    # Get redirect target from POST data or referrer
+    redirect_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+    default_redirect = 'sample_detail'
+    default_kwargs = {'sha256': sha256, 'task_id': task_id}
+    
     # Only allow the author to delete their own solution
     if solution.author != request.user and not request.user.is_staff:
         messages.error(request, 'You can only delete your own solutions.')
-        return redirect('sample_detail', sha256=sha256, task_id=task_id)
+        if redirect_url:
+            return redirect(redirect_url)
+        return redirect(default_redirect, **default_kwargs)
     
     if request.method == 'POST':
         # Check if this is a reference solution (author is task author)
@@ -219,13 +271,19 @@ def delete_solution(request, sha256, task_id, solution_id):
             
             if reference_solution_count <= 1:
                 messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
-                return redirect('sample_detail', sha256=sha256, task_id=task_id)
+                if redirect_url:
+                    return redirect(redirect_url)
+                return redirect(default_redirect, **default_kwargs)
         
         solution.delete()
         messages.success(request, 'Solution deleted successfully.')
-        return redirect('sample_detail', sha256=sha256, task_id=task_id)
+        if redirect_url:
+            return redirect(redirect_url)
+        return redirect(default_redirect, **default_kwargs)
     
-    return redirect('sample_detail', sha256=sha256, task_id=task_id)
+    if redirect_url:
+        return redirect(redirect_url)
+    return redirect(default_redirect, **default_kwargs)
 
 
 def view_onsite_solution(request, sha256, task_id, solution_id):
@@ -264,8 +322,8 @@ def view_onsite_solution(request, sha256, task_id, solution_id):
                 'solution_id': solution_id
             })
     
-    # Render markdown content
-    rendered_content = markdownify(solution.content) if solution.content else ''
+    # Render markdown content (use get_content property for backward compatibility)
+    rendered_content = markdownify(solution.get_content) if solution.get_content else ''
     
     # Prepare URLs for template
     is_reference = solution.author == sample.author
@@ -321,20 +379,38 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
                 'form': {'title': {'value': title}, 'content': {'value': content}},
             })
         
-        # Create or update solution
+        # Create or update solution with Article
         if solution:
-            # Update existing solution
-            solution.title = title
-            solution.content = content
+            # Update existing solution and its article
+            if solution.article:
+                # Update existing article
+                solution.article.title = title
+                solution.article.content = content
+                solution.article.save()
+            else:
+                # Create new article for legacy solution
+                article = Article.objects.create(
+                    title=title,
+                    content=content,
+                    author=request.user,
+                )
+                solution.article = article
+            
+            solution.title = title  # Keep solution title in sync
             solution.save()
             messages.success(request, 'Solution updated successfully!')
         else:
-            # Create new solution
+            # Create new article and solution
+            article = Article.objects.create(
+                title=title,
+                content=content,
+                author=request.user,
+            )
             solution = Solution.objects.create(
                 analysis_task=sample,
                 author=request.user,
                 title=title,
-                content=content,
+                article=article,
                 solution_type='onsite',
             )
             messages.success(request, 'Solution added successfully!')
@@ -342,9 +418,9 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
         # Redirect to view the published solution
         return redirect('view_onsite_solution', sha256=sha256, task_id=task_id, solution_id=solution.id)
     
-    # Prepare initial values for the form
+    # Prepare initial values for the form (use get_content for backward compatibility)
     initial_title = solution.title if solution else ''
-    initial_content = solution.content if solution else ''
+    initial_content = solution.get_content if solution else ''
     
     return render(request, 'samples/onsite_solution_editor.html', {
         'sample': sample,

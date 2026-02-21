@@ -1,0 +1,465 @@
+{% extends "samples/base.html" %}
+{% load user_tags %}
+{% block title %}My Articles{% endblock %}
+
+{% block content %}
+
+<section class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1>My Articles</h1>
+        <p class="text-muted">Your articles and drafts</p>
+      </div>
+      <div class="col-sm-6">
+        <div class="float-right">
+          <a href="{% url 'article_editor' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Article
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        
+        {% if page_obj %}
+          <div class="card">
+            <div class="card-body p-0">
+              <table class="table table-striped table-hover text-nowrap table-sm" style="table-layout: fixed;">
+                <thead>
+                  <tr>
+                    <th style="min-width: 150px;">Title</th>
+                    <th style="width: 100px;">Status</th>
+                    <th style="width: 120px;">Sample</th>
+                    <th style="width: 100px;">Published</th>
+                    <th style="width: 70px; text-align: center;">Views</th>
+                    <th style="width: 70px; text-align: center;">Likes</th>
+                    <th style="width: 165px; text-align: center;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in page_obj %}
+                  {% with article=item.article reference_solution_count=item.reference_solution_count %}
+                  <tr>
+                    <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      <i class="fas fa-file-alt mr-2"></i>
+                      {% if article.is_published %}
+                        <a href="{% url 'view_onsite_solution' sha256=article.solution.analysis_task.sha256 task_id=article.solution.analysis_task.id solution_id=article.solution.id %}" class="text-dark" title="{{ article.title }}">
+                          {{ article.title }}
+                        </a>
+                      {% else %}
+                        <a href="{% url 'article_view' article.id %}" class="text-dark" title="{{ article.title }}">
+                          {{ article.title }}
+                        </a>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if article.is_published %}
+                        {% if article.is_visible %}
+                          <span class="badge badge-success">Published</span>
+                        {% else %}
+                          <span class="badge badge-warning">Hidden</span>
+                        {% endif %}
+                      {% else %}
+                        <span class="badge badge-secondary">Draft</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if article.is_published %}
+                        <a href="{% url 'sample_detail' sha256=article.solution.analysis_task.sha256 task_id=article.solution.analysis_task.id %}" class="d-flex align-items-center" style="min-width: 0;">
+                          <i class="{{ article.solution.analysis_task.platform|platform_icon }} mr-1"></i>
+                          <code style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="{{ article.solution.analysis_task.sha256 }}">
+                            {{ article.solution.analysis_task.sha256|slice:":8" }}…
+                          </code>
+                        </a>
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if article.get_publication_date %}
+                        <span class="text-muted" title="{{ article.get_publication_date|date:'Y-m-d H:i' }}">
+                          {{ article.get_publication_date|date:"d M Y" }}
+                        </span>
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                      <span class="text-dark" title="{{ article.view_count }} view{{ article.view_count|pluralize }}">
+                        <i class="fas fa-eye"></i> {{ article.view_count }}
+                      </span>
+                    </td>
+                    <td style="text-align: center;">
+                      {% if article.is_published %}
+                        {% solution_like_button article.solution user_liked_solution_ids %}
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                      {% if article.is_published %}
+                        <a href="{% url 'view_onsite_solution' sha256=article.solution.analysis_task.sha256 task_id=article.solution.analysis_task.id solution_id=article.solution.id %}" class="btn btn-sm btn-link text-info p-0 mr-2" title="View Solution">
+                          <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'edit_onsite_solution' sha256=article.solution.analysis_task.sha256 task_id=article.solution.analysis_task.id solution_id=article.solution.id %}" class="btn btn-sm btn-link text-primary p-0 mr-2" title="Edit Solution">
+                          <i class="fas fa-edit"></i>
+                        </a>
+                        {% comment %}Unpublish and Delete buttons - disable if it's the last reference solution{% endcomment %}
+                        {% if article.solution.author.id != article.solution.analysis_task.author.id or reference_solution_count > 1 %}
+                          <button class="btn btn-sm btn-link text-warning p-0 mr-2" 
+                                  onclick="confirmUnpublishArticle('{{ article.id }}', '{{ article.title|escapejs }}')"
+                                  title="Unpublish (convert to draft)">
+                            <i class="fas fa-undo"></i>
+                          </button>
+                          <button class="btn btn-sm btn-link text-danger p-0" 
+                                  onclick="confirmDeleteArticle('{{ article.id }}', '{{ article.title|escapejs }}')"
+                                  title="Delete entirely">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        {% else %}
+                          <span class="text-muted mr-2" title="Cannot unpublish the last reference solution">
+                            <i class="fas fa-lock"></i>
+                          </span>
+                          <span class="text-muted" title="Cannot delete the last reference solution">
+                            <i class="fas fa-lock"></i>
+                          </span>
+                        {% endif %}
+                      {% else %}
+                        <a href="{% url 'article_view' article.id %}" class="btn btn-sm btn-link text-info p-0 mr-2" title="View">
+                          <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'article_editor_edit' article.id %}" class="btn btn-sm btn-link text-primary p-0 mr-2" title="Edit">
+                          <i class="fas fa-edit"></i>
+                        </a>
+                        <button class="btn btn-sm btn-link text-success p-0 mr-2" 
+                                onclick="openPublishModal('{{ article.id }}', '{{ article.title|escapejs }}')"
+                                title="Publish to analysis task">
+                          <i class="fas fa-upload"></i>
+                        </button>
+                        <button class="btn btn-sm btn-link text-danger p-0" 
+                                onclick="confirmDeleteArticle('{{ article.id }}', '{{ article.title|escapejs }}')"
+                                title="Delete">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endwith %}
+                  {% empty %}
+                  <tr>
+                    <td colspan="7" class="text-center text-muted">
+                      No articles found.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="card-footer clearfix">
+              <span class="float-left text-muted">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+              </span>
+
+              <ul class="pagination pagination-sm m-0 float-right">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                    «
+                  </a>
+                </li>
+                {% endif %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                    »
+                  </a>
+                </li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        {% endif %}
+        
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Publish Article Modal -->
+<div class="modal fade" id="publishModal" tabindex="-1" role="dialog" aria-labelledby="publishModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="publishModalLabel">Publish Article: <span id="publishArticleTitle"></span></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="sampleSearch">Search for an analysis task:</label>
+          <input type="text" 
+                 class="form-control" 
+                 id="sampleSearch" 
+                 placeholder="Type SHA256, goal, or description (min 2 characters)"
+                 autocomplete="off">
+          <small class="form-text text-muted">Start typing to search for analysis tasks...</small>
+        </div>
+        
+        <div id="searchResults" style="display: none;">
+          <h6 class="mt-3 mb-2">Search Results:</h6>
+          <div id="sampleList" class="list-group" style="max-height: 400px; overflow-y: auto;">
+            <!-- Results will be populated here -->
+          </div>
+        </div>
+        
+        <div id="noResults" style="display: none;" class="alert alert-info mt-3">
+          No analysis tasks found matching your search.
+        </div>
+        
+        <div id="searchLoading" style="display: none;" class="text-center mt-3">
+          <i class="fas fa-spinner fa-spin"></i> Searching...
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDeleteArticle(articleId, articleTitle) {
+  if (confirm('Are you sure you want to delete "' + articleTitle + '" entirely? This action cannot be undone.')) {
+    // Create and submit a form for POST request
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/articles/${articleId}/delete/`;
+    
+    // Add CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfToken) {
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = csrfToken.value;
+      form.appendChild(csrfInput);
+    } else {
+      // Get CSRF from cookie if not in form
+      const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+      if (csrfCookie) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfCookie.split('=')[1];
+        form.appendChild(csrfInput);
+      }
+    }
+    
+    // Add redirect URL to return to this page after deletion
+    const nextInput = document.createElement('input');
+    nextInput.type = 'hidden';
+    nextInput.name = 'next';
+    nextInput.value = window.location.href;
+    form.appendChild(nextInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+
+function confirmUnpublishArticle(articleId, articleTitle) {
+  if (confirm('Are you sure you want to unpublish "' + articleTitle + '"? It will be converted to a draft.')) {
+    // Create and submit a form for POST request
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/articles/${articleId}/unpublish/`;
+    
+    // Add CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfToken) {
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = csrfToken.value;
+      form.appendChild(csrfInput);
+    } else {
+      // Get CSRF from cookie if not in form
+      const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+      if (csrfCookie) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfCookie.split('=')[1];
+        form.appendChild(csrfInput);
+      }
+    }
+    
+    // Add redirect URL to return to this page after unpublishing
+    const nextInput = document.createElement('input');
+    nextInput.type = 'hidden';
+    nextInput.name = 'next';
+    nextInput.value = window.location.href;
+    form.appendChild(nextInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+
+// Publish modal functionality
+let currentArticleId = null;
+let searchTimeout = null;
+
+function openPublishModal(articleId, articleTitle) {
+  currentArticleId = articleId;
+  document.getElementById('publishArticleTitle').textContent = articleTitle;
+  document.getElementById('sampleSearch').value = '';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('noResults').style.display = 'none';
+  $('#publishModal').modal('show');
+}
+
+// Search samples with debouncing
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('sampleSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const query = this.value.trim();
+      
+      // Clear previous timeout
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+      
+      // Hide results if query is too short
+      if (query.length < 2) {
+        document.getElementById('searchResults').style.display = 'none';
+        document.getElementById('noResults').style.display = 'none';
+        return;
+      }
+      
+      // Show loading
+      document.getElementById('searchLoading').style.display = 'block';
+      document.getElementById('searchResults').style.display = 'none';
+      document.getElementById('noResults').style.display = 'none';
+      
+      // Debounce: wait 300ms after user stops typing
+      searchTimeout = setTimeout(() => {
+        fetch(`/ajax/search-samples/?q=${encodeURIComponent(query)}`)
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('searchLoading').style.display = 'none';
+            
+            if (data.results && data.results.length > 0) {
+              displaySearchResults(data.results);
+            } else {
+              document.getElementById('searchResults').style.display = 'none';
+              document.getElementById('noResults').style.display = 'block';
+            }
+          })
+          .catch(error => {
+            console.error('Search error:', error);
+            document.getElementById('searchLoading').style.display = 'none';
+            alert('Error searching for analysis tasks. Please try again.');
+          });
+      }, 300);
+    });
+  }
+});
+
+function displaySearchResults(results) {
+  const sampleList = document.getElementById('sampleList');
+  sampleList.innerHTML = '';
+  
+  results.forEach(sample => {
+    const difficultyClasses = {
+      'easy': 'badge-info',
+      'medium': 'badge-warning',
+      'advanced': 'badge-danger',
+      'expert': 'badge-dark'
+    };
+    const badgeClass = difficultyClasses[sample.difficulty] || 'badge-secondary';
+    
+    const item = document.createElement('a');
+    item.href = '#';
+    item.className = 'list-group-item list-group-item-action';
+    item.innerHTML = `
+      <div class="d-flex w-100 justify-content-between align-items-start">
+        <div style="flex-grow: 1;">
+          <h6 class="mb-1">
+            <code style="font-size: 0.9em;">${sample.sha256_short}...</code>
+            <span class="badge ${badgeClass} ml-2">${sample.difficulty_display}</span>
+          </h6>
+          <p class="mb-1 text-muted" style="font-size: 0.9em;">${sample.goal}</p>
+          <small class="text-muted">by ${sample.author}</small>
+        </div>
+        <button class="btn btn-sm btn-success ml-3" onclick="publishToSample(event, ${sample.id})" style="white-space: nowrap;">
+          <i class="fas fa-check"></i> Select
+        </button>
+      </div>
+    `;
+    sampleList.appendChild(item);
+  });
+  
+  document.getElementById('searchResults').style.display = 'block';
+  document.getElementById('noResults').style.display = 'none';
+}
+
+function publishToSample(event, sampleId) {
+  event.preventDefault();
+  event.stopPropagation();
+  
+  if (!currentArticleId) {
+    alert('Error: Article ID not found');
+    return;
+  }
+  
+  // Get CSRF token
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                    document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+  
+  if (!csrfToken) {
+    alert('Error: CSRF token not found');
+    return;
+  }
+  
+  // Create form data
+  const formData = new FormData();
+  formData.append('sample_id', sampleId);
+  formData.append('csrfmiddlewaretoken', csrfToken);
+  
+  // Submit
+  fetch(`/articles/${currentArticleId}/publish/`, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRFToken': csrfToken
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      $('#publishModal').modal('hide');
+      // Redirect to the sample detail page
+      window.location.href = data.redirect_url;
+    } else {
+      alert('Error: ' + (data.error || 'Failed to publish article'));
+    }
+  })
+  .catch(error => {
+    console.error('Publish error:', error);
+    alert('Error publishing article. Please try again.');
+  });
+}
+</script>
+
+{% endblock %}

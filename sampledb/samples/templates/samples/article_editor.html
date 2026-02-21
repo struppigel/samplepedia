@@ -1,0 +1,158 @@
+{% extends "samples/base.html" %}
+{% load user_tags %}
+{% block title %}{% if article %}Edit Article Draft{% else %}Create Article Draft{% endif %}{% endblock %}
+
+{% block content %}
+
+<section class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1>{% if article %}Edit Article Draft{% else %}Create Article Draft{% endif %}</h1>      
+        <p class="text-muted mb-0">
+          <i class="fas fa-file-alt"></i> Draft article that can be published later
+        </p>
+      </div>
+      <div class="col-sm-6">
+        <div class="float-right">
+          <button type="button" class="btn btn-secondary" id="clearEditor" {% if article %}style="display:none;"{% endif %}>
+            <i class="fas fa-trash"></i> Clear
+          </button>
+          <a href="{% url 'article_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-times"></i> Cancel
+          </a>
+          <button type="button" class="btn {% if article %}btn-danger{% else %}btn-primary{% endif %}" id="submitSolution">
+            <i class="fas fa-save"></i> {% if article %}Update Draft{% else %}Save Draft{% endif %}
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="alert alert-warning mt-3" role="alert">
+      <i class="fas fa-exclamation-triangle mr-2"></i>
+      Please do not post any malware code directly or this site will be detected by antivirus software, use screenshots of malicious code instead.
+    </div>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        
+        {% include "samples/_onsite_editor.html" with initial_title=initial_title initial_content=initial_content %}
+        
+      </div>
+    </div>
+  </div>
+</section>
+
+<form method="post" id="solutionForm" style="display:none;">
+  {% csrf_token %}
+  <input type="hidden" name="title" id="hiddenTitle">
+  <input type="hidden" name="content" id="hiddenContent">
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Wait for editor API to be available
+  const waitForEditor = setInterval(function() {
+    if (window.editorAPI) {
+      clearInterval(waitForEditor);
+      initPageSpecificFeatures();
+    }
+  }, 50);
+  
+  function initPageSpecificFeatures() {
+    const submitBtn = document.getElementById('submitSolution');
+    const clearBtn = document.getElementById('clearEditor');
+    const form = document.getElementById('solutionForm');
+    
+    // Auto-save setup
+    const AUTOSAVE_KEY = 'article_draft_{% if article %}{{ article.id }}{% else %}new{% endif %}';
+    
+    // Override clearLocalStorage method
+    window.editorAPI.clearLocalStorage = () => {
+      localStorage.removeItem(AUTOSAVE_KEY);
+    };
+    
+    // Submit handler
+    submitBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const title = window.editorAPI.getTitle();
+      const content = window.editorAPI.getContent();
+      
+      // Validation
+      if (!title.trim()) {
+        alert('Please enter a title');
+        return;
+      }
+      
+      if (!content.trim()) {
+        alert('Please enter some content');
+        return;
+      }
+      
+      // Set hidden fields and submit
+      document.getElementById('hiddenTitle').value = title;
+      document.getElementById('hiddenContent').value = content;
+      form.submit();
+    });
+    
+    // Clear editor
+    clearBtn.addEventListener('click', function() {
+      if (confirm('Are you sure you want to clear all content? This cannot be undone.')) {
+        window.editorAPI.setTitle('');
+        window.editorAPI.setContent('');
+        window.editorAPI.clearLocalStorage();
+      }
+    });
+    
+    // Auto-save function
+    function autoSave() {
+      const title = window.editorAPI.getTitle();
+      const content = window.editorAPI.getContent();
+      
+      if (title || content) {
+        const data = { title, content, timestamp: Date.now() };
+        localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+      }
+    }
+    
+    // Auto-save every 30 seconds
+    setInterval(autoSave, 30000);
+    
+    // Load auto-saved data if exists (only for new articles)
+    {% if not article %}
+    const saved = localStorage.getItem(AUTOSAVE_KEY);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        const age = Date.now() - data.timestamp;
+        
+        // If saved data is less than 24 hours old
+        if (age < 24 * 60 * 60 * 1000) {
+          if (confirm('Found auto-saved draft. Do you want to restore it?')) {
+            window.editorAPI.setTitle(data.title);
+            window.editorAPI.setContent(data.content);
+          } else {
+            localStorage.removeItem(AUTOSAVE_KEY);
+          }
+        } else {
+          localStorage.removeItem(AUTOSAVE_KEY);
+        }
+      } catch (e) {
+        console.error('Error loading auto-save:', e);
+      }
+    }
+    {% endif %}
+    
+    // Clear auto-save on successful submit
+    form.addEventListener('submit', function() {
+      localStorage.removeItem(AUTOSAVE_KEY);
+    });
+  }
+});
+</script>
+
+{% endblock %}

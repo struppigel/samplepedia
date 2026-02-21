@@ -1,0 +1,267 @@
+{% extends "samples/base.html" %}
+{% load user_tags %}
+{% block title %}{{ article.title }}{% endblock %}
+
+{% block content %}
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-lg-9 col-xl-8">
+        
+        <!-- Article Header -->
+        <article class="blog-article">
+          <div class="article-header mb-4">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle mr-2"></i>
+              <strong>Draft Article</strong> - This article is not attached to any analysis task and is only visible to you.
+            </div>
+            
+            <h1 class="article-title">{{ article.title }}</h1>
+            
+            <div class="article-meta">
+              <span class="meta-item">
+                <i class="fas fa-user"></i> 
+                <a href="{% url 'user_profile' article.author.username %}">{{ article.author.username }}</a>
+              </span>
+              <span class="meta-item">
+                <i class="fas fa-calendar"></i> 
+                Created {{ article.created_at|date:"F d, Y" }}
+              </span>
+              <span class="meta-item">
+                <i class="fas fa-edit"></i> 
+                Updated {{ article.updated_at|date:"F d, Y" }}
+              </span>
+              <span class="meta-item">
+                <i class="fas fa-eye"></i> 
+                {{ article.view_count }} view{{ article.view_count|pluralize }}
+              </span>
+            </div>
+            
+            {% if user_can_edit %}
+            <div class="article-actions mt-3">
+              <button type="button" 
+                      class="btn btn-success btn-sm" 
+                      onclick="openPublishModal('{{ article.id }}', '{{ article.title|escapejs }}')">
+                <i class="fas fa-paper-plane"></i> Publish
+              </button>
+              <a href="{{ edit_url }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-edit"></i> Edit
+              </a>
+              <a href="{% url 'article_delete' article.id %}" class="btn btn-danger btn-sm">
+                <i class="fas fa-trash"></i> Delete
+              </a>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Article Content -->
+          <div class="article-content markdown-preview-content">
+            {{ rendered_content|safe }}
+          </div>
+        </article>
+
+        <!-- Back Button -->
+        <div class="mt-5 mb-4">
+          <a href="{% url 'article_list' %}" class="btn-back">
+            <i class="fas fa-arrow-left mr-1"></i> Back to drafts
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Publish Article Modal -->
+<div class="modal fade" id="publishModal" tabindex="-1" role="dialog" aria-labelledby="publishModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="publishModalLabel">Publish Article: <span id="publishArticleTitle"></span></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="sampleSearch">Search for an analysis task:</label>
+          <input type="text" 
+                 class="form-control" 
+                 id="sampleSearch" 
+                 placeholder="Type SHA256, goal, or description (min 2 characters)"
+                 autocomplete="off">
+          <small class="form-text text-muted">Start typing to search for analysis tasks...</small>
+        </div>
+        
+        <div id="searchResults" style="display: none;">
+          <h6 class="mt-3 mb-2">Search Results:</h6>
+          <div id="sampleList" class="list-group" style="max-height: 400px; overflow-y: auto;">
+            <!-- Results will be populated here -->
+          </div>
+        </div>
+        
+        <div id="noResults" style="display: none;" class="alert alert-info mt-3">
+          No analysis tasks found matching your search.
+        </div>
+        
+        <div id="searchLoading" style="display: none;" class="text-center mt-3">
+          <i class="fas fa-spinner fa-spin"></i> Searching...
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Publish modal functionality
+let currentArticleId = null;
+let searchTimeout = null;
+
+function openPublishModal(articleId, articleTitle) {
+  currentArticleId = articleId;
+  document.getElementById('publishArticleTitle').textContent = articleTitle;
+  document.getElementById('sampleSearch').value = '';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('noResults').style.display = 'none';
+  $('#publishModal').modal('show');
+}
+
+// Search samples with debouncing
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('sampleSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const query = this.value.trim();
+      
+      // Clear previous timeout
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+      
+      // Hide results if query is too short
+      if (query.length < 2) {
+        document.getElementById('searchResults').style.display = 'none';
+        document.getElementById('noResults').style.display = 'none';
+        return;
+      }
+      
+      // Show loading
+      document.getElementById('searchLoading').style.display = 'block';
+      document.getElementById('searchResults').style.display = 'none';
+      document.getElementById('noResults').style.display = 'none';
+      
+      // Debounce: wait 300ms after user stops typing
+      searchTimeout = setTimeout(() => {
+        fetch(`/ajax/search-samples/?q=${encodeURIComponent(query)}`)
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('searchLoading').style.display = 'none';
+            
+            if (data.results && data.results.length > 0) {
+              displaySearchResults(data.results);
+            } else {
+              document.getElementById('searchResults').style.display = 'none';
+              document.getElementById('noResults').style.display = 'block';
+            }
+          })
+          .catch(error => {
+            console.error('Search error:', error);
+            document.getElementById('searchLoading').style.display = 'none';
+            alert('Error searching for analysis tasks. Please try again.');
+          });
+      }, 300);
+    });
+  }
+});
+
+function displaySearchResults(results) {
+  const sampleList = document.getElementById('sampleList');
+  sampleList.innerHTML = '';
+  
+  results.forEach(sample => {
+    const difficultyClasses = {
+      'easy': 'badge-info',
+      'medium': 'badge-warning',
+      'advanced': 'badge-danger',
+      'expert': 'badge-dark'
+    };
+    const badgeClass = difficultyClasses[sample.difficulty] || 'badge-secondary';
+    
+    const item = document.createElement('a');
+    item.href = '#';
+    item.className = 'list-group-item list-group-item-action';
+    item.innerHTML = `
+      <div class="d-flex w-100 justify-content-between align-items-start">
+        <div style="flex-grow: 1;">
+          <h6 class="mb-1">
+            <code style="font-size: 0.9em;">${sample.sha256_short}...</code>
+            <span class="badge ${badgeClass} ml-2">${sample.difficulty_display}</span>
+          </h6>
+          <p class="mb-1 text-muted" style="font-size: 0.9em;">${sample.goal}</p>
+          <small class="text-muted">by ${sample.author}</small>
+        </div>
+        <button class="btn btn-sm btn-success ml-3" onclick="publishToSample(event, ${sample.id})" style="white-space: nowrap;">
+          <i class="fas fa-check"></i> Select
+        </button>
+      </div>
+    `;
+    sampleList.appendChild(item);
+  });
+  
+  document.getElementById('searchResults').style.display = 'block';
+  document.getElementById('noResults').style.display = 'none';
+}
+
+function publishToSample(event, sampleId) {
+  event.preventDefault();
+  event.stopPropagation();
+  
+  if (!currentArticleId) {
+    alert('Error: Article ID not found');
+    return;
+  }
+  
+  // Get CSRF token
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                    document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+  
+  if (!csrfToken) {
+    alert('Error: CSRF token not found');
+    return;
+  }
+  
+  // Create form data
+  const formData = new FormData();
+  formData.append('sample_id', sampleId);
+  formData.append('csrfmiddlewaretoken', csrfToken);
+  
+  // Submit
+  fetch(`/articles/${currentArticleId}/publish/`, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRFToken': csrfToken
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      $('#publishModal').modal('hide');
+      // Redirect to the sample detail page
+      window.location.href = data.redirect_url;
+    } else {
+      alert('Error: ' + (data.error || 'Failed to publish article'));
+    }
+  })
+  .catch(error => {
+    console.error('Publish error:', error);
+    alert('Error publishing article. Please try again.');
+  });
+}
+</script>
+
+{% endblock %}
