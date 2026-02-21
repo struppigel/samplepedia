@@ -47,7 +47,7 @@
                   {% with article=item.article reference_solution_count=item.reference_solution_count %}
                   <tr>
                     <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                      <i class="fas fa-file-alt mr-2"></i>
+                      <i class="fas fa-file-alt text-success mr-2"></i>
                       {% if article.is_published %}
                         <a href="{% url 'view_onsite_solution' sha256=article.solution.analysis_task.sha256 task_id=article.solution.analysis_task.id solution_id=article.solution.id %}" class="text-dark" title="{{ article.title }}">
                           {{ article.title }}
