@@ -158,6 +158,31 @@ class AnalysisTaskFormTestCase(TestCase):
         form = AnalysisTaskForm(data=form_data, user=self.regular_user, is_edit=False)
         self.assertTrue(form.is_valid())
     
+    def test_form_validates_malwarebazaar_download_url(self):
+        """Form should accept MalwareBazaar download URLs (both /sample/ and /download/ paths)"""
+        # Test with /download/ path
+        form_data = {
+            'sha256': 'c' * 64,
+            'download_link': 'https://bazaar.abuse.ch/download/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+            'description': 'Test description',
+            'goal': 'Test goal',
+            'difficulty': Difficulty.EASY,
+            'platform': Platform.WINDOWS,
+            'tags': 'malware, test',
+            'tools': 'ghidra',
+            'reference_solution_title': 'My Solution',
+            'reference_solution_type': 'blog',
+            'reference_solution_url': 'https://example.com/writeup',
+        }
+        
+        form = AnalysisTaskForm(data=form_data, user=self.regular_user, is_edit=False)
+        self.assertTrue(form.is_valid())
+        
+        # Test with /sample/ path (already tested above, but verify explicitly here)
+        form_data['download_link'] = 'https://bazaar.abuse.ch/sample/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc/'
+        form = AnalysisTaskForm(data=form_data, user=self.regular_user, is_edit=False)
+        self.assertTrue(form.is_valid())
+    
     def test_form_rejects_invalid_download_urls_for_regular_users(self):
         """Regular users should not be able to use arbitrary download URLs"""
         form_data = {

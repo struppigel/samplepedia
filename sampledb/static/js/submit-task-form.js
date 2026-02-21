@@ -289,10 +289,10 @@ function initializeSHA256AutoFill() {
         sha256 = malshareMatch[1].toLowerCase();
       }
       
-      // Extract SHA256 from MalwareBazaar URL
-      const bazaarMatch = url.match(/\/sample\/([a-fA-F0-9]{64})/);
+      // Extract SHA256 from MalwareBazaar URL (both /sample/ and /download/ paths)
+      const bazaarMatch = url.match(/\/(sample|download)\/([a-fA-F0-9]{64})/);
       if (bazaarMatch) {
-        sha256 = bazaarMatch[1].toLowerCase();
+        sha256 = bazaarMatch[2].toLowerCase();
       }
       
       // Update SHA256 field
