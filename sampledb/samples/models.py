@@ -492,8 +492,6 @@ class Solution(models.Model):
         verbose_name="Liked by"
     )
     
-    view_count = models.IntegerField(default=0, verbose_name="View count")
-    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     
     # Hiding feature for reference solutions
@@ -537,7 +535,6 @@ class Solution(models.Model):
             models.Index(fields=['-created_at'], name='idx_solution_created'),
             models.Index(fields=['author'], name='idx_solution_author'),
             models.Index(fields=['hidden_until'], name='idx_hidden_until'),
-            models.Index(fields=['-view_count'], name='idx_solution_view_count'),
         ]
     
     def __str__(self):
