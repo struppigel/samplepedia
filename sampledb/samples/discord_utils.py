@@ -129,3 +129,113 @@ def send_sample_notification(sample):
         logger.error(f"Failed to send Discord notification for {sample.sha256}: {e}")
         if hasattr(e.response, 'text'):
             logger.error(f"Response: {e.response.text}")
+
+
+def send_solution_notification(solution):
+    """
+    Send a Discord notification for a newly created solution.
+    
+    Args:
+        solution: Solution model instance
+    """
+    task = solution.analysis_task
+    
+    # Select webhook based on task difficulty level
+    webhook_map = {
+        'easy': settings.DISCORD_WEBHOOK_EASY,
+        'medium': settings.DISCORD_WEBHOOK_MEDIUM,
+        'advanced': settings.DISCORD_WEBHOOK_ADVANCED,
+        'expert': settings.DISCORD_WEBHOOK_EXPERT,
+    }
+    
+    # Get difficulty-specific webhook, fallback to default
+    webhook_url = webhook_map.get(task.difficulty) or settings.DISCORD_WEBHOOK_URL
+    
+    if not webhook_url:
+        logger.warning(f"Discord webhook URL not configured for difficulty '{task.difficulty}', skipping notification")
+        return
+    
+    # Build the absolute URL for the solution
+    base_url = settings.BASE_URL
+    solution_url = f"{base_url}/sample/{task.sha256}/{task.id}/"
+    
+    # For onsite solutions, link to the dedicated view page
+    if solution.solution_type == 'onsite':
+        solution_url = f"{base_url}/sample/{task.sha256}/{task.id}/solution/{solution.id}/view/"
+    
+    # Map difficulty to colors
+    difficulty_colors = {
+        'easy': 0x28a745,      # Green
+        'medium': 0xffc107,    # Yellow
+        'advanced': 0xdc3545,  # Red
+        'expert': 0x343a40,    # Dark
+    }
+    
+    # Get solution type display
+    solution_type_display = solution.get_solution_type_display()
+    
+    # Build Discord embed
+    embed = {
+        "title": solution.title,
+        "url": solution_url,
+        "description": f"A new {solution_type_display.lower()} solution has been added to a malware sample.",
+        "color": difficulty_colors.get(task.difficulty, 0x007bff),
+        "fields": [
+            {
+                "name": "Author",
+                "value": solution.author.username,
+                "inline": True
+            },
+            {
+                "name": "Sample SHA256",
+                "value": f"[{task.sha256[:16]}...]({base_url}/sample/{task.sha256}/{task.id}/)",
+                "inline": True
+            },
+            {
+                "name": "Solution Type",
+                "value": solution_type_display,
+                "inline": True
+            },
+            {
+                "name": "Difficulty",
+                "value": task.get_difficulty_display(),
+                "inline": True
+            },
+            {
+                "name": "Solution Link",
+                "value": f"[View Solution]({solution.url if solution.solution_type != 'onsite' else solution_url})",
+                "inline": False
+            }
+        ],
+        "footer": {
+            "text": "Samplepedia • Malware Training Samples"
+        }
+    }
+    
+    # Add thumbnail if task has image
+    if task.image:
+        try:
+            embed["thumbnail"] = {
+                "url": task.image.url
+            }
+        except:
+            pass
+    
+    payload = {
+        "embeds": [embed],
+        "username": "Samplepedia Bot"
+    }
+    
+    try:
+        logger.info(f"Sending Discord notification for solution {solution.id} (task {task.sha256}) to webhook")
+        response = requests.post(
+            webhook_url,
+            json=payload,
+            timeout=10
+        )
+        response.raise_for_status()
+        logger.info(f"Successfully sent Discord notification for solution {solution.id}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to send Discord notification for solution {solution.id}: {e}")
+        if hasattr(e.response, 'text'):
+            logger.error(f"Response: {e.response.text}")

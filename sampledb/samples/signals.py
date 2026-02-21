@@ -6,7 +6,7 @@ from django.dispatch import receiver
 from django.db import transaction
 from django_comments.signals import comment_was_posted
 from .models import AnalysisTask, Solution, Notification
-from .discord_utils import send_sample_notification
+from .discord_utils import send_sample_notification, send_solution_notification
 import logging
 import re
 
@@ -138,6 +138,7 @@ def notify_on_solution(sender, instance, created, **kwargs):
     """
     Send a notification when a solution is submitted to an analysis task.
     Notifies the task author (unless they submitted the solution themselves).
+    Also sends Discord notification for all new solutions.
     
     Args:
         sender: The Solution model class
@@ -152,19 +153,29 @@ def notify_on_solution(sender, instance, created, **kwargs):
     # Get the analysis task
     task = instance.analysis_task
     
-    # Don't notify if the solution author is the same as the task author
-    if not task.author or task.author == instance.author:
-        return
+    # Send Discord notification for all new solutions (after transaction commits)
+    transaction.on_commit(lambda: _send_solution_discord_notification(instance))
     
-    # Create notification for the task author
-    Notification.objects.create(
-        recipient=task.author,
-        actor=instance.author,
-        verb='submitted a solution',
-        target=task,
-        action_object=instance,
-        description=f"{instance.author.username} added a solution",
-        data={'sha256': task.sha256[:12], 'solution_title': instance.title}
-    )
-    
-    logger.info(f"Solution notification sent to {task.author.username} for sample {task.sha256}")
+    # Send in-app notification to task author (only if different from solution author)
+    if task.author and task.author != instance.author:
+        # Create notification for the task author
+        Notification.objects.create(
+            recipient=task.author,
+            actor=instance.author,
+            verb='submitted a solution',
+            target=task,
+            action_object=instance,
+            description=f"{instance.author.username} added a solution",
+            data={'sha256': task.sha256[:12], 'solution_title': instance.title}
+        )
+        
+        logger.info(f"Solution notification sent to {task.author.username} for sample {task.sha256}")
+
+
+def _send_solution_discord_notification(instance):
+    """Helper function to send Discord notification for solution after transaction commits."""
+    try:
+        send_solution_notification(instance)
+    except Exception as e:
+        # Don't fail if Discord notification fails
+        logger.error(f"Failed to send Discord notification for solution {instance.id}: {e}")
