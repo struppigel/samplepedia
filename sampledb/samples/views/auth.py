@@ -14,13 +14,15 @@ from django.db.models import Q
 from django.utils import timezone
 
 from ..models import Solution, AnalysisTask, get_user_score, DIFFICULTY_POINTS
+from ..discord_utils import send_user_registration_notification, send_account_deletion_notification
 from ..forms import (
     TurnstileAuthenticationForm,
     TurnstileUserRegistrationForm,
     TurnstilePasswordResetForm,
     TurnstileResendVerificationForm,
     ChangePasswordForm,
-    ChangeEmailForm
+    ChangeEmailForm,
+    DeleteAccountForm
 )
 
 
@@ -98,6 +100,9 @@ def register(request):
             user = form.save(commit=False)
             user.is_active = False  # Will be activated after email verification
             user.save()
+            
+            # Send Discord notification for new user registration
+            send_user_registration_notification(user.username)
             
             # Send verification email
             send_verification_email(request, user)
@@ -532,5 +537,65 @@ def ranking(request):
     return render(request, 'samples/ranking.html', {
         'page_obj': page_obj,
         'difficulty_points': DIFFICULTY_POINTS,
+    })
+
+
+@login_required
+def delete_account(request):
+    """Delete user account with password confirmation"""
+    if request.method == 'POST':
+        # Check for last superuser BEFORE form validation (business logic constraint)
+        if request.user.is_superuser:
+            superuser_count = User.objects.filter(is_superuser=True).count()
+            if superuser_count == 1:
+                messages.error(
+                    request,
+                    'Cannot delete your account. You are the last superuser and deleting it would '
+                    'lock everyone out of the admin panel. Please create another superuser first.'
+                )
+                return redirect('delete_account')
+        
+        form = DeleteAccountForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            
+            # Get user details before deletion
+            username = request.user.username
+            user = request.user
+            
+            # Get statistics for Discord notification
+            task_count = user.analysis_tasks.count()
+            solution_count = user.solutions.count()
+            
+            # Send Discord notification before deletion
+            send_account_deletion_notification(username, task_count, solution_count)
+            
+            # Clear email from all comments made by this user (GDPR compliance)
+            from django_comments.models import Comment
+            Comment.objects.filter(user=user).update(user_email='')
+            
+            # Log the user out first
+            from django.contrib.auth import logout
+            logout(request)
+            
+            # Delete the user account (this will cascade delete related objects)
+            user.delete()
+            
+            # Show success message and redirect to home
+            messages.success(
+                request, 
+                f'Your account ({username}) has been permanently deleted. We\'re sorry to see you go!'
+            )
+            return redirect('sample_list')
+    else:
+        form = DeleteAccountForm(user=request.user)
+    
+    # Get user statistics to show in warning
+    task_count = request.user.analysis_tasks.count()
+    solution_count = request.user.solutions.count()
+    
+    return render(request, 'samples/delete_account.html', {
+        'form': form,
+        'task_count': task_count,
+        'solution_count': solution_count,
     })
 

@@ -10,7 +10,7 @@
             {% if comment.user %}
               <a href="{% url 'user_profile' comment.user.username %}" style="color: inherit; text-decoration: none;">{{ comment.user_name }}</a>
             {% else %}
-              {{ comment.user_name }}
+              <span class="text-muted">Deleted User</span>
             {% endif %}
           </strong>
           <span class="text-muted small">

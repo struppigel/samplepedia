@@ -50,6 +50,7 @@ urlpatterns = [
     path("settings/", views.profile_settings, name="profile_settings"),
     path("settings/password/", views.change_password, name="change_password"),
     path("settings/email/", views.change_email, name="change_email"),
+    path("settings/delete-account/", views.delete_account, name="delete_account"),
     path("verify-email-change/<uidb64>/<token>/", views.verify_email_change, name="verify_email_change"),
     path("comments/<int:comment_id>/edit/", views.edit_comment, name="comments-xtd-edit"),
     path("comments/<int:comment_id>/delete/", views.delete_comment, name="comments-delete"),

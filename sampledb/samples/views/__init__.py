@@ -17,7 +17,8 @@ from .auth import (
     change_password,
     change_email,
     verify_email_change,
-    ranking
+    ranking,
+    delete_account
 )
 from .pages import impressum, privacy_policy, markdown_editor
 from .comments import edit_comment, delete_comment, post_comment, search_users
@@ -72,6 +73,7 @@ __all__ = [
     'change_email',
     'verify_email_change',
     'ranking',
+    'delete_account',
     # Pages
     'impressum',
     'privacy_policy',

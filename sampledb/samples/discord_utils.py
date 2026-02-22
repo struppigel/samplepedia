@@ -239,3 +239,113 @@ def send_solution_notification(solution):
         logger.error(f"Failed to send Discord notification for solution {solution.id}: {e}")
         if hasattr(e.response, 'text'):
             logger.error(f"Response: {e.response.text}")
+
+
+def send_user_registration_notification(username):
+    """
+    Send a Discord notification when a new user registers.
+    
+    Args:
+        username: Username of the newly registered user
+    """
+    webhook_url = settings.DISCORD_WEBHOOK_LOGGING
+    
+    if not webhook_url:
+        logger.warning("Discord logging webhook URL not configured, skipping registration notification")
+        return
+    
+    # Build Discord embed
+    embed = {
+        "title": "🎉 New User Registration",
+        "description": f"A new user has joined Samplepedia!",
+        "color": 0x28a745,  # Green
+        "fields": [
+            {
+                "name": "Username",
+                "value": username,
+                "inline": True
+            }
+        ],
+        "footer": {
+            "text": "Samplepedia • User Registration"
+        },
+        "timestamp": None  # Discord will use current timestamp
+    }
+    
+    payload = {
+        "embeds": [embed],
+        "username": "Samplepedia Bot"
+    }
+    
+    try:
+        logger.info(f"Sending Discord notification for new user registration: {username}")
+        response = requests.post(
+            webhook_url,
+            json=payload,
+            timeout=10
+        )
+        response.raise_for_status()
+        logger.info(f"Successfully sent Discord notification for user registration: {username}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to send Discord notification for user registration ({username}): {e}")
+        if hasattr(e, 'response') and hasattr(e.response, 'text'):
+            logger.error(f"Response: {e.response.text}")
+
+
+def send_account_deletion_notification(username, task_count, solution_count):
+    """
+    Send a Discord notification when a user account is deleted.
+    
+    Args:
+        username: Username of the deleted account
+        task_count: Number of tasks the user had contributed
+        solution_count: Number of solutions the user had contributed
+    """
+    webhook_url = settings.DISCORD_WEBHOOK_LOGGING
+    
+    if not webhook_url:
+        logger.warning("Discord logging webhook URL not configured, skipping deletion notification")
+        return
+    
+    # Build Discord embed
+    embed = {
+        "title": "👋 User Account Deleted",
+        "description": f"A user has deleted their account.",
+        "color": 0xdc3545,  # Red
+        "fields": [
+            {
+                "name": "Username",
+                "value": username,
+                "inline": True
+            },
+            {
+                "name": "Contributions",
+                "value": f"{task_count} tasks, {solution_count} solutions",
+                "inline": True
+            }
+        ],
+        "footer": {
+            "text": "Samplepedia • Account Deletion"
+        },
+        "timestamp": None  # Discord will use current timestamp
+    }
+    
+    payload = {
+        "embeds": [embed],
+        "username": "Samplepedia Bot"
+    }
+    
+    try:
+        logger.info(f"Sending Discord notification for account deletion: {username}")
+        response = requests.post(
+            webhook_url,
+            json=payload,
+            timeout=10
+        )
+        response.raise_for_status()
+        logger.info(f"Successfully sent Discord notification for account deletion: {username}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to send Discord notification for account deletion ({username}): {e}")
+        if hasattr(e, 'response') and hasattr(e.response, 'text'):
+            logger.error(f"Response: {e.response.text}")
+
