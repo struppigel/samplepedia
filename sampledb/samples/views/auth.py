@@ -14,6 +14,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from ..models import Solution, AnalysisTask, get_user_score, DIFFICULTY_POINTS
+from ..discord_utils import send_user_registration_notification, send_account_deletion_notification
 from ..forms import (
     TurnstileAuthenticationForm,
     TurnstileUserRegistrationForm,
@@ -99,6 +100,9 @@ def register(request):
             user = form.save(commit=False)
             user.is_active = False  # Will be activated after email verification
             user.save()
+            
+            # Send Discord notification for new user registration
+            send_user_registration_notification(user.username)
             
             # Send verification email
             send_verification_email(request, user)
@@ -557,6 +561,13 @@ def delete_account(request):
             # Get user details before deletion
             username = request.user.username
             user = request.user
+            
+            # Get statistics for Discord notification
+            task_count = user.analysis_tasks.count()
+            solution_count = user.solutions.count()
+            
+            # Send Discord notification before deletion
+            send_account_deletion_notification(username, task_count, solution_count)
             
             # Clear email from all comments made by this user (GDPR compliance)
             from django_comments.models import Comment
