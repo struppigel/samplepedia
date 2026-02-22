@@ -1,0 +1,118 @@
+{% extends "samples/base.html" %}
+{% load static %}
+
+{% block title %}Delete Account - Samplepedia{% endblock %}
+
+{% block content %}
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-12">
+        <h1 class="m-0 text-danger">
+          <i class="fas fa-exclamation-triangle"></i> Delete Account
+        </h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    
+    <div class="row">
+      <div class="col-md-8">
+        <!-- Warning Alert -->
+        <div class="alert alert-danger">
+          <h4><i class="icon fas fa-ban"></i> Warning!</h4>
+          <p class="mb-2">
+            <strong>This action is permanent and cannot be undone.</strong> Once you delete your account:
+          </p>
+          <p class="mb-2"><strong>What will be permanently deleted:</strong></p>
+          <ul class="mb-2">
+            <li>Your user account and login credentials</li>
+            {% if task_count > 0 %}
+              <li><strong>{{ task_count }} analysis task{{ task_count|pluralize }}</strong> you created</li>
+            {% endif %}
+            {% if solution_count > 0 %}
+              <li><strong>{{ solution_count }} solution{{ solution_count|pluralize }}</strong> you submitted</li>
+            {% endif %}
+            <li>All your articles and drafts</li>
+            <li>All your likes and favorites</li>
+            <li>All notifications related to your account</li>
+          </ul>
+          <p class="mb-2"><strong>What will be preserved:</strong></p>
+          <ul class="mb-0">
+            <li>Your comments will remain visible to not destroy discussion context but will no longer contain a username</li>
+          </ul>
+        </div>
+
+        <!-- Deletion Form -->
+        <div class="card card-danger">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-user-slash"></i> Confirm Account Deletion</h3>
+          </div>
+          <div class="card-body">
+            <form method="post">
+              {% csrf_token %}
+              
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                  {{ form.non_field_errors }}
+                </div>
+              {% endif %}
+
+              <div class="form-group">
+                <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                  <div class="text-danger mt-1">
+                    {{ form.password.errors }}
+                  </div>
+                {% endif %}
+                {% if form.password.help_text %}
+                  <small class="form-text text-muted">{{ form.password.help_text }}</small>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                <div class="form-check">
+                  {{ form.confirm_deletion }}
+                  <label class="form-check-label" for="{{ form.confirm_deletion.id_for_label }}">
+                    {{ form.confirm_deletion.label }}
+                  </label>
+                </div>
+                {% if form.confirm_deletion.errors %}
+                  <div class="text-danger mt-1">
+                    {{ form.confirm_deletion.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="form-group">
+                {{ form.turnstile }}
+                {% if form.turnstile.errors %}
+                  <div class="text-danger mt-1">
+                    {{ form.turnstile.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <hr>
+
+              <button type="submit" id="delete-button" class="btn btn-danger" disabled>
+                <i class="fas fa-trash-alt"></i> Permanently Delete My Account
+              </button>
+              <a href="{% url 'profile_settings' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+              </a>
+            </form>
+            
+            {% include 'samples/_turnstile_script.html' with button_id='delete-button' callback_name='enableDeleteButton' %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
