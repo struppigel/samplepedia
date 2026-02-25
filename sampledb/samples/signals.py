@@ -1,7 +1,7 @@
 """
 Django signals for the samples app.
 """
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.db import transaction
 from django_comments.signals import comment_was_posted
@@ -11,6 +11,26 @@ import logging
 import re
 
 logger = logging.getLogger(__name__)
+
+
+@receiver(pre_delete, sender='auth.User')
+def clear_user_email_from_comments(sender, instance, **kwargs):
+    """
+    Clear user email from comments when a user is deleted (GDPR compliance).
+    This signal is triggered before user deletion to preserve privacy.
+    
+    Args:
+        sender: The User model class
+        instance: The User instance being deleted
+        **kwargs: Additional keyword arguments
+    """
+    from django_comments.models import Comment
+    
+    # Clear email from all comments by this user
+    comments_updated = Comment.objects.filter(user=instance).update(user_email='')
+    
+    if comments_updated > 0:
+        logger.info(f"Cleared email from {comments_updated} comment(s) for user {instance.username}")
 
 
 @receiver(post_save, sender=AnalysisTask)

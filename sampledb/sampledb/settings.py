@@ -260,6 +260,7 @@ DISCORD_WEBHOOK_EASY = config('DISCORD_WEBHOOK_EASY', default='')
 DISCORD_WEBHOOK_MEDIUM = config('DISCORD_WEBHOOK_MEDIUM', default='')
 DISCORD_WEBHOOK_ADVANCED = config('DISCORD_WEBHOOK_ADVANCED', default='')
 DISCORD_WEBHOOK_EXPERT = config('DISCORD_WEBHOOK_EXPERT', default='')
+DISCORD_WEBHOOK_LOGGING = config('DISCORD_WEBHOOK_LOGGING', default='')  # For user registration/deletion events
 
 # Base URL for Discord notifications (used for sample links)
 BASE_URL = config('BASE_URL', default='http://localhost:8000')

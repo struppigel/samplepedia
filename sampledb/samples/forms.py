@@ -443,6 +443,42 @@ class TurnstileUserRegistrationForm(UserCreationForm):
         return email
 
 
+# Delete Account Form with password confirmation and Turnstile CAPTCHA
+class DeleteAccountForm(forms.Form):
+    """
+    Form for users to delete their account (requires password confirmation).
+    This action is irreversible.
+    """
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter your password to confirm deletion'
+        }),
+        label="Confirm Password",
+        help_text="Enter your password to confirm account deletion."
+    )
+    confirm_deletion = forms.BooleanField(
+        required=True,
+        label="I understand that this action is permanent and cannot be undone",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        error_messages={
+            'required': 'You must confirm that you understand this action is permanent.'
+        }
+    )
+    turnstile = TurnstileField(label="")
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_password(self):
+        """Verify the password is correct"""
+        password = self.cleaned_data.get('password')
+        if not self.user.check_password(password):
+            raise forms.ValidationError("Your password is incorrect.")
+        return password
+
+
 # Password Reset Form with Turnstile CAPTCHA
 class TurnstilePasswordResetForm(forms.Form):
     """
