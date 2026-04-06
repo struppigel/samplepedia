@@ -34,7 +34,8 @@ urlpatterns = [
     # AJAX endpoints
     path("ajax/search-samples/", views.search_samples_ajax, name="search_samples_ajax"),
     path("ajax/get-user-drafts/", views.get_user_drafts_ajax, name="get_user_drafts_ajax"),
-    # Pages    path("impressum/", views.impressum, name="impressum"),
+    # Pages
+    path("impressum/", views.impressum, name="impressum"),
     path("privacy/", views.privacy_policy, name="privacy_policy"),
     path("login/", views.login_view, name="login"),
     path("logout/", auth_views.LogoutView.as_view(next_page='/'), name="logout"),
