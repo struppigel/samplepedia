@@ -62,7 +62,7 @@
                   {{ solution.title }}
                 </a>
               {% else %}
-                <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="text-strong" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
+                <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="text-strong" data-external-confirm>
                   {{ solution.title }} <i class="fas fa-external-link-alt fa-xs text-muted"></i>
                 </a>
               {% endif %}
@@ -118,7 +118,7 @@
                     <a href="{% url 'sample_detail' sha256=solution.analysis_task.sha256 task_id=solution.analysis_task.id %}" class="btn btn-sm btn-secondary me-1">
                       <i class="fas fa-file-alt"></i> Sample
                     </a>
-                    <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-danger" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
+                    <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-danger" data-external-confirm>
                       <i class="fas fa-external-link-alt"></i> View
                     </a>
                   </div>

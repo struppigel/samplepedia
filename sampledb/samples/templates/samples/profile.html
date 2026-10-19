@@ -162,7 +162,7 @@
                               <i class="fas fa-eye"></i>
                             </a>
                           {% else %}
-                            <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" title="View Solution" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
+                            <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" title="View Solution" data-external-confirm>
                               <i class="fas fa-external-link-alt"></i>
                             </a>
                           {% endif %}

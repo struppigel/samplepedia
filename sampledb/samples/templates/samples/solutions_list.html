@@ -107,7 +107,7 @@
                     {{ solution.title }}
                   </a>
                 {% else %}
-                  <a href="{{ solution.url }}" target="_blank" class="text-strong" rel="noopener noreferrer" title="{{ solution.title }}" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">
+                  <a href="{{ solution.url }}" target="_blank" class="text-strong" rel="noopener noreferrer" title="{{ solution.title }}" data-external-confirm>
                     {{ solution.title }}
                   </a>
                 {% endif %}

@@ -164,7 +164,7 @@
                     {% if solution.solution_type == 'onsite' %}
                       <a href="{% url 'view_onsite_solution' sha256=sample.sha256 task_id=sample.id solution_id=solution.id %}" class="ms-2">{{ solution.title }}</a>
                     {% else %}
-                      <a href="{{ solution.url }}" target="_blank" class="ms-2" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">{{ solution.title }}</a>
+                      <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="ms-2" data-external-confirm>{{ solution.title }}</a>
                     {% endif %}
                     {% if solution.author == sample.author %}
                       <span class="badge badge-info ms-2" title="Reference solution by task author">
@@ -197,7 +197,7 @@
                       {% comment %}Hide delete button if it's the last reference solution{% endcomment %}
                       {% if solution.author != sample.author or reference_solution_count > 1 %}
                         <button class="btn btn-link btn-sm text-danger p-0 ms-2" 
-                                onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256 }}', '{{ sample.id }}')"
+                                onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256|escapejs }}', '{{ sample.id }}')"
                                 title="Delete this solution">
                           <i class="fas fa-trash-alt"></i>
                         </button>

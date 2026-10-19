@@ -28,7 +28,7 @@
                 </button>
               {% endif %}
               {% if comment.user and comment.user.id == user.id or user.is_staff or sample.author.id == user.id %}
-                <button class="btn btn-link btn-sm text-danger p-0 ms-1" onclick="deleteComment({{ comment.id }}, '{{ request.path }}')" title="Delete comment">
+                <button class="btn btn-link btn-sm text-danger p-0 ms-1" onclick="deleteComment({{ comment.id }}, '{{ request.path|escapejs }}')" title="Delete comment">
                   <i class="fas fa-trash-alt"></i>
                 </button>
               {% endif %}
