@@ -128,7 +128,12 @@ document.addEventListener('DOMContentLoaded', function() {
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
       
-      document.getElementById('solutionForm').submit();
+      document.getElementById('solutionForm').requestSubmit();
+    });
+    
+    // Clear auto-save once the solution is submitted
+    document.getElementById('solutionForm').addEventListener('submit', function() {
+      localStorage.removeItem(STORAGE_KEY);
     });
     
     // Auto-save to localStorage (only for new solutions)

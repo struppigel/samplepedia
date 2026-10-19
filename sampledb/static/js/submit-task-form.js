@@ -562,7 +562,7 @@ function initializeMarkdownPreviewTabs() {
  * Clear localStorage on form submission
  */
 function initializeFormSubmission() {
-  const form = document.querySelector('form[method="post"]');
+  const form = document.getElementById('submit-task-form');
   if (form) {
     form.addEventListener('submit', function() {
       // Use external clearFormDrafts if available, otherwise use FormDraftManager

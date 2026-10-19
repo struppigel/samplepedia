@@ -20,7 +20,8 @@ function clearFormDrafts() {
     'draft_form_uploaded_image',
     'draft_form_tags',
     'draft_form_tools',
-    'draft_form_difficulty'
+    'draft_form_difficulty',
+    'markdown_editor_content'
   ];
   
   draftKeys.forEach(key => localStorage.removeItem(key));
