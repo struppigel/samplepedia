@@ -1,0 +1,22 @@
+{% load url_helpers %}
+{# Previous/next links for a Django Page that keep the current filters. #}
+{# Include with: page_obj; optionally param (query parameter, default "page") #}
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="card-footer clearfix">
+  <span class="float-start text-muted">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+  </span>
+  <ul class="pagination pagination-sm m-0 float-end">
+    {% if page_obj.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="{% page_url page_obj.previous_page_number param|default:'page' %}" aria-label="Previous page">«</a>
+    </li>
+    {% endif %}
+    {% if page_obj.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="{% page_url page_obj.next_page_number param|default:'page' %}" aria-label="Next page">»</a>
+    </li>
+    {% endif %}
+  </ul>
+</div>
+{% endif %}

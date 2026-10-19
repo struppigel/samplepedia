@@ -5,7 +5,7 @@ from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.db import transaction
 from django_comments.signals import comment_was_posted
-from .models import AnalysisTask, Solution, Notification
+from .models import AnalysisTask, Solution, Notification, NotificationVerb
 from .discord_utils import send_sample_notification, send_solution_notification
 import logging
 import re
@@ -136,10 +136,10 @@ def notify_on_comment(sender, comment, request, **kwargs):
     for recipient in recipients:
         # Customize notification verb based on whether user was mentioned
         if recipient in mentioned_users:
-            verb = 'mentioned you in a comment'
+            verb = NotificationVerb.MENTIONED
             description = f"{comment.user.username} mentioned you"
         else:
-            verb = 'commented'
+            verb = NotificationVerb.COMMENTED
             description = f"{comment.user.username} commented"
         
         Notification.objects.create(
@@ -184,7 +184,7 @@ def notify_on_solution(sender, instance, created, **kwargs):
         Notification.objects.create(
             recipient=task.author,
             actor=instance.author,
-            verb='submitted a solution',
+            verb=NotificationVerb.SUBMITTED_SOLUTION,
             target=task,
             action_object=instance,
             description=f"{instance.author.username} added a solution",

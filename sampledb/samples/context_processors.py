@@ -20,10 +20,7 @@ def notification_count(request):
     """Make notification count available in all templates."""
     if request.user.is_authenticated:
         return {
-            'unread_notifications_count': Notification.objects.filter(
-                recipient=request.user,
-                unread=True
-            ).count()
+            'unread_notifications_count': Notification.objects.filter(recipient=request.user).unread().count()
         }
     return {
         'unread_notifications_count': 0

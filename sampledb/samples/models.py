@@ -23,6 +23,24 @@ DIFFICULTY_POINTS = {
 }
 
 
+class NotificationVerb(models.TextChoices):
+    """The stored values are the legacy free-text verbs, so existing rows stay valid"""
+    LIKED_TASK = 'liked', 'Liked a task'
+    LIKED_SOLUTION = 'liked_solution', 'Liked a solution'
+    COMMENTED = 'commented', 'Commented'
+    MENTIONED = 'mentioned you in a comment', 'Mentioned in a comment'
+    SUBMITTED_SOLUTION = 'submitted a solution', 'Submitted a solution'
+
+
+NOTIFICATION_ICONS = {
+    NotificationVerb.LIKED_TASK: 'fas fa-heart text-danger',
+    NotificationVerb.LIKED_SOLUTION: 'fas fa-heart text-danger',
+    NotificationVerb.COMMENTED: 'fas fa-comment text-info',
+    NotificationVerb.MENTIONED: 'fas fa-at text-info',
+    NotificationVerb.SUBMITTED_SOLUTION: 'fas fa-lightbulb text-warning',
+}
+
+
 class NotificationQuerySet(models.QuerySet):
     """Custom queryset for Notification model"""
     
@@ -72,8 +90,9 @@ class Notification(models.Model):
     
     verb = models.CharField(
         max_length=50,
+        choices=NotificationVerb.choices,
         verbose_name="Verb",
-        help_text="Action type: liked, commented, added_solution, etc."
+        help_text="What the actor did"
     )
     
     # GenericForeignKey for the target object (what was acted upon)
@@ -134,6 +153,11 @@ class Notification(models.Model):
     def __str__(self):
         return f"{self.actor.username} {self.verb} → {self.recipient.username}"
     
+    @property
+    def icon(self):
+        """Font Awesome classes for this kind of notification"""
+        return NOTIFICATION_ICONS.get(self.verb, 'fas fa-bell text-muted')
+
     def mark_as_read(self):
         """Mark this notification as read"""
         if self.unread:
@@ -520,8 +544,8 @@ class Solution(models.Model):
             return reverse('view_onsite_solution', kwargs={
                 'sha256': task.sha256, 'task_id': task.id, 'solution_id': self.id,
             })
-        # External solutions live elsewhere; their page here is the task
-        return task.get_absolute_url()
+        # External solutions live elsewhere; here they are a highlighted row on the task page
+        return f'{task.get_absolute_url()}?highlight_solution={self.id}'
 
     @classmethod
     def title_taken(cls, task, title, exclude_pk=None):

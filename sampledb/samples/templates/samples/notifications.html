@@ -38,15 +38,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                       <div class="flex-grow-1">
                         <a href="{% url 'mark_notification_read' notification.id %}" class="text-decoration-none">
-                          {% if notification.verb == 'liked' %}
-                            <i class="fas fa-heart text-danger me-2"></i>
-                          {% elif notification.verb == 'liked_solution' %}
-                            <i class="fas fa-heart text-danger me-2"></i>
-                          {% elif notification.verb == 'commented' %}
-                            <i class="fas fa-comment text-info me-2"></i>
-                          {% elif notification.verb == 'submitted a solution' %}
-                            <i class="fas fa-lightbulb text-warning me-2"></i>
-                          {% endif %}
+                          <i class="{{ notification.icon }} me-2"></i>
                           <strong>{{ notification.description }}</strong>
                           {% if notification.data.sha256 %}
                             <span class="text-muted">[SHA256: {{ notification.data.sha256 }}...]</span>
@@ -78,6 +70,7 @@
               </div>
             {% endif %}
           </div>
+          {% include 'samples/_pagination.html' %}
         </div>
       </div>
     </div>

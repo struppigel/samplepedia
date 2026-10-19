@@ -72,15 +72,8 @@
                     let html = '';
                     data.notifications.forEach(notification => {
                         const timeAgo = formatTimeAgo(new Date(notification.timestamp));
-                        let icon = '';
-
-                        if (notification.description.includes('liked')) {
-                            icon = '<i class="fas fa-heart text-danger me-2"></i>';
-                        } else if (notification.description.includes('commented')) {
-                            icon = '<i class="fas fa-comment text-info me-2"></i>';
-                        } else if (notification.description.includes('solution')) {
-                            icon = '<i class="fas fa-lightbulb text-warning me-2"></i>';
-                        }
+                        // The server picks the icon from the notification's verb
+                        const icon = `<i class="${escapeHtml(notification.icon)} me-2"></i>`;
 
                         // Descriptions contain user-provided text (usernames, titles): always escape
                         html += `
