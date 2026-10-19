@@ -87,44 +87,7 @@
               </div>
               
               <!-- Pagination -->
-              {% if page_obj.has_other_pages %}
-              <div class="card-footer clearfix">
-                <span class="float-start text-muted">
-                  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                </span>
-                <ul class="pagination pagination-sm m-0 float-end">
-                  {% if page_obj.has_previous %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page=1">
-                      «« First
-                    </a>
-                  </li>
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                      « Previous
-                    </a>
-                  </li>
-                  {% endif %}
-                  
-                  <li class="page-item disabled">
-                    <span class="page-link">Page {{ page_obj.number }}</span>
-                  </li>
-                  
-                  {% if page_obj.has_next %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                      Next »
-                    </a>
-                  </li>
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
-                      Last »»
-                    </a>
-                  </li>
-                  {% endif %}
-                </ul>
-              </div>
-              {% endif %}
+              {% include 'samples/_pagination.html' %}
             {% else %}
               <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> No rankings available yet.
@@ -149,7 +112,6 @@
               <li>{% difficulty_badge 'medium' 'Medium' %} {{ difficulty_points.medium }} points per like</li>
               <li>{% difficulty_badge 'advanced' 'Advanced' %} {{ difficulty_points.advanced }} points per like</li>
               <li>{% difficulty_badge 'expert' 'Expert' %} {{ difficulty_points.expert }} points per like</li>
-              <!-- <li>{% difficulty_badge 'expert' 'Expert' %} {{ difficulty_points.expert }} points per like</li> temp disabled until it is implemented completely -->
             </ul>
           </div>
         </div>

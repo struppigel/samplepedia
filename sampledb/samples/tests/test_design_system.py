@@ -338,6 +338,7 @@ class Bootstrap4ShimTestCase(RatchetMixin, SimpleTestCase):
     )
     KNOWN_SHIMS = {
         'samples/templates/samples/_article_header.html: badge-info',
+        'samples/templates/samples/_filter_bar.html: btn-default',
         'samples/templates/samples/_onsite_editor.html: badge-info',
         'samples/templates/samples/_onsite_editor.html: card-tools',
         'samples/templates/samples/_user_groups.html: badge-danger',
@@ -354,14 +355,12 @@ class Bootstrap4ShimTestCase(RatchetMixin, SimpleTestCase):
         'samples/templates/samples/detail.html: badge-secondary',
         'samples/templates/samples/detail.html: badge-warning',
         'samples/templates/samples/detail.html: card-tools',
-        'samples/templates/samples/list.html: btn-default',
         'samples/templates/samples/list.html: card-tools',
         'samples/templates/samples/notifications.html: badge-primary',
         'samples/templates/samples/notifications.html: card-tools',
         'samples/templates/samples/profile.html: badge-warning',
         'samples/templates/samples/ranking.html: badge-danger',
         'samples/templates/samples/solutions_list.html: badge-warning',
-        'samples/templates/samples/solutions_list.html: btn-default',
         'samples/templates/samples/solutions_list.html: card-tools',
         'static/js/tag-list.js: badge-secondary',
         'static/css/bootstrap-theme.css: card-tools',

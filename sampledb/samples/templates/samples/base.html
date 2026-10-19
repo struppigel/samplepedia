@@ -163,7 +163,7 @@
 <main class="app-main">
   {% block page_header %}
   <header class="page-header">
-    <div class="container-fluid page-header-inner">
+    <div class="{% block page_header_class %}container-fluid{% endblock %} page-header-inner">
       <div>
         <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
         {% block page_subtitle %}{% endblock %}

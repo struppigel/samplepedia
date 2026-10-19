@@ -1,7 +1,6 @@
 {% extends "samples/base.html" %}
 {% load static %}
 {% load user_tags %}
-{% load url_helpers %}
 
 {% block title %}{{ profile_user.username }}'s Profile - Samplepedia{% endblock %}
 
@@ -84,14 +83,7 @@
                     {% for solution in solutions %}
                       <tr>
                         <!-- SHA256 and Link -->
-                        <td style="padding: 0.3rem 0.75rem;">
-                          <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}" class="d-flex align-items-center" style="min-width: 0;">
-                            <i class="{{ solution.analysis_task.platform|platform_icon }} me-1"></i>
-                            <code class="text-truncate" style="min-width: 0;" title="{{ solution.analysis_task.sha256 }}"> 
-                              {{ solution.analysis_task.sha256|slice:":8" }}…
-                            </code>
-                          </a>
-                        </td>
+                        {% include 'samples/_sha256_cell.html' with task=solution.analysis_task short=True %}
                         
                         <!-- Difficulty Badge -->
                         <td>
@@ -194,30 +186,7 @@
               </div>
               
               <!-- Pagination for Solutions -->
-              {% if solutions.has_other_pages %}
-              <div class="card-footer clearfix">
-                <span class="float-start text-muted">
-                  Page {{ solutions.number }} of {{ solutions.paginator.num_pages }}
-                </span>
-                <ul class="pagination pagination-sm m-0 float-end">
-                  {% if solutions.has_previous %}
-                  <li class="page-item">
-                    <a class="page-link" href="{% url_replace solutions_page=solutions.previous_page_number %}">
-                      «
-                    </a>
-                  </li>
-                  {% endif %}
-                  
-                  {% if solutions.has_next %}
-                  <li class="page-item">
-                    <a class="page-link" href="{% url_replace solutions_page=solutions.next_page_number %}">
-                      »
-                    </a>
-                  </li>
-                  {% endif %}
-                </ul>
-              </div>
-              {% endif %}
+              {% include 'samples/_pagination.html' with page_obj=solutions param='solutions_page' %}
             {% else %}
               <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> No solutions submitted yet.
@@ -259,14 +228,7 @@
                     {% for task in analysis_tasks %}
                       <tr>
                         <!-- SHA256 and Link -->
-                        <td style="padding: 0.3rem 0.75rem;">
-                          <a href="{% url 'sample_detail' task.sha256 task.id %}" class="d-flex align-items-center" style="min-width: 0;">
-                            <i class="{{ task.platform|platform_icon }} me-1"></i>
-                            <code class="text-truncate" style="min-width: 0;" title="{{ task.sha256 }}"> 
-                              {{ task.sha256|slice:":8" }}…
-                            </code>
-                          </a>
-                        </td>
+                        {% include 'samples/_sha256_cell.html' with task=task short=True %}
                         
                         <!-- Difficulty Badge -->
                         <td>
@@ -337,30 +299,7 @@
               </div>
               
               <!-- Pagination for Analysis Tasks -->
-              {% if analysis_tasks.has_other_pages %}
-              <div class="card-footer clearfix">
-                <span class="float-start text-muted">
-                  Page {{ analysis_tasks.number }} of {{ analysis_tasks.paginator.num_pages }}
-                </span>
-                <ul class="pagination pagination-sm m-0 float-end">
-                  {% if analysis_tasks.has_previous %}
-                  <li class="page-item">
-                    <a class="page-link" href="{% url_replace tasks_page=analysis_tasks.previous_page_number %}">
-                      «
-                    </a>
-                  </li>
-                  {% endif %}
-                  
-                  {% if analysis_tasks.has_next %}
-                  <li class="page-item">
-                    <a class="page-link" href="{% url_replace tasks_page=analysis_tasks.next_page_number %}">
-                      »
-                    </a>
-                  </li>
-                  {% endif %}
-                </ul>
-              </div>
-              {% endif %}
+              {% include 'samples/_pagination.html' with page_obj=analysis_tasks param='tasks_page' %}
             {% else %}
               <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> No analysis tasks submitted yet.

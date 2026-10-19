@@ -27,7 +27,8 @@ def course_samples(request, course_id):
     samples = AnalysisTask.objects.filter(
         course_references__course=course
     ).prefetch_related(
-        Prefetch('course_references', queryset=course_refs, to_attr='refs_in_course')
+        Prefetch('course_references', queryset=course_refs, to_attr='refs_in_course'),
+        'tags',
     ).distinct()
     
     # Build a list with samples and their course references

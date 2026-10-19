@@ -112,6 +112,7 @@ def solution_list(request):
         'all_tags': all_tags,
         'difficulties': Difficulty.choices,
         'platforms': Platform.choices,
+        'is_filtered': any([q, solution_type, tag, difficulty, platform]),
         'user_liked_solution_ids': user_liked_solution_ids,
         'sort': sort,
     })
@@ -340,6 +341,7 @@ def solutions_showcase(request):
     return render(request, 'samples/solutions_showcase.html', {
         'solutions': page_obj,
         'page_obj': page_obj,
+        'page_numbers': list(paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)),
         'user_liked_solution_ids': user_liked_solution_ids,
     })
 

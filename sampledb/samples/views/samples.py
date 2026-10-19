@@ -120,6 +120,7 @@ def sample_list(request):
         "difficulties": Difficulty.choices,
         "platforms": Platform.choices,
         "favorites_only": favorites_only,
+        "is_filtered": any([q, tag, difficulty, platform, favorites_only]),
         "user_favorited_ids": user_favorited_ids,
         "sort": sort,
     })
@@ -169,6 +170,8 @@ def sample_detail(request, sha256, task_id):
         "user_has_liked": user_has_favorited,
         "solutions": solutions,
         "youtube_solution": youtube_solution,
+        # The image and video cards go in a right-hand column, which widens the page
+        "has_sidebar": bool(sample.image or sample.youtube_id or youtube_solution),
         "user_can_edit": sample.user_can_edit(request.user),
         "user_liked_solution_ids": user_liked_solution_ids,
     })

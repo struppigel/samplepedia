@@ -294,6 +294,7 @@ def ranking(request):
 
     return render(request, 'samples/ranking.html', {
         'page_obj': page_obj,
+        'page_numbers': list(paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)),
         'difficulty_points': DIFFICULTY_POINTS,
     })
 

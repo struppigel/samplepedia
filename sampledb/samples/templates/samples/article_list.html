@@ -1,6 +1,6 @@
 {% extends "samples/base.html" %}
 {% load user_tags %}
-{% block title %}My Articles{% endblock %}
+{% block title %}My Articles - Samplepedia{% endblock %}
 {% block page_title %}My Articles{% endblock %}
 {% block page_subtitle %}<p class="text-muted">Your articles and drafts</p>{% endblock %}
 {% block page_actions %}
@@ -57,18 +57,11 @@
                         <span class="badge badge-secondary">Draft</span>
                       {% endif %}
                     </td>
-                    <td>
-                      {% if article.is_published %}
-                        <a href="{% url 'sample_detail' sha256=article.solution.analysis_task.sha256 task_id=article.solution.analysis_task.id %}" class="d-flex align-items-center" style="min-width: 0;">
-                          <i class="{{ article.solution.analysis_task.platform|platform_icon }} me-1"></i>
-                          <code class="text-truncate" style="min-width: 0;" title="{{ article.solution.analysis_task.sha256 }}">
-                            {{ article.solution.analysis_task.sha256|slice:":8" }}…
-                          </code>
-                        </a>
-                      {% else %}
-                        <span class="text-muted">—</span>
-                      {% endif %}
-                    </td>
+                    {% if article.is_published %}
+                      {% include 'samples/_sha256_cell.html' with task=article.solution.analysis_task short=True %}
+                    {% else %}
+                      <td><span class="text-muted">—</span></td>
+                    {% endif %}
                     <td>
                       {% if article.get_publication_date %}
                         <span class="text-muted" title="{{ article.get_publication_date|date:'Y-m-d H:i' }}">
@@ -149,29 +142,7 @@
               </table>
             </div>
             
-            <div class="card-footer clearfix">
-              <span class="float-start text-muted">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-              </span>
-
-              <ul class="pagination pagination-sm m-0 float-end">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                    «
-                  </a>
-                </li>
-                {% endif %}
-                
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                    »
-                  </a>
-                </li>
-                {% endif %}
-              </ul>
-            </div>
+            {% include 'samples/_pagination.html' %}
           </div>
         {% endif %}
         

@@ -2,9 +2,9 @@
 
 {% load cloudinary %}
 
-{% block title %}{{ course_display_name }} Course Samples - Samplepedia{% endblock %}
+{% block title %}{{ course.name }} Course Samples - Samplepedia{% endblock %}
 
-{% block page_title %}{{ course_display_name }} Course Samples{% endblock %}
+{% block page_title %}{{ course.name }} Course Samples{% endblock %}
 
 {% block content %}
 
@@ -48,11 +48,7 @@
                 </td>
 
                 <!-- Sample SHA256 -->
-                <td style="max-width: 200px; padding: 0.3rem 0.75rem;">
-                  <a href="{% url 'sample_detail' item.sample.sha256 item.sample.id %}" class="d-flex align-items-center" style="min-width: 0;">
-                    <code class="text-truncate" style="min-width: 0;" title="{{ item.sample.sha256 }}">{{ item.sample.sha256 }}</code>
-                  </a>
-                </td>
+                {% include 'samples/_sha256_cell.html' with task=item.sample no_icon=True %}
 
                 <!-- Tags -->
                 <td>

@@ -1,10 +1,9 @@
 {% extends "samples/base.html" %}
 
-{% load url_helpers %}  
 {% load cloudinary %}
 {% load user_tags %}
-{% block title %}Trainings Samples{% endblock %}
-{% block page_title %}Trainings Samples{% endblock %}
+{% block title %}Training Samples - Samplepedia{% endblock %}
+{% block page_title %}Training Samples{% endblock %}
 
 {% block content %}
 
@@ -16,63 +15,7 @@
         <h3 class="card-title">Samples</h3>
 
         <div class="card-tools">
-          <form method="get" class="d-flex flex-wrap align-items-center">
-            <div class="input-group input-group-sm me-2" style="width: 300px;">
-              <input
-                type="text"
-                name="q"
-                class="form-control"
-                placeholder="Search SHA256"
-                value="{{ q }}"
-              >
-            </div>
-            
-            <select name="difficulty" class="form-select form-select-sm me-2" style="width: 120px;" onchange="this.form.submit()">
-              <option value="">All Levels</option>
-              {% for value, label in difficulties %}
-                <option value="{{ value }}" {% if selected_difficulty == value %}selected{% endif %}>
-                  {{ label }}
-                </option>
-              {% endfor %}
-            </select>
-            
-            <select name="platform" class="form-select form-select-sm me-2" style="width: 120px;" onchange="this.form.submit()">
-              <option value="">All Platforms</option>
-              {% for value, label in platforms %}
-                <option value="{{ value }}" {% if selected_platform == value %}selected{% endif %}>
-                  {{ label }}
-                </option>
-              {% endfor %}
-            </select>
-            
-            <select name="tag" class="form-select form-select-sm me-2" style="width: 120px;" onchange="this.form.submit()">
-              <option value="">All Tags</option>
-              {% for tag in all_tags %}
-                <option value="{{ tag.name }}" {% if selected_tag == tag.name %}selected{% endif %}>
-                  {{ tag.name }}
-                </option>
-              {% endfor %}
-            </select>
-            
-            {% if user.is_authenticated %}
-              <input type="hidden" name="favorites" value="{{ favorites_only|yesno:'true,false' }}">
-              <button type="button" class="btn btn-sm me-2 {% if favorites_only %}btn-danger{% else %}btn-default{% endif %}" onclick="toggleFavorites(this.form)">
-                My <i class="fas fa-heart"></i>
-              </button>
-            {% endif %}
-            
-            <button type="submit" class="btn btn-default btn-sm me-2">
-              Filter
-            </button>
-            {% if q or selected_tag or selected_difficulty or selected_platform or favorites_only %}
-              <a href="/?browse=true" class="btn btn-sm btn-secondary me-2">Clear</a>
-            {% endif %}
-            {% if user.is_authenticated %}
-              <a href="{% url 'submit_task' %}" class="btn btn-danger btn-sm me-2" id="submitTaskBtn">
-                <i class="fas fa-plus"></i> Submit
-              </a>
-            {% endif %}
-          </form>
+          {% include 'samples/_filter_bar.html' with placeholder='Search SHA256' clear_url='/?browse=true' show_favorites=True show_submit=True %}
         </div>
       </div>
 
@@ -133,12 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <tr>
               
               <!-- SHA256 and Link -->
-              <td style="max-width: 200px; padding: 0.3rem 0.75rem; min-width: 0;">
-                <a href="{% url 'sample_detail' s.sha256 s.id %}" class="d-flex align-items-center sha256-link" style="min-width: 0;">
-                  <i class="{{ s.platform|platform_icon }} me-1 flex-shrink-0"></i>
-                  <code class="text-truncate" style="min-width: 0;" title="{{ s.sha256 }}">{{ s.sha256 }}</code>
-                </a>
-              </td>
+              {% include 'samples/_sha256_cell.html' with task=s %}
 
               <!-- Author -->
               <td>
@@ -191,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </tr>
             {% empty %}
             <tr>
-              <td colspan="7" class="text-center text-muted">
+              <td colspan="9" class="text-center text-muted">
                 No samples found.
               </td>
             </tr>
@@ -200,29 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </table>
       </div>
 
-      <div class="card-footer clearfix">
-        <span class="float-start text-muted">
-          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-        </span>
-
-        <ul class="pagination pagination-sm m-0 float-end">
-          {% if page_obj.has_previous %}
-          <li class="page-item">
-            <a class="page-link" href="{% url_replace page=page_obj.previous_page_number %}">
-              «
-            </a>
-          </li>
-          {% endif %}
-          
-          {% if page_obj.has_next %}
-          <li class="page-item">
-            <a class="page-link" href="{% url_replace page=page_obj.next_page_number %}">
-              »
-            </a>
-          </li>
-          {% endif %}
-        </ul>
-      </div>
+      {% include 'samples/_pagination.html' %}
 
     </div>
 

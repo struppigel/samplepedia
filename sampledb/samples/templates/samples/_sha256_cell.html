@@ -1,0 +1,15 @@
+{% load user_tags %}
+{% comment %}
+  Table cell with a task's SHA256 (and platform icon) linking to the task.
+  Include with: task (an AnalysisTask)
+  Optional:
+    short       show the first 8 characters instead of the full, truncated hash
+    no_icon     leave out the platform icon
+    icon_class  extra classes for the platform icon (e.g. "icon-lg")
+{% endcomment %}
+<td style="max-width: 200px; padding: 0.3rem 0.75rem;">
+  <a href="{% url 'sample_detail' task.sha256 task.id %}" class="d-flex align-items-center" style="min-width: 0;">
+    {% if not no_icon %}<i class="{{ task.platform|platform_icon }} me-1 flex-shrink-0{% if icon_class %} {{ icon_class }}{% endif %}"></i>{% endif %}
+    <code class="text-truncate" style="min-width: 0;" title="{{ task.sha256 }}">{% if short %}{{ task.sha256|slice:":8" }}…{% else %}{{ task.sha256 }}{% endif %}</code>
+  </a>
+</td>

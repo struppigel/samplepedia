@@ -1,9 +1,8 @@
 {% extends "samples/base.html" %}
 
-{% load url_helpers %}  
 {% load cloudinary %}
 {% load user_tags %}
-{% block title %}Latest Solutions{% endblock %}
+{% block title %}Solutions Overview - Samplepedia{% endblock %}
 {% block page_title %}Solutions Overview{% endblock %}
 
 {% block content %}
@@ -16,58 +15,8 @@
         <h3 class="card-title">Solution Search</h3>
 
         <div class="card-tools">
-          <form method="get" class="d-flex flex-wrap align-items-center">
-            <div class="input-group input-group-sm me-2" style="width: 300px;">
-              <input
-                type="text"
-                name="q"
-                class="form-control"
-                placeholder="Search title or SHA256"
-                value="{{ q }}"
-              >
-            </div>
-            
-            <select name="solution_type" class="form-select form-select-sm me-2" style="width: 120px;" onchange="this.form.submit()">
-              <option value="">All Types</option>
-              {% for value, label in solution_types %}
-                <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
-              {% endfor %}
-            </select>
-            
-            <select name="difficulty" class="form-select form-select-sm me-2" style="width: 120px;" onchange="this.form.submit()">
-              <option value="">All Levels</option>
-              {% for value, label in difficulties %}
-                <option value="{{ value }}" {% if selected_difficulty == value %}selected{% endif %}>
-                  {{ label }}
-                </option>
-              {% endfor %}
-            </select>
-            
-            <select name="platform" class="form-select form-select-sm me-2" style="width: 120px;" onchange="this.form.submit()">
-              <option value="">All Platforms</option>
-              {% for value, label in platforms %}
-                <option value="{{ value }}" {% if selected_platform == value %}selected{% endif %}>
-                  {{ label }}
-                </option>
-              {% endfor %}
-            </select>
-            
-            <select name="tag" class="form-select form-select-sm me-2" style="width: 120px;" onchange="this.form.submit()">
-              <option value="">All Tags</option>
-              {% for tag in all_tags %}
-                <option value="{{ tag.name }}" {% if selected_tag == tag.name %}selected{% endif %}>
-                  {{ tag.name }}
-                </option>
-              {% endfor %}
-            </select>
-            
-            <button type="submit" class="btn btn-default btn-sm me-2">
-              Filter
-            </button>
-            {% if q or selected_type or selected_tag or selected_difficulty or selected_platform %}
-              <a href="{% url 'solution_list' %}" class="btn btn-sm btn-secondary me-2">Clear</a>
-            {% endif %}
-          </form>
+          {% url 'solution_list' as solution_list_url %}
+          {% include 'samples/_filter_bar.html' with placeholder='Search title or SHA256' clear_url=solution_list_url %}
         </div>
       </div>
 
@@ -126,12 +75,7 @@
               </td>
 
               <!-- Related Sample -->
-              <td style="max-width: 200px; padding: 0.3rem 0.75rem;">
-                <a href="{% url 'sample_detail' solution.analysis_task.sha256 solution.analysis_task.id %}" class="d-flex align-items-center" style="min-width: 0;">
-                  <i class="{{ solution.analysis_task.platform|platform_icon }} me-1 flex-shrink-0 icon-lg"></i>
-                  <code class="text-truncate" style="min-width: 0;" title="{{ solution.analysis_task.sha256 }}">{{ solution.analysis_task.sha256 }}</code>
-                </a>
-              </td>
+              {% include 'samples/_sha256_cell.html' with task=solution.analysis_task icon_class='icon-lg' %}
 
               <!-- Difficulty Badge -->
               <td>
@@ -166,29 +110,7 @@
         </table>
       </div>
 
-      <div class="card-footer clearfix">
-        <span class="float-start text-muted">
-          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-        </span>
-
-        <ul class="pagination pagination-sm m-0 float-end">
-          {% if page_obj.has_previous %}
-          <li class="page-item">
-            <a class="page-link" href="{% url_replace page=page_obj.previous_page_number %}">
-              «
-            </a>
-          </li>
-          {% endif %}
-          
-          {% if page_obj.has_next %}
-          <li class="page-item">
-            <a class="page-link" href="{% url_replace page=page_obj.next_page_number %}">
-              »
-            </a>
-          </li>
-          {% endif %}
-        </ul>
-      </div>
+      {% include 'samples/_pagination.html' %}
 
     </div>
 
