@@ -1,0 +1,24 @@
+{% comment %}
+One form field: label, widget, errors and help text.
+Rendered by {% form_field form.name %} from samples/templatetags/form_tags.py, which
+builds the widget (Bootstrap class, is-invalid, aria-describedby) and the label/help text.
+{% endcomment %}
+<div{% if wrapper_class %} class="{{ wrapper_class }}"{% endif %}>
+  {% if is_checkbox %}
+    <div class="form-check">
+      {{ widget }}
+      <label class="form-check-label" for="{{ field.id_for_label }}">{{ label }}</label>
+    </div>
+  {% else %}
+    {% if label %}<label class="form-label" for="{{ field.id_for_label }}">{{ label }}</label>{% endif %}
+    {{ widget }}
+  {% endif %}
+  {% if field.errors %}
+    <div class="invalid-feedback d-block" id="{{ field.auto_id }}_error">
+      {% for error in field.errors %}<div>{{ error }}</div>{% endfor %}
+    </div>
+  {% endif %}
+  {% if help_text %}
+    <small class="form-text text-muted" id="{{ field.auto_id }}_helptext">{{ help_text }}</small>
+  {% endif %}
+</div>

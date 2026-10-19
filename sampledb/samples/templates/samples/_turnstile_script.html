@@ -1,34 +1,36 @@
 {% comment %}
-Reusable Turnstile button enable script
-Usage: {% include 'samples/_turnstile_script.html' with button_id='submit-button' callback_name='enableSubmitButton' %}
+Enables a form's submit button once its Turnstile challenge is solved. Included by _turnstile.html:
+the widget names this callback (data-callback) and the button to enable (data-submit-button).
+No template variables, so this can move to a static file as is.
 {% endcomment %}
 <script>
-  // Enable submit button after Turnstile challenge succeeds
-  function {{ callback_name }}() {
-    document.getElementById('{{ button_id }}').disabled = false;
+  function spTurnstileSolved() {
+    document.querySelectorAll('.cf-turnstile[data-submit-button]').forEach(function (widget) {
+      const button = document.getElementById(widget.dataset.submitButton);
+      if (button) {
+        button.disabled = false;
+      }
+    });
   }
-  
-  // Add callback attribute to Turnstile widget
-  document.addEventListener('DOMContentLoaded', function() {
-    const turnstileWidget = document.querySelector('.cf-turnstile');
-    if (turnstileWidget) {
-      turnstileWidget.setAttribute('data-callback', '{{ callback_name }}');
-      
-      // Also check if already solved
-      const observer = new MutationObserver(function(mutations) {
-        const response = turnstileWidget.querySelector('input[name="cf-turnstile-response"]');
-        if (response && response.value) {
-          {{ callback_name }}();
+
+  // Fallback in case the challenge was solved without the callback firing
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.cf-turnstile[data-submit-button]').forEach(function (widget) {
+      function solved() {
+        const response = widget.querySelector('input[name="cf-turnstile-response"]');
+        return Boolean(response && response.value);
+      }
+      if (solved()) {
+        spTurnstileSolved();
+        return;
+      }
+      const observer = new MutationObserver(function () {
+        if (solved()) {
+          spTurnstileSolved();
           observer.disconnect();
         }
       });
-      observer.observe(turnstileWidget, { childList: true, subtree: true });
-      
-      // Check immediately
-      const response = turnstileWidget.querySelector('input[name="cf-turnstile-response"]');
-      if (response && response.value) {
-        {{ callback_name }}();
-      }
-    }
+      observer.observe(widget, { childList: true, subtree: true });
+    });
   });
 </script>

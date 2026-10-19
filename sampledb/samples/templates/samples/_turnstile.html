@@ -1,0 +1,7 @@
+{% comment %}
+Cloudflare Turnstile challenge with its errors, rendered by {% turnstile form.turnstile 'submit-button-id' %}
+from samples/templatetags/form_tags.py. The widget carries data-callback and data-submit-button;
+the script (defined before the widget, so Turnstile always finds the callback) enables that button.
+{% endcomment %}
+{% include 'samples/_turnstile_script.html' %}
+{% include 'samples/_form_field.html' %}

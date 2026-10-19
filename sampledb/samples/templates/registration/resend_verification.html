@@ -1,6 +1,7 @@
 {% extends "samples/base.html" %}
+{% load form_tags %}
 
-{% block title %}Resend Verification Email{% endblock %}
+{% block title %}Resend Verification Email - Samplepedia{% endblock %}
 
 {% block page_title %}Resend Verification Email{% endblock %}
 
@@ -25,24 +26,10 @@
 
             <form method="post" action="{% url 'resend_verification' %}">
               {% csrf_token %}
-              
-              <div class="mb-3">
-                <label for="{{ form.email.id_for_label }}">Email Address:</label>
-                {{ form.email }}
-                {% if form.email.errors %}
-                  <div class="text-danger">{{ form.email.errors }}</div>
-                {% endif %}
-                <small class="form-text text-muted">
-                  Enter the email address you used to register.
-                </small>
-              </div>
 
-              <div class="mb-3">
-                {{ form.turnstile }}
-                {% if form.turnstile.errors %}
-                  <div class="text-danger">{{ form.turnstile.errors }}</div>
-                {% endif %}
-              </div>
+              {% form_field form.email label="Email Address" help_text="Enter the email address you used to register." %}
+
+              {% turnstile form.turnstile 'resend-button' %}
 
               <button type="submit" id="resend-button" class="btn btn-primary" disabled>
                 <i class="fas fa-paper-plane"></i> Resend Verification Email
@@ -51,9 +38,7 @@
                 <i class="fas fa-sign-in-alt"></i> Back to Login
               </a>
             </form>
-            
-            {% include 'samples/_turnstile_script.html' with button_id='resend-button' callback_name='enableResendButton' %}
-            
+
             <div class="callout callout-info mt-4">
               <h5><i class="icon fas fa-info"></i> Note</h5>
               <p class="mb-0">
