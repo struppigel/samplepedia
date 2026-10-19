@@ -6,11 +6,13 @@ from django.core.paginator import Paginator
 from django.db.models import F, Prefetch, Q
 from django.http import JsonResponse
 from ..design_tokens import difficulty_css_class
+from ..constants import ARTICLES_PER_PAGE
 from ..forms import ArticleForm
 from ..models import Article, AnalysisTask, Solution
 from ..services.solutions import publish_draft
 from ..utils.http import safe_next_url
 from ..utils.markdown import render_markdown
+from .lookups import get_task_or_404
 
 
 @login_required
@@ -31,7 +33,7 @@ def article_list(request):
             request.user.liked_solutions.values_list('id', flat=True)
         )
     
-    paginator = Paginator(articles, 25)
+    paginator = Paginator(articles, ARTICLES_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -281,7 +283,7 @@ def attach_draft_to_sample(request, sha256, task_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=400)
     
-    sample = get_object_or_404(AnalysisTask, id=task_id, sha256=sha256)
+    sample = get_task_or_404(sha256, task_id)
     
     article_id = request.POST.get('article_id')
     if not article_id:

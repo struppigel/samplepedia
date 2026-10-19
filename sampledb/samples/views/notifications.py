@@ -5,9 +5,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 
+from ..constants import NOTIFICATIONS_PER_PAGE
 from ..models import Notification, NotificationVerb
 
-NOTIFICATIONS_PER_PAGE = 25
 DROPDOWN_SIZE = 5
 
 

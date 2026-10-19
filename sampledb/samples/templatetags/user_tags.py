@@ -109,10 +109,10 @@ def solution_icon(solution_type):
     For unknown solution types, returns a generic link icon as fallback.
     """
     icons = {
-        'blog': 'fa-book solution-icon-blog',
-        'paper': 'fa-file-alt solution-icon-paper',
-        'video': 'fa-video solution-icon-video',
-        'onsite': 'fa-file-alt solution-icon-onsite',
+        SolutionType.BLOG: 'fa-book solution-icon-blog',
+        SolutionType.PAPER: 'fa-file-alt solution-icon-paper',
+        SolutionType.VIDEO: 'fa-video solution-icon-video',
+        SolutionType.ONSITE: 'fa-file-alt solution-icon-onsite',
     }
     return icons.get(solution_type, 'fa-link solution-icon-link')
 

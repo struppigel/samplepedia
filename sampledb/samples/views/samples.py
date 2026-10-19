@@ -13,9 +13,11 @@ import re
 
 from ..models import AnalysisTask, Difficulty, SampleImage, SolutionType
 from ..forms import AnalysisTaskForm
+from ..constants import TASKS_PER_PAGE
 from ..querysets import difficulty_order
 from ..services.solutions import create_solution, hidden_until_from_weeks
 from ..utils.markdown import render_markdown
+from .lookups import get_task_or_404
 
 
 def sample_list(request):
@@ -90,7 +92,7 @@ def sample_list(request):
     sort_field = valid_sorts.get(sort, '-id')
     samples = samples.order_by(sort_field, '-id')  # Secondary sort by ID for consistency
 
-    paginator = Paginator(samples, 17)
+    paginator = Paginator(samples, TASKS_PER_PAGE)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
     
@@ -125,7 +127,10 @@ def sample_list(request):
 
 def sample_detail(request, sha256, task_id):
     sample = get_object_or_404(AnalysisTask, id=task_id)
-    
+    # One canonical URL per task: a wrong or outdated hash redirects instead of echoing it back
+    if sha256 != sample.sha256:
+        return redirect(sample, permanent=True)
+        
     # Increment view count using F expression for atomic update
     AnalysisTask.objects.filter(id=task_id).update(view_count=F('view_count') + 1)
     # Refresh from database to get updated view_count
@@ -282,8 +287,8 @@ def _create_task(request, form):
 @login_required
 def edit_task(request, sha256, task_id):
     """Allow users to edit their own analysis task (or admins/contributors to edit any)"""
-    task = get_object_or_404(AnalysisTask, sha256=sha256, id=task_id)
-    
+    task = get_task_or_404(sha256, task_id)
+
     # Check permissions using model method
     if not task.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to edit this task.')
@@ -330,8 +335,8 @@ def edit_task(request, sha256, task_id):
 @login_required
 def delete_task(request, sha256, task_id):
     """Allow users to delete their own analysis task (or admins/contributors to delete any)"""
-    task = get_object_or_404(AnalysisTask, sha256=sha256, id=task_id)
-    
+    task = get_task_or_404(sha256, task_id)
+
     # Check permissions using model method
     if not task.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to delete this task.')

@@ -144,3 +144,24 @@ class OnsiteEditAuthorshipTestCase(RegressionTestCase):
         solution.article.refresh_from_db()
         self.assertEqual(solution.article.author, self.author)
         self.assertEqual(solution.article.content, 'new')
+
+
+class TaskUrlTestCase(RegressionTestCase):
+    """The SHA256 in /sample/<sha256>/<id>/ used to be ignored, and the detail page echoed the path back."""
+
+    def test_detail_redirects_to_canonical_url(self):
+        response = self.client.get(reverse('sample_detail', args=["');alert(1);('", self.task.id]))
+        self.assertRedirects(response, self.task.get_absolute_url(), status_code=301, fetch_redirect_response=False)
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.view_count, 0)
+
+    def test_other_task_urls_require_the_right_hash(self):
+        wrong = 'f' * 64
+        self.assertEqual(self.client.post(reverse('toggle_like', args=[wrong, self.task.id])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('create_solution', args=[wrong, self.task.id])).status_code, 404)
+        url = reverse('view_onsite_solution', args=[wrong, self.task.id, self.existing.id])
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_uppercase_hash_is_accepted(self):
+        url = reverse('create_solution', args=[self.task.sha256.upper(), self.task.id])
+        self.assertEqual(self.client.get(url).status_code, 200)

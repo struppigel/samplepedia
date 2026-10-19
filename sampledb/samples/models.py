@@ -13,16 +13,6 @@ from django.core.validators import RegexValidator
 from .querysets import AnalysisTaskQuerySet, SolutionQuerySet
 
 
-# Points per like, by task difficulty - SINGLE SOURCE OF TRUTH
-# Used by samples/scoring.py and displayed in the UI
-DIFFICULTY_POINTS = {
-    'easy': 10,
-    'medium': 20,
-    'advanced': 40,
-    'expert': 80,
-}
-
-
 class NotificationVerb(models.TextChoices):
     """The stored values are the legacy free-text verbs, so existing rows stay valid"""
     LIKED_TASK = 'liked', 'Liked a task'
@@ -176,6 +166,16 @@ class Difficulty(models.TextChoices):
     MEDIUM = "medium", "medium"
     ADVANCED = "advanced", "advanced"
     EXPERT = "expert", "expert"
+
+# Points per like, by task difficulty - SINGLE SOURCE OF TRUTH
+# Used by samples/scoring.py and displayed in the UI
+DIFFICULTY_POINTS = {
+    Difficulty.EASY: 10,
+    Difficulty.MEDIUM: 20,
+    Difficulty.ADVANCED: 40,
+    Difficulty.EXPERT: 80,
+}
+
 
 class Platform(models.TextChoices):
     WINDOWS = "windows", "Windows"

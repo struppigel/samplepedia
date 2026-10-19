@@ -3,8 +3,9 @@ from django.shortcuts import get_object_or_404, resolve_url
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
-from ..models import AnalysisTask, Solution
+from ..models import Solution
 from ..services.likes import toggle_like as toggle
+from .lookups import get_task_or_404
 
 
 def login_required_response():
@@ -21,7 +22,7 @@ def _toggle_response(request, target):
 @require_POST
 def toggle_like(request, sha256, task_id):
     """Toggle favorite for a sample (requires authentication)"""
-    return _toggle_response(request, get_object_or_404(AnalysisTask, id=task_id))
+    return _toggle_response(request, get_task_or_404(sha256, task_id))
 
 
 @require_POST

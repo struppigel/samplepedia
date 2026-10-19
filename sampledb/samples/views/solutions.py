@@ -13,10 +13,12 @@ from django.views.decorators.http import require_POST
 from taggit.models import Tag
 from ..models import AnalysisTask, Difficulty, Platform, Solution, SolutionType, EditorImage, Article
 from ..forms import ArticleForm, SolutionForm
+from ..constants import SHOWCASE_PER_PAGE, SOLUTIONS_PER_PAGE
 from ..querysets import difficulty_order
 from ..services.solutions import create_solution as add_solution, update_onsite_solution
 from ..utils.http import safe_next_url
 from ..utils.markdown import render_markdown
+from .lookups import get_task_or_404
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +84,7 @@ def solution_list(request):
     else:
         solutions = solutions.order_by('-created_at')
     
-    paginator = Paginator(solutions, 17)
+    paginator = Paginator(solutions, SOLUTIONS_PER_PAGE)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
@@ -118,7 +120,7 @@ def solution_list(request):
 @login_required
 def create_solution(request, sha256, task_id):
     """Create a new solution for an analysis task"""
-    sample = get_object_or_404(AnalysisTask, id=task_id)
+    sample = get_task_or_404(sha256, task_id)
     
     if request.method == 'POST':
         form = SolutionForm(request.POST, task=sample, user=request.user)
@@ -155,7 +157,7 @@ def create_solution(request, sha256, task_id):
 @login_required
 def edit_solution(request, sha256, task_id, solution_id):
     """Edit a solution (by author or staff)"""
-    sample = get_object_or_404(AnalysisTask, id=task_id)
+    sample = get_task_or_404(sha256, task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample)
     
     if not solution.user_can_edit(request.user):
@@ -163,7 +165,7 @@ def edit_solution(request, sha256, task_id, solution_id):
         return redirect('sample_detail', sha256=sha256, task_id=task_id)
 
     # Redirect onsite solutions to the dedicated editor
-    if solution.solution_type == 'onsite':
+    if solution.solution_type == SolutionType.ONSITE:
         return redirect('edit_onsite_solution', sha256=sha256, task_id=task_id, solution_id=solution_id)
     
     if request.method == 'POST':
@@ -185,7 +187,7 @@ def edit_solution(request, sha256, task_id, solution_id):
 @login_required
 def delete_solution(request, sha256, task_id, solution_id):
     """Delete a solution (by its author or staff)"""
-    sample = get_object_or_404(AnalysisTask, id=task_id)
+    sample = get_task_or_404(sha256, task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample)
     
     next_url = safe_next_url(request, 'sample_detail', sha256=sha256, task_id=task_id)
@@ -208,8 +210,8 @@ def delete_solution(request, sha256, task_id, solution_id):
 
 def view_onsite_solution(request, sha256, task_id, solution_id):
     """View an on-site solution with rendered markdown content"""
-    sample = get_object_or_404(AnalysisTask, id=task_id)
-    solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type='onsite')
+    sample = get_task_or_404(sha256, task_id)
+    solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type=SolutionType.ONSITE)
     
     if not solution.user_can_view(request.user):
         messages.error(request, 'This solution is not yet available.')
@@ -257,12 +259,12 @@ def view_onsite_solution(request, sha256, task_id, solution_id):
 @login_required
 def onsite_solution_editor(request, sha256, task_id, solution_id=None):
     """Dedicated editor page for creating/editing on-site solutions"""
-    sample = get_object_or_404(AnalysisTask, id=task_id)
+    sample = get_task_or_404(sha256, task_id)
     solution = None
     
     # If editing, get the solution
     if solution_id:
-        solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type='onsite')
+        solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type=SolutionType.ONSITE)
         
         if not solution.user_can_edit(request.user):
             messages.error(request, 'You do not have permission to edit this solution.')
@@ -324,7 +326,7 @@ def solutions_showcase(request):
     ).order_by('-visible_date')
     
     # Pagination
-    paginator = Paginator(solutions, 6)  # 6 solutions per page (3 rows of 2)
+    paginator = Paginator(solutions, SHOWCASE_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     

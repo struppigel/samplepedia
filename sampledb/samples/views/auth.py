@@ -9,6 +9,7 @@ from django.utils.encoding import force_str
 from django.conf import settings
 from django.core.paginator import Paginator
 
+from ..constants import PROFILE_ROWS_PER_PAGE, RANKING_PER_PAGE
 from ..models import Solution, AnalysisTask, DIFFICULTY_POINTS
 from ..scoring import like_fields, rank_of, ranked_users, scored_user
 from ..discord_utils import (
@@ -163,12 +164,12 @@ def user_profile(request, username):
     
     # Pagination for solutions
     solutions_page = request.GET.get('solutions_page', 1)
-    solutions_paginator = Paginator(solutions_list, 10)  # 10 solutions per page
+    solutions_paginator = Paginator(solutions_list, PROFILE_ROWS_PER_PAGE)
     solutions = solutions_paginator.get_page(solutions_page)
 
     # Pagination for analysis tasks
     tasks_page = request.GET.get('tasks_page', 1)
-    tasks_paginator = Paginator(analysis_tasks_list, 10)  # 10 tasks per page
+    tasks_paginator = Paginator(analysis_tasks_list, PROFILE_ROWS_PER_PAGE)
     analysis_tasks = tasks_paginator.get_page(tasks_page)
     
     # Get current user's favorited sample IDs for display
@@ -286,7 +287,7 @@ def verify_email_change(request, uidb64, token):
 
 def ranking(request):
     """Display user ranking page based on scores"""
-    paginator = Paginator(ranked_users(), 50)
+    paginator = Paginator(ranked_users(), RANKING_PER_PAGE)
     page_obj = paginator.get_page(request.GET.get('page'))
     for rank, ranked_user in enumerate(page_obj, start=page_obj.start_index()):
         ranked_user.rank = rank
