@@ -1,6 +1,7 @@
 import logging
 
 from django.shortcuts import render, get_object_or_404, redirect
+from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -13,6 +14,7 @@ from taggit.models import Tag
 from ..models import AnalysisTask, Difficulty, Platform, Solution, SolutionType, EditorImage, Article
 from ..forms import SolutionForm
 from ..querysets import difficulty_order
+from ..services.solutions import create_solution as add_solution, update_onsite_solution
 from ..utils.http import safe_next_url
 from ..utils.markdown import render_markdown
 
@@ -121,57 +123,26 @@ def create_solution(request, sha256, task_id):
     if request.method == 'POST':
         form = SolutionForm(request.POST, task=sample)
         if form.is_valid():
-            draft_article_id = form.cleaned_data.get('draft_article_id')
-            
-            # If draft article is selected, attach it to a new solution
-            if draft_article_id:
-                article = get_object_or_404(Article, id=draft_article_id, author=request.user)
-                
-                # Create solution with the article
-                solution = Solution.objects.create(
-                    analysis_task=sample,
+            data = form.cleaned_data
+            draft = data.get('draft_article')
+            try:
+                add_solution(
+                    task=sample,
                     author=request.user,
-                    title=article.title,
-                    solution_type='onsite',
-                    article=article,
-                    url=''  # Not used for onsite solutions
+                    solution_type=data['solution_type'],
+                    title=data.get('title') or '',
+                    url=data.get('url') or '',
+                    content=data.get('content') or '',
+                    article=draft,
                 )
-                messages.success(request, f'Draft article "{article.title}" has been published as a solution!')
+            except ValidationError as error:
+                form.add_error(None, error)
             else:
-                # Regular solution creation
-                solution_type = form.cleaned_data.get('solution_type')
-                
-                # For onsite solutions, create an Article to store the content
-                if solution_type == 'onsite':
-                    content = form.cleaned_data.get('content', '')
-                    title = form.cleaned_data.get('title')
-                    
-                    # Create the article
-                    article = Article.objects.create(
-                        title=title,
-                        content=content,
-                        author=request.user
-                    )
-                    
-                    # Create solution with the article
-                    solution = Solution.objects.create(
-                        analysis_task=sample,
-                        author=request.user,
-                        title=title,
-                        solution_type='onsite',
-                        article=article,
-                        url=''
-                    )
+                if draft:
+                    messages.success(request, f'Draft article "{draft.title}" has been published as a solution!')
                 else:
-                    # External solution (blog, paper, video) - just save normally
-                    solution = form.save(commit=False)
-                    solution.analysis_task = sample
-                    solution.author = request.user
-                    solution.save()
-                
-                messages.success(request, 'Solution added successfully!')
-            
-            return redirect('sample_detail', sha256=sha256, task_id=task_id)
+                    messages.success(request, 'Solution added successfully!')
+                return redirect('sample_detail', sha256=sha256, task_id=task_id)
     else:
         form = SolutionForm(task=sample)
     
@@ -263,7 +234,6 @@ def view_onsite_solution(request, sha256, task_id, solution_id):
             'solution_id': solution_id
         })
     
-    # Render markdown content (use get_content property for backward compatibility)
     rendered_content = render_markdown(solution.get_content)
     
     # Prepare URLs for template
@@ -302,15 +272,25 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
         title = request.POST.get('title', '').strip()
         content = request.POST.get('content', '').strip()
         
-        # Validation
         error = None
         if not title:
             error = 'Title is required.'
         elif not content:
             error = 'Content is required.'
-        elif Solution.title_taken(sample, title, exclude_pk=solution.pk if solution else None):
-            error = f'This task already has a solution titled "{title}".'
-        
+        else:
+            try:
+                if solution:
+                    update_onsite_solution(solution, title=title, content=content)
+                    messages.success(request, 'Solution updated successfully!')
+                else:
+                    solution = add_solution(
+                        task=sample, author=request.user, solution_type=SolutionType.ONSITE,
+                        title=title, content=content,
+                    )
+                    messages.success(request, 'Solution added successfully!')
+            except ValidationError as validation_error:
+                error = ' '.join(validation_error.messages)
+
         if error:
             # Re-render with what the user typed so nothing is lost
             messages.error(request, error)
@@ -321,46 +301,10 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
                 'initial_content': content,
             })
         
-        # Create or update solution with Article
-        if solution:
-            # Update existing solution and its article
-            if solution.article:
-                # Update existing article
-                solution.article.title = title
-                solution.article.content = content
-                solution.article.save()
-            else:
-                # Create new article for legacy solution
-                article = Article.objects.create(
-                    title=title,
-                    content=content,
-                    author=solution.author,
-                )
-                solution.article = article
-            
-            solution.title = title  # Keep solution title in sync
-            solution.save()
-            messages.success(request, 'Solution updated successfully!')
-        else:
-            # Create new article and solution
-            article = Article.objects.create(
-                title=title,
-                content=content,
-                author=request.user,
-            )
-            solution = Solution.objects.create(
-                analysis_task=sample,
-                author=request.user,
-                title=title,
-                article=article,
-                solution_type='onsite',
-            )
-            messages.success(request, 'Solution added successfully!')
-        
         # Redirect to view the published solution
         return redirect('view_onsite_solution', sha256=sha256, task_id=task_id, solution_id=solution.id)
     
-    # Prepare initial values for the form (use get_content for backward compatibility)
+    # Prepare initial values for the form
     initial_title = solution.title if solution else ''
     initial_content = solution.get_content if solution else ''
     

@@ -136,13 +136,11 @@ class ArticleViewDeleteTestCase(RegressionTestCase):
         self.assertFalse(Article.objects.filter(id=draft.id).exists())
 
 
-class LegacyOnsiteEditTestCase(RegressionTestCase):
-    def test_staff_edit_keeps_solution_author_as_article_author(self):
-        legacy = Solution.objects.create(
-            analysis_task=self.task, title='Legacy', solution_type=SolutionType.ONSITE,
-            content='old', author=self.author,
-        )
+class OnsiteEditAuthorshipTestCase(RegressionTestCase):
+    def test_staff_edit_keeps_article_author(self):
+        solution = make_onsite_solution(task=self.task, title='Writeup', content='old')
         self.login_as(self.staff)
-        self.client.post(self.task_url('edit_onsite_solution', solution_id=legacy.id), {'title': 'Legacy', 'content': 'new'})
-        legacy.refresh_from_db()
-        self.assertEqual(legacy.article.author, self.author)
+        self.client.post(self.task_url('edit_onsite_solution', solution_id=solution.id), {'title': 'Writeup', 'content': 'new'})
+        solution.article.refresh_from_db()
+        self.assertEqual(solution.article.author, self.author)
+        self.assertEqual(solution.article.content, 'new')

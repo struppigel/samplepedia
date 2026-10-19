@@ -505,13 +505,11 @@ class SolutionHidingTestCase(SolutionTestCase):
             task=cls.task, author=cls.solution_author, title='PreviouslyHidden Solution',
             hidden_until=now - timedelta(days=1),
         )
-        # Legacy onsite solution: content field, no Article
-        cls.hidden_onsite = Solution.objects.create(
-            analysis_task=cls.task,
-            title='NotYetPublic Onsite',
-            solution_type=SolutionType.ONSITE,
-            content='# Secret Analysis\n\nThis is hidden.',
+        cls.hidden_onsite = make_onsite_solution(
+            task=cls.task,
             author=cls.solution_author,
+            title='NotYetPublic Onsite',
+            content='# Secret Analysis\n\nThis is hidden.',
             hidden_until=now + timedelta(weeks=1),
         )
 

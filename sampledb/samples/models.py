@@ -501,10 +501,8 @@ class Solution(models.Model):
     
     @property
     def get_content(self):
-        """Get content from article if available, otherwise from deprecated content field"""
-        if self.article:
-            return self.article.content
-        return self.content
+        """The text of an on-site solution, stored in its Article"""
+        return self.article.content if self.article else ""
     
     @property
     def get_title(self):

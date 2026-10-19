@@ -1,19 +1,20 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.db.models import Case, When, IntegerField, F
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.utils import timezone
 from taggit.models import Tag
 import re
 
-from ..models import AnalysisTask, Difficulty, SampleImage, Solution
+from ..models import AnalysisTask, Difficulty, SampleImage, SolutionType
 from ..forms import AnalysisTaskForm
 from ..querysets import difficulty_order
+from ..services.solutions import create_solution, hidden_until_from_weeks
 from ..utils.markdown import render_markdown
 
 
@@ -202,108 +203,77 @@ def submit_task(request):
     if request.method == 'POST':
         form = AnalysisTaskForm(request.POST, request.FILES, user=request.user, is_edit=False)
         if form.is_valid():
-            # Use atomic transaction to ensure tags/tools are saved before Discord notification
-            with transaction.atomic():
-                sample = form.save(commit=False)
-                sample.author = request.user
-                
-                # Handle uploaded image (priority over gallery selection)
-                uploaded_image = form.cleaned_data.get('image_upload')
-                if uploaded_image:
-                    # Upload directly to AnalysisTask.image (NOT to SampleImage gallery)
-                    sample.image = uploaded_image
-                else:
-                    # Handle image selection from gallery
-                    image_id = request.POST.get('image_id')
-                    if image_id:
-                        try:
-                            sample_image = SampleImage.objects.get(id=image_id)
-                            sample.image = sample_image.image
-                        except SampleImage.DoesNotExist:
-                            pass
-                
-                sample.save()
-                
-                # Convert tags and tools to lowercase and save (must happen in same transaction for Discord)
-                if form.cleaned_data.get('tags'):
-                    tags = [tag.strip().lower() for tag in form.cleaned_data['tags'] if tag.strip()]
-                    sample.tags.set(tags)
-                
-                if form.cleaned_data.get('tools'):
-                    tools = [tool.strip().lower() for tool in form.cleaned_data['tools'] if tool.strip()]
-                    sample.tools.set(tools)
-                
-                # Create reference solution if provided (required for non-staff, optional for staff)
-                ref_title = form.cleaned_data.get('reference_solution_title')
-                ref_type = form.cleaned_data.get('reference_solution_type')
-                ref_url = form.cleaned_data.get('reference_solution_url')
-                ref_content = form.cleaned_data.get('reference_solution_content')
-                hide_weeks = form.cleaned_data.get('hide_weeks', 0)
-                draft_article_id = form.cleaned_data.get('reference_draft_article_id')
-                
-                # Check if user selected an existing draft article
-                if draft_article_id and '_draft_article' in form.cleaned_data:
-                    draft_article = form.cleaned_data['_draft_article']
-                    
-                    # Calculate hidden_until if hide_weeks > 0
-                    from datetime import timedelta
-                    hidden_until = None
-                    
-                    if hide_weeks and hide_weeks > 0:
-                        hidden_until = timezone.now() + timedelta(weeks=hide_weeks)
-                    
-                    # Create solution with draft article
-                    Solution.objects.create(
-                        analysis_task=sample,
-                        title=draft_article.title,
-                        solution_type='onsite',
-                        article=draft_article,
-                        author=request.user,
-                        hidden_until=hidden_until
-                    )
-                elif ref_title and ref_type:
-                    # Create new solution from manual input
-                    # Calculate hidden_until if hide_weeks > 0
-                    from datetime import timedelta
-                    hidden_until = None
-                    
-                    if hide_weeks and hide_weeks > 0:
-                        hidden_until = timezone.now() + timedelta(weeks=hide_weeks)
-                    
-                    # Create solution based on type
-                    if ref_type == 'onsite':
-                        Solution.objects.create(
-                            analysis_task=sample,
-                            title=ref_title,
-                            solution_type=ref_type,
-                            content=ref_content or '',
-                            author=request.user,
-                            hidden_until=hidden_until
-                        )
-                    elif ref_url:
-                        Solution.objects.create(
-                            analysis_task=sample,
-                            title=ref_title,
-                            solution_type=ref_type,
-                            url=ref_url,
-                            author=request.user,
-                            hidden_until=hidden_until
-                        )
-            
-            # Transaction committed, Discord notification will fire now with correct data
-            messages.success(request, f'AnalysisTask {sample.sha256[:12]}... submitted successfully!')
-            return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
+            try:
+                # Atomic: tags/tools are saved before the Discord notification fires on
+                # commit, and a rejected reference solution leaves no task behind
+                with transaction.atomic():
+                    sample = _create_task(request, form)
+            except ValidationError as error:
+                form.add_error(None, error)
+            else:
+                messages.success(request, f'AnalysisTask {sample.sha256[:12]}... submitted successfully!')
+                return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
     else:
         form = AnalysisTaskForm(user=request.user, is_edit=False)
-    
+
     # Get available images from image library
     available_images = SampleImage.objects.all()
-    
+
     return render(request, 'samples/submit_task.html', {
         'form': form,
         'available_images': available_images,
         'is_edit': False,
     })
+
+
+def _create_task(request, form):
+    """Save a new task from a valid AnalysisTaskForm, with its reference solution if one was given."""
+    data = form.cleaned_data
+    sample = form.save(commit=False)
+    sample.author = request.user
+
+    # Handle uploaded image (priority over gallery selection)
+    uploaded_image = data.get('image_upload')
+    if uploaded_image:
+        # Upload directly to AnalysisTask.image (NOT to SampleImage gallery)
+        sample.image = uploaded_image
+    else:
+        # Handle image selection from gallery
+        image_id = request.POST.get('image_id')
+        if image_id:
+            try:
+                sample_image = SampleImage.objects.get(id=image_id)
+                sample.image = sample_image.image
+            except SampleImage.DoesNotExist:
+                pass
+
+    sample.save()
+
+    # Convert tags and tools to lowercase and save
+    if data.get('tags'):
+        sample.tags.set([tag.strip().lower() for tag in data['tags'] if tag.strip()])
+    if data.get('tools'):
+        sample.tools.set([tool.strip().lower() for tool in data['tools'] if tool.strip()])
+
+    # Reference solution: required for non-staff (the form enforces it), optional for staff
+    hidden_until = hidden_until_from_weeks(data.get('hide_weeks'))
+    draft = data.get('_draft_article') if data.get('reference_draft_article_id') else None
+    if draft:
+        create_solution(
+            task=sample, author=request.user, solution_type=SolutionType.ONSITE,
+            article=draft, hidden_until=hidden_until,
+        )
+    elif data.get('reference_solution_title') and data.get('reference_solution_type'):
+        create_solution(
+            task=sample,
+            author=request.user,
+            solution_type=data['reference_solution_type'],
+            title=data['reference_solution_title'],
+            url=data.get('reference_solution_url') or '',
+            content=data.get('reference_solution_content') or '',
+            hidden_until=hidden_until,
+        )
+    return sample
 
 
 @login_required

@@ -1,4 +1,4 @@
-from .models import AnalysisTask, Difficulty, Solution, Article
+from .models import AnalysisTask, Difficulty, Solution, SolutionType, Article
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
@@ -51,20 +51,29 @@ class AuthenticatedCommentForm(XtdCommentForm):
 
 # For submitting analysis solutions to an analysis task
 class SolutionForm(forms.ModelForm):
+    """
+    Validates solution input; saving goes through services.solutions so that
+    on-site text ends up in an Article. cleaned_data['draft_article'] holds the
+    selected draft, if any.
+    """
     draft_article_id = forms.IntegerField(
         required=False,
         widget=forms.HiddenInput(attrs={'id': 'id_draft_article_id'}),
         label=''
     )
-    
+    # On-site text is stored in an Article, not on the Solution
+    content = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 15, 'id': 'id_content'}),
+    )
+
     class Meta:
         model = Solution
-        fields = ['title', 'solution_type', 'url', 'content']
+        fields = ['title', 'solution_type', 'url']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Solution title'}),
             'solution_type': forms.Select(attrs={'class': 'form-select'}),
             'url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 15, 'id': 'id_content'}),
         }
     
     def __init__(self, *args, task=None, **kwargs):
@@ -113,16 +122,23 @@ class SolutionForm(forms.ModelForm):
 
             # The solution takes the draft's title
             title = article.title
+            cleaned_data['draft_article'] = article
 
         if self.task and title and Solution.title_taken(self.task, title, exclude_pk=self.instance.pk):
             raise forms.ValidationError(f'This task already has a solution titled "{title}".')
 
+        # The on-site text would have no Article to live in
+        if self.instance.pk and self.instance.solution_type != SolutionType.ONSITE and solution_type == SolutionType.ONSITE:
+            raise forms.ValidationError(
+                "An external solution can't become an on-site one. Write a new on-site solution instead."
+            )
+
         # For onsite solutions without draft: require content
-        if solution_type == 'onsite' and not draft_article_id and not content:
+        if solution_type == SolutionType.ONSITE and not draft_article_id and not content:
             raise forms.ValidationError('On-site solutions must have content or a draft article selected.')
-        
+
         # Validate that non-onsite solutions have URL
-        if solution_type != 'onsite' and not url:
+        if solution_type != SolutionType.ONSITE and not draft_article_id and not url:
             raise forms.ValidationError('External solutions must have a URL.')
         
         return cleaned_data
@@ -204,8 +220,6 @@ class AnalysisTaskForm(forms.ModelForm):
             if field_name in self.fields:
                 self.fields[field_name].required = True
         
-        # Import SolutionType choices
-        from .models import SolutionType
         self.fields['reference_solution_type'].choices = [('', '---------')] + list(SolutionType.choices)
         
         # Hide reference solution fields when editing

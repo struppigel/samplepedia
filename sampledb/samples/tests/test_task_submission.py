@@ -237,10 +237,12 @@ class TaskSubmissionViewTestCase(SampleTestCase):
 
         task = self.assert_task_created(response, 'c' * 64)
 
-        # Legacy: submit_task still writes Solution.content
+        # The text lives in an Article owned by the submitter
         solution = Solution.objects.get(analysis_task=task)
         self.assertEqual(solution.solution_type, 'onsite')
-        self.assertIn('My Analysis', solution.content)
+        self.assertEqual(solution.article.author, self.regular_user)
+        self.assertEqual(solution.article.title, 'My Analysis')
+        self.assertIn('This is my detailed analysis', solution.article.content)
         self.assertIsNone(solution.url)  # Onsite solutions don't have URLs
 
     def test_staff_can_submit_task_without_reference_solution(self):

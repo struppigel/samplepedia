@@ -1,11 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import F, Prefetch, Q
 from django.http import JsonResponse
 from ..design_tokens import difficulty_css_class
 from ..models import Article, AnalysisTask, Solution
+from ..services.solutions import publish_draft
 from ..utils.http import safe_next_url
 from ..utils.markdown import render_markdown
 
@@ -267,24 +269,16 @@ def publish_article(request, article_id):
         return JsonResponse({'error': 'Sample ID required'}, status=400)
     
     sample = get_object_or_404(AnalysisTask, id=sample_id)
-    
-    if Solution.title_taken(sample, article.title):
-        return JsonResponse({'error': f'This task already has a solution titled "{article.title}".'}, status=400)
-    
-    # Create the solution
-    solution = Solution.objects.create(
-        analysis_task=sample,
-        author=request.user,
-        title=article.title,
-        solution_type='onsite',
-        article=article,
-        url=''  # Not used for onsite solutions
-    )
-    
+
+    try:
+        publish_draft(article=article, task=sample, author=request.user)
+    except ValidationError as error:
+        return JsonResponse({'error': ' '.join(error.messages)}, status=400)
+
     messages.success(request, f'Article "{article.title}" has been published to sample {sample.sha256[:12]}.')
     return JsonResponse({
         'success': True,
-        'redirect_url': f'/sample/{sample.sha256}/{sample.id}/'
+        'redirect_url': sample.get_absolute_url(),
     })
 
 
@@ -306,19 +300,11 @@ def attach_draft_to_sample(request, sha256, task_id):
     if article.is_published():
         return JsonResponse({'error': 'Article is already published'}, status=400)
     
-    if Solution.title_taken(sample, article.title):
-        return JsonResponse({'error': f'This task already has a solution titled "{article.title}".'}, status=400)
-    
-    # Create the solution
-    solution = Solution.objects.create(
-        analysis_task=sample,
-        author=request.user,
-        title=article.title,
-        solution_type='onsite',
-        article=article,
-        url=''  # Not used for onsite solutions
-    )
-    
+    try:
+        publish_draft(article=article, task=sample, author=request.user)
+    except ValidationError as error:
+        return JsonResponse({'error': ' '.join(error.messages)}, status=400)
+
     messages.success(request, f'Article "{article.title}" has been published to this sample.')
     return JsonResponse({
         'success': True,
