@@ -12,7 +12,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from taggit.models import Tag
 from ..models import AnalysisTask, Difficulty, Platform, Solution, SolutionType, EditorImage, Article
-from ..forms import SolutionForm
+from ..forms import ArticleForm, SolutionForm
 from ..querysets import difficulty_order
 from ..services.solutions import create_solution as add_solution, update_onsite_solution
 from ..utils.http import safe_next_url
@@ -121,7 +121,7 @@ def create_solution(request, sha256, task_id):
     sample = get_object_or_404(AnalysisTask, id=task_id)
     
     if request.method == 'POST':
-        form = SolutionForm(request.POST, task=sample)
+        form = SolutionForm(request.POST, task=sample, user=request.user)
         if form.is_valid():
             data = form.cleaned_data
             draft = data.get('draft_article')
@@ -269,15 +269,13 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
             return redirect('sample_detail', sha256=sha256, task_id=task_id)
     
     if request.method == 'POST':
+        form = ArticleForm(request.POST)
         title = request.POST.get('title', '').strip()
         content = request.POST.get('content', '').strip()
-        
-        error = None
-        if not title:
-            error = 'Title is required.'
-        elif not content:
-            error = 'Content is required.'
-        else:
+
+        error = None if form.is_valid() else form.first_error()
+        if error is None:
+            title, content = form.cleaned_data['title'], form.cleaned_data['content']
             try:
                 if solution:
                     update_onsite_solution(solution, title=title, content=content)

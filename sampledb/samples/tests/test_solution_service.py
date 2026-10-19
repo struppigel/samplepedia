@@ -105,7 +105,7 @@ class CreateSolutionViewTestCase(SampleTestCase):
         })
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'You can only publish your own drafts.')
+        self.assertContains(response, 'You can only use your own draft articles.')
         self.assertFalse(Solution.objects.exists())
 
     def test_external_solution_cannot_become_onsite(self):

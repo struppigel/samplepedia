@@ -226,34 +226,37 @@ def submit_task(request):
     })
 
 
+def _save_task(request, form, task):
+    """
+    Save a task from a valid AnalysisTaskForm: an uploaded image wins over a gallery
+    choice (or clearing it), and tags and tools are stored lowercased.
+    """
+    data = form.cleaned_data
+    image_id = request.POST.get('image_id', '')
+    if data.get('image_upload'):
+        # Upload directly to AnalysisTask.image (NOT to the SampleImage gallery)
+        task.image = data['image_upload']
+    elif image_id.isdigit():
+        gallery_image = SampleImage.objects.filter(id=image_id).first()
+        if gallery_image:
+            task.image = gallery_image.image
+    elif request.POST.get('clear_image'):
+        task.image = None
+    task.save()
+
+    if data.get('tags'):
+        task.tags.set([tag.strip().lower() for tag in data['tags'] if tag.strip()])
+    if data.get('tools'):
+        task.tools.set([tool.strip().lower() for tool in data['tools'] if tool.strip()])
+    return task
+
+
 def _create_task(request, form):
     """Save a new task from a valid AnalysisTaskForm, with its reference solution if one was given."""
     data = form.cleaned_data
     sample = form.save(commit=False)
     sample.author = request.user
-
-    # Handle uploaded image (priority over gallery selection)
-    uploaded_image = data.get('image_upload')
-    if uploaded_image:
-        # Upload directly to AnalysisTask.image (NOT to SampleImage gallery)
-        sample.image = uploaded_image
-    else:
-        # Handle image selection from gallery
-        image_id = request.POST.get('image_id')
-        if image_id:
-            try:
-                sample_image = SampleImage.objects.get(id=image_id)
-                sample.image = sample_image.image
-            except SampleImage.DoesNotExist:
-                pass
-
-    sample.save()
-
-    # Convert tags and tools to lowercase and save
-    if data.get('tags'):
-        sample.tags.set([tag.strip().lower() for tag in data['tags'] if tag.strip()])
-    if data.get('tools'):
-        sample.tools.set([tool.strip().lower() for tool in data['tools'] if tool.strip()])
+    _save_task(request, form, sample)
 
     # Reference solution: required for non-staff (the form enforces it), optional for staff
     hidden_until = hidden_until_from_weeks(data.get('hide_weeks'))
@@ -289,38 +292,9 @@ def edit_task(request, sha256, task_id):
     if request.method == 'POST':
         form = AnalysisTaskForm(request.POST, request.FILES, instance=task, user=request.user, is_edit=True)
         if form.is_valid():
-            # Use atomic transaction
             with transaction.atomic():
-                sample = form.save(commit=False)
-                
-                # Handle uploaded image (priority over gallery selection)
-                uploaded_image = form.cleaned_data.get('image_upload')
-                if uploaded_image:
-                    # Upload directly to AnalysisTask.image (NOT to SampleImage gallery)
-                    sample.image = uploaded_image
-                else:
-                    # Handle image selection from gallery
-                    image_id = request.POST.get('image_id')
-                    if image_id:
-                        try:
-                            sample_image = SampleImage.objects.get(id=image_id)
-                            sample.image = sample_image.image
-                        except SampleImage.DoesNotExist:
-                            pass
-                    elif request.POST.get('clear_image'):
-                        sample.image = None
-                
-                sample.save()
-                
-                # Convert tags and tools to lowercase and save
-                if form.cleaned_data.get('tags'):
-                    tags = [tag.strip().lower() for tag in form.cleaned_data['tags'] if tag.strip()]
-                    sample.tags.set(tags)
-                
-                if form.cleaned_data.get('tools'):
-                    tools = [tool.strip().lower() for tool in form.cleaned_data['tools'] if tool.strip()]
-                    sample.tools.set(tools)
-            
+                sample = _save_task(request, form, form.save(commit=False))
+                        
             messages.success(request, f'AnalysisTask {sample.sha256[:12]}... updated successfully!')
             return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
     else:

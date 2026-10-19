@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.db.models import F, Prefetch, Q
 from django.http import JsonResponse
 from ..design_tokens import difficulty_css_class
+from ..forms import ArticleForm
 from ..models import Article, AnalysisTask, Solution
 from ..services.solutions import publish_draft
 from ..utils.http import safe_next_url
@@ -60,24 +61,16 @@ def article_editor(request, article_id=None):
             return redirect('article_list')
     
     if request.method == 'POST':
-        title = request.POST.get('title', '').strip()
-        content = request.POST.get('content', '').strip()
-        
-        # Validation
-        error = None
-        if not title:
-            error = 'Title is required.'
-        elif not content:
-            error = 'Content is required.'
-        
-        if error:
+        form = ArticleForm(request.POST)
+        if not form.is_valid():
             # Re-render with what the user typed so nothing is lost
-            messages.error(request, error)
+            messages.error(request, form.first_error())
             return render(request, 'samples/article_editor.html', {
                 'article': article,
-                'initial_title': title,
-                'initial_content': content,
+                'initial_title': request.POST.get('title', ''),
+                'initial_content': request.POST.get('content', ''),
             })
+        title, content = form.cleaned_data['title'], form.cleaned_data['content']
         
         # Create or update article
         if article:
