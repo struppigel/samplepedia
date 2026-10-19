@@ -101,11 +101,11 @@ body {
 }
 
 .notification-menu-header {
-  color: var(--sp-dropdown-header-color);
+  color: var(--sp-dropdown-header-fg);
 }
 
 /* Mobile: icons only (labels, username and brand text hidden) */
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .app-navbar .navbar-nav .nav-link {
     font-size: 0;
   }

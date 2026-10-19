@@ -34,10 +34,9 @@
 
   --bs-link-color: var(--sp-link);
   --bs-link-color-rgb: var(--sp-link-rgb);
-  --bs-link-decoration: none;
   --bs-link-hover-color: var(--sp-link-hover);
   --bs-link-hover-color-rgb: var(--sp-link-hover-rgb);
-  --bs-code-color: var(--sp-code-color);
+  --bs-code-color: var(--sp-code-fg);
 
   --bs-border-width: var(--sp-border-width);
   --bs-border-color: var(--sp-border-color);
@@ -331,7 +330,7 @@
 .form-select-sm {
   padding-right: var(--sp-select-sm-pe);
   background-position: right var(--sp-space-1) center;
-  background-size: 12px 9px;
+  background-size: var(--sp-select-sm-arrow);
 }
 
 /* Help text below inputs sits on its own line (Bootstrap 4 behavior) */
@@ -340,7 +339,7 @@
 }
 
 small.form-text {
-  font-size: var(--sp-fs-small);
+  font-size: var(--sp-fs-fine-print);
 }
 
 .form-control::placeholder {
@@ -372,11 +371,6 @@ small.form-text {
 .form-check-input:focus {
   border-color: var(--sp-input-border-focus);
   box-shadow: var(--sp-focus-ring);
-}
-
-.input-group-text {
-  background-color: var(--sp-input-group-bg);
-  border-color: var(--sp-input-border);
 }
 
 /* ------------------------------------------------------------------ */
@@ -428,12 +422,6 @@ small.form-text {
   --bs-alert-border-color: var(--sp-alert-danger-border);
 }
 
-.alert-secondary {
-  --bs-alert-color: var(--sp-alert-secondary-fg);
-  --bs-alert-bg: var(--sp-alert-secondary-bg);
-  --bs-alert-border-color: var(--sp-alert-secondary-border);
-}
-
 .alert a {
   color: var(--bs-alert-link-color);
   text-decoration: var(--sp-alert-link-decoration);
@@ -450,8 +438,8 @@ small.form-text {
   --bs-list-group-item-padding-x: var(--sp-list-item-px);
   --bs-list-group-item-padding-y: var(--sp-list-item-py);
   --bs-list-group-border-color: var(--sp-list-border);
-  --bs-list-group-action-color: var(--sp-list-action-color);
-  --bs-list-group-action-hover-color: var(--sp-list-action-color);
+  --bs-list-group-action-color: var(--sp-list-action-fg);
+  --bs-list-group-action-hover-color: var(--sp-list-action-fg);
   --bs-list-group-action-hover-bg: var(--sp-list-action-hover-bg);
 }
 
@@ -459,7 +447,7 @@ small.form-text {
 /* Pagination                                                          */
 /* ------------------------------------------------------------------ */
 .pagination {
-  --bs-pagination-color: var(--sp-page-link-color);
+  --bs-pagination-color: var(--sp-page-link-fg);
   --bs-pagination-bg: var(--sp-page-link-bg);
   --bs-pagination-border-color: var(--sp-page-link-border);
   --bs-pagination-hover-color: var(--sp-brand);
@@ -480,15 +468,15 @@ small.form-text {
 /* ------------------------------------------------------------------ */
 .dropdown-menu {
   --bs-dropdown-bg: var(--sp-dropdown-bg);
-  --bs-dropdown-color: var(--sp-dropdown-color);
+  --bs-dropdown-color: var(--sp-dropdown-fg);
   --bs-dropdown-border-color: var(--sp-dropdown-border);
   --bs-dropdown-divider-bg: var(--sp-dropdown-divider);
-  --bs-dropdown-link-color: var(--sp-dropdown-color);
-  --bs-dropdown-link-hover-color: var(--sp-dropdown-hover-color);
+  --bs-dropdown-link-color: var(--sp-dropdown-fg);
+  --bs-dropdown-link-hover-color: var(--sp-dropdown-hover-fg);
   --bs-dropdown-link-hover-bg: var(--sp-dropdown-hover-bg);
-  --bs-dropdown-link-active-color: var(--sp-dropdown-hover-color);
+  --bs-dropdown-link-active-color: var(--sp-dropdown-hover-fg);
   --bs-dropdown-link-active-bg: var(--sp-dropdown-hover-bg);
-  --bs-dropdown-header-color: var(--sp-dropdown-header-color);
+  --bs-dropdown-header-color: var(--sp-dropdown-header-fg);
 }
 
 .modal {

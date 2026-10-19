@@ -1,25 +1,48 @@
 """
 Design tokens needed outside the browser (e.g. Discord embed colors).
 
-The single source of truth for the site's design is static/css/tokens.css.
-The values here mirror the matching --sp-* custom properties there;
-samples/tests/test_design_system.py fails if the two drift apart.
+They are read from static/css/tokens.css, the single source of truth for the
+site's design, when this module is imported; nothing here is copied by hand.
 """
+import re
+from functools import lru_cache
+from pathlib import Path
 
-# Mirrors --sp-difficulty-<level> in tokens.css
-DIFFICULTY_COLORS = {
-    'easy': '#17a2b8',
-    'medium': '#ffa726',
-    'advanced': '#ef5350',
-    'expert': '#111111',
-}
+from .models import Difficulty
 
-# Mirrors --sp-difficulty-unknown in tokens.css
-DIFFICULTY_FALLBACK_COLOR = '#6c757d'
+TOKENS_CSS = Path(__file__).resolve().parent.parent / 'static' / 'css' / 'tokens.css'
 
-# Mirror --sp-success / --sp-danger in tokens.css
-SUCCESS_COLOR = '#28a745'
-DANGER_COLOR = '#dc3545'
+_COMMENT_RE = re.compile(r'/\*.*?\*/', re.S)
+_ROOT_RE = re.compile(r':root\s*\{(.*?)\}', re.S)
+_TOKEN_RE = re.compile(r'--sp-([\w-]+)\s*:\s*([^;]+);')
+_VAR_RE = re.compile(r'var\(--sp-([\w-]+)\)')
+
+
+@lru_cache(maxsize=None)
+def light_tokens():
+    """The light theme's --sp-* values (from :root), with var() references resolved."""
+    text = _COMMENT_RE.sub('', TOKENS_CSS.read_text(encoding='utf-8'))
+    raw = {}
+    for block in _ROOT_RE.findall(text):
+        raw.update((name, value.strip()) for name, value in _TOKEN_RE.findall(block))
+
+    def resolve(value, depth=0):
+        if depth > 10:
+            return value
+        return _VAR_RE.sub(lambda m: resolve(raw[m.group(1)], depth + 1), value)
+
+    return {name: resolve(value) for name, value in raw.items()}
+
+
+_tokens = light_tokens()
+
+# --sp-difficulty-<level> and the badge color for unknown levels
+DIFFICULTY_COLORS = {level: _tokens[f'difficulty-{level}'] for level in Difficulty.values}
+DIFFICULTY_FALLBACK_COLOR = _tokens['difficulty-unknown']
+
+# --sp-success / --sp-danger
+SUCCESS_COLOR = _tokens['success']
+DANGER_COLOR = _tokens['danger']
 
 
 def difficulty_css_class(difficulty):

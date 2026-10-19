@@ -174,15 +174,8 @@ class NoImportantTestCase(SimpleTestCase):
         self.assertEqual(offenders, [])
 
 
-class TokensOnlyTestCase(RatchetMixin, SimpleTestCase):
+class TokensOnlyTestCase(SimpleTestCase):
     """Raw design values live in tokens.css; everything else uses var(--sp-*)"""
-
-    KNOWN_RAW_VALUES = {
-        'components.css: line-height: 1.4',
-        'components.css: line-height: 1.6',
-        'components.css: line-height: 1.6em',
-        'solutions-showcase.css: line-height: 1.25em',
-    }
 
     def test_no_raw_colors_outside_tokens(self):
         offenders = []
@@ -216,7 +209,7 @@ class TokensOnlyTestCase(RatchetMixin, SimpleTestCase):
                         offenders.append(f"{path.name}: {prop}: {value.strip()}")
                 elif literal and literal.lower() not in KEYWORDS:
                     offenders.append(f"{path.name}: {prop}: {value.strip()}")
-        self.assertWithinBaseline(offenders, self.KNOWN_RAW_VALUES)
+        self.assertEqual(offenders, [], "\n".join(offenders))
 
     def test_inline_styles_have_no_design_values(self):
         design_props = TOKEN_ONLY_PROPERTIES | {'color', 'background', 'background-color', 'border-color'}
@@ -229,19 +222,12 @@ class TokensOnlyTestCase(RatchetMixin, SimpleTestCase):
         self.assertEqual(offenders, [], "\n".join(offenders))
 
 
-class TokenUsageTestCase(RatchetMixin, SimpleTestCase):
+class TokenUsageTestCase(SimpleTestCase):
     """Tokens that are used exist, and tokens that exist are used"""
 
     TOKEN_USE_RE = re.compile(r'var\(\s*--sp-([\w-]+)')
     # JS reads or writes tokens by name, e.g. style.setProperty('--sp-x', ...)
     TOKEN_NAME_RE = re.compile(r"""['"]--sp-([\w-]+)['"]""")
-
-    KNOWN_UNUSED = {
-        'black', 'brand-tint', 'brand-tint-strong', 'close-color', 'editor-help-code-bg',
-        'editor-help-heading', 'ext-badge-bg', 'ext-badge-fg', 'fs-close', 'fs-code', 'fs-icon',
-        'fs-lg', 'lh-tight', 'radius-round', 'shadow-close-text', 'shadow-raised',
-        'shadow-thumbnail', 'space-5', 'surface-raised', 'surface-sunken', 'z-ext-badge',
-    }
 
     def used_tokens(self):
         used = set()
@@ -255,7 +241,8 @@ class TokenUsageTestCase(RatchetMixin, SimpleTestCase):
         self.assertEqual(undefined, [], 'Used but not defined in tokens.css :root')
 
     def test_defined_tokens_are_used(self):
-        self.assertWithinBaseline(token_block_names(r':root') - self.used_tokens(), self.KNOWN_UNUSED)
+        unused = sorted(token_block_names(r':root') - self.used_tokens())
+        self.assertEqual(unused, [], 'Defined in tokens.css but never used')
 
     def test_dark_theme_only_overrides_existing_tokens(self):
         extra = sorted(token_block_names(r'\[data-bs-theme="dark"\]') - token_block_names(r':root'))

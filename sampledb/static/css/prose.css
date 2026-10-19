@@ -36,13 +36,13 @@
 }
 
 .prose p {
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--sp-space-block);
 }
 
 .prose ul,
 .prose ol {
   padding-left: var(--sp-space-4);
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--sp-space-block);
 }
 
 .prose li {
@@ -51,15 +51,15 @@
 
 .prose code {
   padding: 0.2em 0.4em;
-  font-size: var(--sp-fs-count);
+  font-size: var(--sp-fs-code);
   color: var(--sp-prose-code-fg);
   background-color: var(--sp-prose-code-bg);
   border-radius: var(--sp-radius-code);
 }
 
 .prose pre {
-  padding: 0.75rem;
-  margin: 0.75rem 0;
+  padding: var(--sp-space-block);
+  margin: var(--sp-space-block) 0;
   overflow-x: auto;
   background-color: var(--sp-prose-pre-bg);
   border-radius: var(--sp-radius-content);
@@ -80,7 +80,7 @@
 
 .prose blockquote {
   padding: 0.5em 0.7rem 0.5em var(--sp-space-3);
-  margin: 0.75rem 0;
+  margin: var(--sp-space-block) 0;
   color: var(--sp-prose-blockquote-fg);
   background-color: var(--sp-prose-blockquote-bg);
   border-left: var(--sp-border-accent-width) solid var(--sp-prose-blockquote-border);
@@ -118,14 +118,14 @@
 
 .prose table {
   width: 100%;
-  margin: 0.75rem 0;
+  margin: var(--sp-space-block) 0;
   border-collapse: collapse;
   border: var(--sp-border-width) solid var(--sp-prose-table-border);
 }
 
 .prose th,
 .prose td {
-  padding: var(--sp-space-2) 0.75rem;
+  padding: var(--sp-space-2) var(--sp-space-block);
   text-align: left;
   border: var(--sp-border-width) solid var(--sp-prose-table-border);
 }
@@ -169,7 +169,7 @@
   font-style: italic;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .prose-article {
     font-size: var(--sp-fs-article-mobile);
   }

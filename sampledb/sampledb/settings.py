@@ -200,17 +200,20 @@ STORAGES = {
 }
 
 # Cloudinary configuration for media file storage (required in production)
-# Defaults let tests and local runs start without credentials; uploads then fail at request time.
-cloudinary.config(
-    cloud_name=config('CLOUDINARY_CLOUD_NAME', default=''),
-    api_key=config('CLOUDINARY_API_KEY', default=''),
-    api_secret=config('CLOUDINARY_API_SECRET', default=''),
-    secure=True
-)
+# Without credentials local runs still start; uploads then fail at request time.
+if TESTING:
+    # Fixed fake account: image URLs render, and nothing can reach the real one (uploads are mocked)
+    cloudinary.config(cloud_name='samplepedia-test', api_key='test', api_secret='test', secure=True)
+else:
+    cloudinary.config(
+        cloud_name=config('CLOUDINARY_CLOUD_NAME', default=''),
+        api_key=config('CLOUDINARY_API_KEY', default=''),
+        api_secret=config('CLOUDINARY_API_SECRET', default=''),
+        secure=True
+    )
 
 # Map message levels onto alert styles (alert-{{ message.level_tag }})
 MESSAGE_TAGS = {
-    message_constants.DEBUG: 'secondary',
     message_constants.ERROR: 'danger',
 }
 

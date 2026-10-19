@@ -1,6 +1,7 @@
 /*
  * Latest solutions showcase (samples/solutions_showcase.html).
- * Scoped to body.page-solutions-showcase.
+ * Loaded only by that page (block extra_css), so these selectors don't leak
+ * into other pages; body.page-solutions-showcase scopes the shared .showcase-width.
  */
 
 .page-solutions-showcase .showcase-width {
@@ -10,7 +11,7 @@
 }
 
 .solution-card {
-  transition: transform var(--sp-dur) ease-in-out;
+  transition: transform var(--sp-dur) var(--sp-ease-in-out);
   will-change: transform;
 }
 
@@ -61,10 +62,10 @@
 
 .solution-card .card-title {
   display: -webkit-box;
-  min-height: 2.5em;
+  min-height: calc(2 * var(--sp-lh-card-title));
   overflow: hidden;
   -webkit-line-clamp: 2;
-  line-height: 1.25em;
+  line-height: var(--sp-lh-card-title);
   text-overflow: ellipsis;
   -webkit-box-orient: vertical;
 }
