@@ -6,24 +6,24 @@ re-renders that dropped the user's input.
 from datetime import timedelta
 from unittest import mock
 
-from django.contrib.auth.models import User
-from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from samples.models import AnalysisTask, Article, Solution, SolutionType
+from samples.models import Article, Solution, SolutionType
+from samples.tests.base import SampleTestCase
+from samples.tests.factories import make_article, make_onsite_solution, make_solution, make_staff, make_task
 
 
-class RegressionTestCase(TestCase):
+class RegressionTestCase(SampleTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.task = make_task()
+        cls.author = cls.task.author
+        cls.staff = make_staff()
+        cls.existing = make_solution(task=cls.task, title='Taken')
+
     def setUp(self):
-        self.author = User.objects.create_user(username='author', password='testpass123')
-        self.staff = User.objects.create_user(username='staff', password='testpass123', is_staff=True)
-        self.task = AnalysisTask.objects.create(sha256='a' * 64, goal='g', author=self.author)
-        self.existing = Solution.objects.create(
-            analysis_task=self.task, title='Taken', solution_type=SolutionType.BLOG,
-            url='https://example.com/', author=self.author,
-        )
-        self.client.login(username='author', password='testpass123')
+        self.login_as(self.author)
 
     def task_url(self, name, **kwargs):
         return reverse(name, kwargs={'sha256': self.task.sha256, 'task_id': self.task.id, **kwargs})
@@ -48,7 +48,7 @@ class DuplicateSolutionTitleTestCase(RegressionTestCase):
         self.assertEqual(Solution.objects.count(), 1)
 
     def test_create_from_draft_with_taken_title(self):
-        draft = Article.objects.create(title='Taken', content='text', author=self.author)
+        draft = make_article(title='Taken', author=self.author)
         response = self.client.post(self.task_url('create_solution'), {
             'solution_type': SolutionType.ONSITE, 'draft_article_id': draft.id,
         })
@@ -56,10 +56,7 @@ class DuplicateSolutionTitleTestCase(RegressionTestCase):
         self.assertEqual(Solution.objects.count(), 1)
 
     def test_edit_into_taken_title(self):
-        other = Solution.objects.create(
-            analysis_task=self.task, title='Other', solution_type=SolutionType.BLOG,
-            url='https://example.org/', author=self.author,
-        )
+        other = make_solution(task=self.task, title='Other')
         response = self.client.post(self.task_url('edit_solution', solution_id=other.id), {
             'title': 'Taken', 'solution_type': SolutionType.BLOG, 'url': 'https://example.org/',
         })
@@ -79,13 +76,13 @@ class DuplicateSolutionTitleTestCase(RegressionTestCase):
         self.assertEqual(Solution.objects.count(), 1)
 
     def test_publish_article(self):
-        draft = Article.objects.create(title='Taken', content='text', author=self.author)
+        draft = make_article(title='Taken', author=self.author)
         response = self.client.post(reverse('publish_article', args=[draft.id]), {'sample_id': self.task.id})
         self.assertEqual(response.status_code, 400)
         self.assertIn('already has a solution titled', response.json()['error'])
 
     def test_attach_draft(self):
-        draft = Article.objects.create(title='Taken', content='text', author=self.author)
+        draft = make_article(title='Taken', author=self.author)
         response = self.client.post(self.task_url('attach_draft_to_sample'), {'article_id': draft.id})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Solution.objects.count(), 1)
@@ -93,11 +90,7 @@ class DuplicateSolutionTitleTestCase(RegressionTestCase):
 
 class HiddenSolutionTestCase(RegressionTestCase):
     def create_hidden_onsite(self):
-        article = Article.objects.create(title='Hidden', content='secret', author=self.author)
-        return Solution.objects.create(
-            analysis_task=self.task, title='Hidden', solution_type=SolutionType.ONSITE, article=article,
-            author=self.author, hidden_until=timezone.now() + timedelta(weeks=2),
-        )
+        return make_onsite_solution(task=self.task, hidden_until=timezone.now() + timedelta(weeks=2))
 
     def test_blocked_view_does_not_count(self):
         solution = self.create_hidden_onsite()
@@ -116,10 +109,7 @@ class HiddenSolutionTestCase(RegressionTestCase):
     @mock.patch('samples.signals.send_solution_notification')
     def test_visible_solution_is_announced(self, send):
         with self.captureOnCommitCallbacks(execute=True):
-            Solution.objects.create(
-                analysis_task=self.task, title='Public', solution_type=SolutionType.BLOG,
-                url='https://example.org/', author=self.author,
-            )
+            make_solution(task=self.task)
         send.assert_called_once()
 
 
@@ -139,7 +129,7 @@ class EditorReRenderTestCase(RegressionTestCase):
 
 class ArticleViewDeleteTestCase(RegressionTestCase):
     def test_delete_button_posts(self):
-        draft = Article.objects.create(title='Draft', content='text', author=self.author)
+        draft = make_article(author=self.author)
         response = self.client.get(reverse('article_view', args=[draft.id]))
         self.assertContains(response, f'<form method="post" action="{reverse("article_delete", args=[draft.id])}"')
         self.client.post(reverse('article_delete', args=[draft.id]), {'next': reverse('article_list')})
@@ -152,7 +142,7 @@ class LegacyOnsiteEditTestCase(RegressionTestCase):
             analysis_task=self.task, title='Legacy', solution_type=SolutionType.ONSITE,
             content='old', author=self.author,
         )
-        self.client.login(username='staff', password='testpass123')
+        self.login_as(self.staff)
         self.client.post(self.task_url('edit_onsite_solution', solution_id=legacy.id), {'title': 'Legacy', 'content': 'new'})
         legacy.refresh_from_db()
         self.assertEqual(legacy.article.author, self.author)

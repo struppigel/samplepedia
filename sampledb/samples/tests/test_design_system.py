@@ -20,15 +20,16 @@ from pathlib import Path
 from unittest import mock
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.contrib.staticfiles import finders
-from django.test import Client, SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 
 from samples import design_tokens
 from samples.discord_utils import send_sample_notification
-from samples.models import AnalysisTask, Difficulty
+from samples.models import Difficulty
 from samples.templatetags.user_tags import difficulty_badge_class
+from samples.tests.base import SampleTestCase
+from samples.tests.factories import make_task, make_user
 
 BASE_DIR = Path(settings.BASE_DIR)
 TEMPLATES_DIR = BASE_DIR / 'samples' / 'templates'
@@ -281,23 +282,17 @@ class DesignTokensSyncTestCase(SimpleTestCase):
         self.assertEqual(design_tokens.difficulty_embed_color('nonsense'), 0x6c757d)
 
 
-class DesignIntegrationTestCase(TestCase):
+class DesignIntegrationTestCase(SampleTestCase):
     """Server-side pieces of the design system work end to end"""
 
-    def setUp(self):
-        self.owner = User.objects.create_user(username='owner', password='testpass123')
-        self.other = User.objects.create_user(username='other', password='testpass123')
-        self.task = AnalysisTask.objects.create(
-            sha256='b' * 64,
-            goal='Find the C2 address',
-            difficulty=Difficulty.EASY,
-            description='Test description',
-            author=self.owner,
-        )
-        self.client = Client()
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = make_user()
+        cls.other = make_user()
+        cls.task = make_task(author=cls.owner, goal='Find the C2 address', difficulty=Difficulty.EASY)
 
     def test_error_message_rendered_once_as_danger_alert(self):
-        self.client.login(username='other', password='testpass123')
+        self.login_as(self.other)
         response = self.client.get(
             reverse('edit_task', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
             follow=True,
@@ -314,7 +309,7 @@ class DesignIntegrationTestCase(TestCase):
         self.assertContains(response, 'class="page-title"')
 
     def test_search_samples_ajax_returns_difficulty_class(self):
-        self.client.login(username='owner', password='testpass123')
+        self.login_as(self.owner)
         response = self.client.get(reverse('search_samples_ajax'), {'q': 'C2 address'})
         results = response.json()['results']
         self.assertEqual(len(results), 1)

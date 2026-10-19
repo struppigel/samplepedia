@@ -7,14 +7,16 @@ from pathlib import Path
 from unittest import mock
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 from django.urls import reverse
 from django_comments.forms import CommentSecurityForm
 from django_comments_xtd.models import XtdComment
 
-from samples.models import AnalysisTask, Article, Difficulty, Solution, SolutionType
+from samples.tests.base import SampleTestCase
+from samples.tests.factories import (
+    PASSWORD, make_article, make_onsite_solution, make_solution, make_task, make_user,
+)
 from samples.utils.markdown import render_markdown
 
 XSS_MARKDOWN = (
@@ -65,27 +67,17 @@ class RenderMarkdownTestCase(SimpleTestCase):
         self.assertEqual(render_markdown(None), '')
 
 
-class MarkdownRenderPathsTestCase(TestCase):
+class MarkdownRenderPathsTestCase(SampleTestCase):
     """Every view that renders user markdown must sanitize it."""
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.task = make_task(goal=XSS_MARKDOWN, description=XSS_MARKDOWN)
+        cls.user = cls.task.author
+        cls.solution = make_onsite_solution(task=cls.task, content=XSS_MARKDOWN)
+
     def setUp(self):
-        self.user = User.objects.create_user(username='author', password='testpass123')
-        self.task = AnalysisTask.objects.create(
-            sha256='c' * 64,
-            goal=XSS_MARKDOWN,
-            description=XSS_MARKDOWN,
-            difficulty=Difficulty.EASY,
-            author=self.user,
-        )
-        self.article = Article.objects.create(title='Article', content=XSS_MARKDOWN, author=self.user)
-        self.solution = Solution.objects.create(
-            analysis_task=self.task,
-            title='Article',
-            solution_type=SolutionType.ONSITE,
-            article=self.article,
-            author=self.user,
-        )
-        self.client.login(username='author', password='testpass123')
+        self.login_as(self.user)
 
     def assert_sanitized(self, html):
         self.assertNotIn('<script>alert(1)</script>', html)
@@ -100,7 +92,7 @@ class MarkdownRenderPathsTestCase(TestCase):
 
     def test_article_view(self):
         # Published articles redirect to the solution view, so render a draft
-        draft = Article.objects.create(title='Draft', content=XSS_MARKDOWN, author=self.user)
+        draft = make_article(content=XSS_MARKDOWN, author=self.user)
         response = self.client.get(reverse('article_view', args=[draft.id]))
         self.assertEqual(response.status_code, 200)
         self.assert_sanitized(response.content.decode())
@@ -142,25 +134,17 @@ class InlineHandlerInterpolationTestCase(SimpleTestCase):
         self.assertEqual(violations, [])
 
 
-class ExternalLinkTestCase(TestCase):
+class ExternalLinkTestCase(SampleTestCase):
     """A solution URL must not reach a JS context."""
 
     def test_malicious_solution_url_is_not_interpolated_into_js(self):
-        author = User.objects.create_user(username='author', password='testpass123')
-        task = AnalysisTask.objects.create(sha256='d' * 64, goal='g', author=author)
-        Solution.objects.create(
-            analysis_task=task,
-            title='Evil',
-            solution_type=SolutionType.BLOG,
-            url="https://example.com/');alert(1);//",
-            author=author,
-        )
+        task = make_solution(url="https://example.com/');alert(1);//").analysis_task
         html = self.client.get(reverse('sample_detail', args=[task.sha256, task.id])).content.decode()
         self.assertIn('data-external-confirm', html)
         self.assertNotIn('return confirm(', html)
 
 
-class SecurityHeadersTestCase(TestCase):
+class SecurityHeadersTestCase(SampleTestCase):
     """The CSP header must restrict who may frame the site."""
 
     def test_frame_ancestors_restricted(self):
@@ -175,17 +159,13 @@ class SecurityHeadersTestCase(TestCase):
         self.assertNotIn('default-src', response.headers.get('Content-Security-Policy', ''))
 
 
-# Turnstile would call Cloudflare; its validate() also enforces the required token
-skip_turnstile = mock.patch('turnstile.fields.TurnstileField.validate', lambda self, value: None)
-
-
-@skip_turnstile
-class LoginRedirectTestCase(TestCase):
-    def setUp(self):
-        User.objects.create_user(username='reader', password='testpass123')
+class LoginRedirectTestCase(SampleTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        make_user('reader')
 
     def login(self, **params):
-        return self.client.post(reverse('login'), {'username': 'reader', 'password': 'testpass123', **params})
+        return self.client.post(reverse('login'), {'username': 'reader', 'password': PASSWORD, **params})
 
     def test_honours_posted_next(self):
         self.assertRedirects(self.login(next='/courses/'), '/courses/', fetch_redirect_response=False)
@@ -201,21 +181,20 @@ class LoginRedirectTestCase(TestCase):
         self.assertNotContains(response, 'evil.example')
 
 
-class NextRedirectTestCase(TestCase):
+class NextRedirectTestCase(SampleTestCase):
     """Views that redirect to 'next' or the Referer must stay on this site."""
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.solution = make_solution()
+        cls.task = cls.solution.analysis_task
+        cls.other = make_user()
+        cls.url = reverse('delete_solution', args=[cls.task.sha256, cls.task.id, cls.solution.id])
+        cls.detail_url = reverse('sample_detail', args=[cls.task.sha256, cls.task.id])
+
     def setUp(self):
-        self.author = User.objects.create_user(username='author', password='testpass123')
-        User.objects.create_user(username='other', password='testpass123')
-        self.task = AnalysisTask.objects.create(sha256='f' * 64, goal='g', author=self.author)
-        self.solution = Solution.objects.create(
-            analysis_task=self.task, title='Ref', solution_type=SolutionType.BLOG,
-            url='https://example.com/', author=self.author,
-        )
-        self.url = reverse('delete_solution', args=[self.task.sha256, self.task.id, self.solution.id])
-        self.detail_url = reverse('sample_detail', args=[self.task.sha256, self.task.id])
         # A user who may not delete gets an error message and a redirect
-        self.client.login(username='other', password='testpass123')
+        self.login_as(self.other)
 
     def test_external_next_falls_back(self):
         response = self.client.post(self.url, {'next': 'https://evil.example/'})
@@ -230,24 +209,21 @@ class NextRedirectTestCase(TestCase):
         self.assertRedirects(response, '/courses/', fetch_redirect_response=False)
 
     def test_article_delete_rejects_external_next(self):
-        article = Article.objects.create(title='A', content='c', author=self.author)
+        article = make_article(author=self.task.author)
         response = self.client.post(reverse('article_delete', args=[article.id]), {'next': 'https://evil.example/'})
         self.assertRedirects(response, reverse('article_list'), fetch_redirect_response=False)
 
 
-class LikeEndpointTestCase(TestCase):
-    def setUp(self):
-        self.author = User.objects.create_user(username='author', password='testpass123')
-        self.task = AnalysisTask.objects.create(sha256='1' * 64, goal='g', author=self.author)
-        self.solution = Solution.objects.create(
-            analysis_task=self.task, title='S', solution_type=SolutionType.BLOG,
-            url='https://example.com/', author=self.author,
-        )
-        self.task_like_url = reverse('toggle_like', args=[self.task.sha256, self.task.id])
-        self.solution_like_url = reverse('toggle_solution_like', args=[self.solution.id])
+class LikeEndpointTestCase(SampleTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.solution = make_solution()
+        cls.task = cls.solution.analysis_task
+        cls.task_like_url = reverse('toggle_like', args=[cls.task.sha256, cls.task.id])
+        cls.solution_like_url = reverse('toggle_solution_like', args=[cls.solution.id])
 
     def test_get_does_not_change_state(self):
-        self.client.login(username='author', password='testpass123')
+        self.login_as(make_user())
         self.assertEqual(self.client.get(self.task_like_url).status_code, 405)
         self.assertEqual(self.client.get(self.solution_like_url).status_code, 405)
         self.assertEqual(self.task.favorited_by.count(), 0)
@@ -260,10 +236,11 @@ class LikeEndpointTestCase(TestCase):
             self.assertEqual(response.json()['redirect'], settings.LOGIN_URL)
 
 
-class CommentPostingTestCase(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='commenter', password='testpass123')
-        self.task = AnalysisTask.objects.create(sha256='2' * 64, goal='g', author=self.user)
+class CommentPostingTestCase(SampleTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.task = make_task()
+        cls.user = cls.task.author
 
     def comment_data(self, text):
         return {**CommentSecurityForm(self.task).generate_security_data(), 'comment': text, 'reply_to': 0}
@@ -280,7 +257,7 @@ class CommentPostingTestCase(TestCase):
         self.assertEqual(XtdComment.objects.count(), 0)
 
     def test_author_lands_on_highlighted_comment(self):
-        self.client.login(username='commenter', password='testpass123')
+        self.login_as(self.user)
         response = self.client.post(reverse('comments-post-comment'), self.comment_data('hello'), follow=True)
         comment = XtdComment.objects.get()
         self.assertEqual(comment.user, self.user)
@@ -291,10 +268,9 @@ class CommentPostingTestCase(TestCase):
         self.assertEqual(self.client.get(reverse('comments-comment-done'), {'c': 'abc'}).status_code, 404)
 
 
-class EditorImageUploadTestCase(TestCase):
+class EditorImageUploadTestCase(SampleTestCase):
     def test_upload_error_does_not_leak_details(self):
-        User.objects.create_user(username='writer', password='testpass123')
-        self.client.login(username='writer', password='testpass123')
+        self.login_as(make_user())
         image = SimpleUploadedFile('a.png', b'\x89PNG', content_type='image/png')
         with mock.patch('samples.views.solutions.EditorImage.objects.create', side_effect=Exception('api_secret=xyz')):
             with self.assertLogs('samples.views.solutions', level='ERROR'):
