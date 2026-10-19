@@ -19,7 +19,6 @@ def transfer_solution_view_counts_to_articles(apps, schema_editor):
                 view_count=solution.view_count
             )
     
-    print(f"Transferred view counts from {solutions_with_articles.count()} solutions to their articles")
 
 
 def reverse_transfer_view_counts(apps, schema_editor):

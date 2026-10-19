@@ -139,6 +139,10 @@ if TESTING:
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
+if TESTING:
+    # Hashing with PBKDF2 dominates test run time; tests don't need strong hashes
+    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -350,6 +354,9 @@ MARKDOWNX_MARKDOWNIFY_FUNCTION = 'samples.utils.markdown.render_markdown'
 # Cloudflare Turnstile Configuration
 TURNSTILE_SITEKEY = config('TURNSTILE_SITEKEY', default='')
 TURNSTILE_SECRET = config('TURNSTILE_SECRET', default='')
+if TESTING:
+    # Validation would call Cloudflare over the network
+    TURNSTILE_ENABLE = False
 SILENCED_SYSTEM_CHECKS = [
     # No X-Frame-Options on purpose: the site is embedded by the course platform,
     # and CONTENT_SECURITY_POLICY's frame-ancestors restricts who may frame it
