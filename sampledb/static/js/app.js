@@ -3,23 +3,6 @@ if (window.hljs) {
   hljs.highlightAll();
 }
 
-// Confirm before following a user-submitted external link.
-// The URL is read from the DOM, never interpolated into JS by the template.
-document.addEventListener('click', function(e) {
-  const link = e.target.closest('a[data-external-confirm]');
-  if (link && !confirm(`You are about to visit an external website:\n\n${link.href}\n\nDo you want to continue?`)) {
-    e.preventDefault();
-  }
-});
-
-// Ask before submitting destructive forms: <form data-confirm="Really delete?">
-document.addEventListener('submit', function(e) {
-  const form = e.target;
-  if (form.dataset.confirm && !confirm(form.dataset.confirm)) {
-    e.preventDefault();
-  }
-});
-
 // Generate consistent color for each tag based on tag name
 function hashString(str) {
   let hash = 0;

@@ -1,5 +1,8 @@
 from django.conf import settings
+from django.utils.functional import SimpleLazyObject
+
 from .models import Notification
+from .utils.drafts import pop_drafts_to_clear
 
 
 def impressum_settings(request):
@@ -25,3 +28,11 @@ def notification_count(request):
     return {
         'unread_notifications_count': 0
     }
+
+
+def drafts_to_clear(request):
+    """
+    Browser drafts to forget on this page (see samples/utils/drafts.py). Lazy, so
+    only the page that renders base.html consumes them.
+    """
+    return {'drafts_to_clear': SimpleLazyObject(lambda: pop_drafts_to_clear(request))}

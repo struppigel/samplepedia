@@ -108,6 +108,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'samples.context_processors.impressum_settings',
                 'samples.context_processors.notification_count',
+                'samples.context_processors.drafts_to_clear',
             ],
         },
     },
