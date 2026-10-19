@@ -11,8 +11,10 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from csp.constants import NONE, SELF
 from decouple import config, Csv
 from django.contrib.messages import constants as message_constants
+from django.core.exceptions import ImproperlyConfigured
 import dj_database_url
 import cloudinary
 import sys
@@ -28,10 +30,14 @@ TESTING = 'test' in sys.argv
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-CHANGE-THIS-IN-PRODUCTION')
+INSECURE_SECRET_KEY = 'django-insecure-CHANGE-THIS-IN-PRODUCTION'
+SECRET_KEY = config('SECRET_KEY', default=INSECURE_SECRET_KEY)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
+
+if SECRET_KEY == INSECURE_SECRET_KEY and not DEBUG and not TESTING:
+    raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is off.')
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
@@ -94,6 +100,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'csp',
     'cloudinary_storage',
     'cloudinary',
     'taggit',
@@ -322,9 +329,17 @@ if TESTING:
 # Base URL for Discord notifications (used for sample links)
 BASE_URL = config('BASE_URL', default='http://localhost:8000')
 
-# Allow embedding only from my platform
-CSP_FRAME_ANCESTORS = ["'self'", "https://malwareanalysis-for-hedgehogs.learnworlds.com"]
-X_FRAME_OPTIONS = None
+# Content Security Policy (django-csp 4 format). Allow embedding only from my platform.
+# default-src is disabled on purpose: django-csp would otherwise inject
+# default-src 'self' and block the CDN scripts, fonts and images.
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': None,
+        'frame-ancestors': [SELF, 'https://malwareanalysis-for-hedgehogs.learnworlds.com'],
+        'base-uri': [SELF],
+        'object-src': [NONE],
+    },
+}
 
 # Django Sites Framework (required for django-comments-xtd)
 SITE_ID = 1
