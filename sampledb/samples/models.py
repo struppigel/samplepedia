@@ -13,46 +13,14 @@ from django.core.validators import RegexValidator
 from .querysets import AnalysisTaskQuerySet, SolutionQuerySet
 
 
-# Difficulty point multipliers - SINGLE SOURCE OF TRUTH
-# Used in score calculation and displayed in UI
+# Points per like, by task difficulty - SINGLE SOURCE OF TRUTH
+# Used by samples/scoring.py and displayed in the UI
 DIFFICULTY_POINTS = {
     'easy': 10,
     'medium': 20,
     'advanced': 40,
     'expert': 80,
 }
-
-
-def get_user_score(user):
-    """Calculate user score based on likes received with difficulty multipliers.
-    
-    Scoring system:
-    - Easy task like: 10 points per like
-    - Medium task like: 20 points per like
-    - Advanced task like: 40 points per like
-    - Expert task like: 80 points per like
-    
-    - Easy solution like: 10 points per like
-    - Medium solution like: 20 points per like
-    - Advanced solution like: 40 points per like
-    - Expert solution like: 80 points per like
-    """
-    
-    # Score from analysis task likes
-    task_score = 0
-    for task in user.analysis_tasks.all():
-        likes_count = task.favorited_by.count()
-        points_per_like = DIFFICULTY_POINTS.get(task.difficulty, 1)
-        task_score += likes_count * points_per_like
-    
-    # Score from solution likes (based on the task difficulty they solved)
-    solution_score = 0
-    for solution in user.solutions.select_related('analysis_task').all():
-        likes_count = solution.liked_by.count()
-        points_per_like = DIFFICULTY_POINTS.get(solution.analysis_task.difficulty, 1)
-        solution_score += likes_count * points_per_like
-    
-    return task_score + solution_score
 
 
 class NotificationQuerySet(models.QuerySet):

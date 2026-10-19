@@ -4,7 +4,6 @@ the Solution model): who sees hidden solutions on every page that lists them,
 who may edit or delete, and that list pages cost a fixed number of queries.
 """
 from datetime import timedelta
-from unittest import expectedFailure
 
 from django.contrib.auth.models import AnonymousUser
 from django.db import connection
@@ -210,7 +209,6 @@ class QueryCountTestCase(SampleTestCase):
     def test_showcase(self):
         self.assert_constant(reverse('solutions_showcase'), make_user())
 
-    @expectedFailure  # The score and rank on the profile still query per task and solution
     def test_profile(self):
         author = make_user('prolific')
         self.assert_constant(reverse('user_profile', args=['prolific']), author)

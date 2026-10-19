@@ -46,10 +46,10 @@
                         
                         <!-- User with groups -->
                         <td>
-                          <a href="{% url 'user_profile' item.user.username %}" class="fw-bold">
-                            <i class="fas fa-user"></i> {{ item.user.username }}
+                          <a href="{% url 'user_profile' item.username %}" class="fw-bold">
+                            <i class="fas fa-user"></i> {{ item.username }}
                           </a>
-                          {% display_user_groups item.user %}
+                          {% display_user_groups item %}
                         </td>
                         
                         <!-- Score with badge -->
