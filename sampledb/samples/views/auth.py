@@ -15,6 +15,7 @@ from django.utils import timezone
 
 from ..models import Solution, AnalysisTask, get_user_score, DIFFICULTY_POINTS
 from ..discord_utils import send_user_registration_notification, send_account_deletion_notification
+from ..utils.http import is_safe_url, safe_next_url
 from ..forms import (
     TurnstileAuthenticationForm,
     TurnstileUserRegistrationForm,
@@ -73,21 +74,21 @@ def calculate_user_likes_by_difficulty(user):
 
 def login_view(request):
     """Custom login view with Turnstile CAPTCHA protection"""
+    # The form posts 'next' as a hidden field; the initial GET carries it in the query string
+    next_param = request.POST.get('next') or request.GET.get('next', '')
+
     if request.method == 'POST':
         form = TurnstileAuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             auth_login(request, user)
-            
-            # Redirect to 'next' parameter if present, otherwise home
-            next_url = request.GET.get('next', '/')
-            return redirect(next_url)
+            return redirect(safe_next_url(request, settings.LOGIN_REDIRECT_URL, allow_referer=False))
     else:
         form = TurnstileAuthenticationForm()
-    
+
     return render(request, 'registration/login.html', {
         'form': form,
-        'next': request.GET.get('next', ''),
+        'next': next_param if is_safe_url(request, next_param) else '',
     })
 
 

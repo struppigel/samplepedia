@@ -1,15 +1,20 @@
+import logging
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils import timezone
-from ..utils.markdown import render_markdown
 from django.db.models import Q, F
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from ..models import AnalysisTask, Solution, SolutionType, EditorImage, Article
 from ..forms import SolutionForm
+from ..utils.http import safe_next_url
+from ..utils.markdown import render_markdown
+
+logger = logging.getLogger(__name__)
 
 
 def solution_list(request):
@@ -245,18 +250,13 @@ def delete_solution(request, sha256, task_id, solution_id):
     sample = get_object_or_404(AnalysisTask, id=task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample)
     
-    # Get redirect target from POST data or referrer
-    redirect_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
-    default_redirect = 'sample_detail'
-    default_kwargs = {'sha256': sha256, 'task_id': task_id}
-    
+    next_url = safe_next_url(request, 'sample_detail', sha256=sha256, task_id=task_id)
+
     # Only allow the author to delete their own solution
     if solution.author != request.user and not request.user.is_staff:
         messages.error(request, 'You can only delete your own solutions.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect, **default_kwargs)
-    
+        return redirect(next_url)
+
     if request.method == 'POST':
         # Check if this is a reference solution (author is task author)
         is_reference_solution = solution.author == sample.author
@@ -271,19 +271,12 @@ def delete_solution(request, sha256, task_id, solution_id):
             
             if reference_solution_count <= 1:
                 messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
-                if redirect_url:
-                    return redirect(redirect_url)
-                return redirect(default_redirect, **default_kwargs)
-        
+                return redirect(next_url)
+
         solution.delete()
         messages.success(request, 'Solution deleted successfully.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect, **default_kwargs)
-    
-    if redirect_url:
-        return redirect(redirect_url)
-    return redirect(default_redirect, **default_kwargs)
+
+    return redirect(next_url)
 
 
 def view_onsite_solution(request, sha256, task_id, solution_id):
@@ -499,5 +492,6 @@ def upload_editor_image(request):
             'id': editor_image.id
         })
     
-    except Exception as e:
-        return JsonResponse({'error': f'Upload failed: {str(e)}'}, status=500)
+    except Exception:
+        logger.exception('Editor image upload failed for user %s', request.user.pk)
+        return JsonResponse({'error': 'Upload failed. Please try again.'}, status=500)

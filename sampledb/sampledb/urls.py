@@ -8,7 +8,7 @@ from samples.views import login_view
 urlpatterns = [
     path("admin/login/", login_view, name="admin_login"),
     path("admin/", admin.site.urls),
-    path("comments/", include('django_comments_xtd.urls')),
+    # comments/ routes live in samples.urls so the custom views take precedence
     path('favicon.ico', RedirectView.as_view(url='/static/myhegebatlogo_white.png', permanent=True)),
     path("", include("samples.urls")),
 ]

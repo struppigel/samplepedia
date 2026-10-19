@@ -2,18 +2,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django_comments.models import Comment
-from django_comments.views.comments import CommentPostBadRequest
-from django_comments import signals
-from django.http import HttpResponseForbidden, HttpResponseRedirect, JsonResponse
-from django.apps import apps
-from django.contrib.contenttypes.models import ContentType
+from django_comments.views.comments import post_comment as django_comments_post_comment
+from django.http import Http404, HttpResponseForbidden, JsonResponse
 from django.views.decorators.http import require_POST, require_GET
-from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.models import User
 from django.db.models import Q
 from ..models import AnalysisTask
-import django_comments
-import re
 
 
 @login_required
@@ -77,64 +71,30 @@ def delete_comment(request, comment_id):
     })
 
 
-@csrf_protect
 @require_POST
 @login_required
 def post_comment(request):
+    """Comments require an account; validation and saving are left to django-comments."""
+    return django_comments_post_comment(request)
+
+
+def comment_posted(request):
     """
-    Custom comment posting view that redirects to the comment with highlight.
-    Overrides the default django-comments post view.
+    django-comments redirects here with ?c=<id> after a successful post.
+    Send the author to their new comment, highlighted.
     """
-    # Get the comment app and form
-    comment_app = apps.get_app_config('django_comments_xtd')
-    
-    # Get data from request
-    data = request.POST.copy()
-    
-    # Get the target object
-    try:
-        ctype = data.get("content_type")
-        object_pk = data.get("object_pk")
-        if ctype is None or object_pk is None:
-            return CommentPostBadRequest("Missing content_type or object_pk field.")
-        
-        content_type = ContentType.objects.get_for_id(int(ctype))
-        target = content_type.get_object_for_this_type(pk=object_pk)
-    except (ValueError, ContentType.DoesNotExist, target.__class__.DoesNotExist):
-        return CommentPostBadRequest("Invalid content_type or object_pk")
-    
-    # Get the comment form
-    form_class = django_comments.get_form()
-    form = form_class(target, data=data)
-    
-    # Set user on form for AuthenticatedCommentForm
-    if hasattr(form, 'user'):
-        form.user = request.user
-    
-    # Check security and validate
-    if not form.is_valid():
-        return CommentPostBadRequest("Invalid form data")
-    
-    # Save the comment
-    comment = form.get_comment_object(site_id=django_comments.get_current_site_id(request))
-    comment.ip_address = request.META.get("REMOTE_ADDR", None)
-    comment.user = request.user
-    
-    # Save and send signals
-    comment.save()
-    signals.comment_was_posted.send(
-        sender=comment.__class__,
-        comment=comment,
-        request=request,
-    )
-    
-    # Redirect to the comment with highlight
-    if isinstance(target, AnalysisTask):
-        redirect_url = f"{target.get_absolute_url()}?highlight=comment-{comment.id}#comment-{comment.id}"
-    else:
-        redirect_url = target.get_absolute_url()
-    
-    return HttpResponseRedirect(redirect_url)
+    comment_id = request.GET.get('c', '')
+    if not comment_id.isdigit():
+        raise Http404
+    comment = get_object_or_404(Comment, pk=comment_id, is_removed=False)
+    target = comment.content_object
+    if target is None:
+        raise Http404
+    return redirect(f"{target.get_absolute_url()}?highlight=comment-{comment.id}#comment-{comment.id}")
+
+
+def comments_api_disabled(request, *args, **kwargs):
+    raise Http404
 
 
 @require_GET

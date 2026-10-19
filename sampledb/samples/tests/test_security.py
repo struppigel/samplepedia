@@ -4,11 +4,15 @@ templates, redirect validation and HTTP method restrictions.
 """
 import re
 from pathlib import Path
+from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
+from django_comments.forms import CommentSecurityForm
+from django_comments_xtd.models import XtdComment
 
 from samples.models import AnalysisTask, Article, Difficulty, Solution, SolutionType
 from samples.utils.markdown import render_markdown
@@ -169,3 +173,131 @@ class SecurityHeadersTestCase(TestCase):
         # A default-src would block the CDN assets until a full policy exists
         response = self.client.get('/impressum/')
         self.assertNotIn('default-src', response.headers.get('Content-Security-Policy', ''))
+
+
+# Turnstile would call Cloudflare; its validate() also enforces the required token
+skip_turnstile = mock.patch('turnstile.fields.TurnstileField.validate', lambda self, value: None)
+
+
+@skip_turnstile
+class LoginRedirectTestCase(TestCase):
+    def setUp(self):
+        User.objects.create_user(username='reader', password='testpass123')
+
+    def login(self, **params):
+        return self.client.post(reverse('login'), {'username': 'reader', 'password': 'testpass123', **params})
+
+    def test_honours_posted_next(self):
+        self.assertRedirects(self.login(next='/courses/'), '/courses/', fetch_redirect_response=False)
+
+    def test_rejects_external_next(self):
+        self.assertRedirects(self.login(next='https://evil.example/'), '/', fetch_redirect_response=False)
+
+    def test_rejects_scheme_relative_next(self):
+        self.assertRedirects(self.login(next='//evil.example/'), '/', fetch_redirect_response=False)
+
+    def test_external_next_not_rendered_into_form(self):
+        response = self.client.get(reverse('login'), {'next': 'https://evil.example/'})
+        self.assertNotContains(response, 'evil.example')
+
+
+class NextRedirectTestCase(TestCase):
+    """Views that redirect to 'next' or the Referer must stay on this site."""
+
+    def setUp(self):
+        self.author = User.objects.create_user(username='author', password='testpass123')
+        User.objects.create_user(username='other', password='testpass123')
+        self.task = AnalysisTask.objects.create(sha256='f' * 64, goal='g', author=self.author)
+        self.solution = Solution.objects.create(
+            analysis_task=self.task, title='Ref', solution_type=SolutionType.BLOG,
+            url='https://example.com/', author=self.author,
+        )
+        self.url = reverse('delete_solution', args=[self.task.sha256, self.task.id, self.solution.id])
+        self.detail_url = reverse('sample_detail', args=[self.task.sha256, self.task.id])
+        # A user who may not delete gets an error message and a redirect
+        self.client.login(username='other', password='testpass123')
+
+    def test_external_next_falls_back(self):
+        response = self.client.post(self.url, {'next': 'https://evil.example/'})
+        self.assertRedirects(response, self.detail_url, fetch_redirect_response=False)
+
+    def test_external_referer_falls_back(self):
+        response = self.client.post(self.url, HTTP_REFERER='https://evil.example/')
+        self.assertRedirects(response, self.detail_url, fetch_redirect_response=False)
+
+    def test_internal_next_is_followed(self):
+        response = self.client.post(self.url, {'next': '/courses/'})
+        self.assertRedirects(response, '/courses/', fetch_redirect_response=False)
+
+    def test_article_delete_rejects_external_next(self):
+        article = Article.objects.create(title='A', content='c', author=self.author)
+        response = self.client.post(reverse('article_delete', args=[article.id]), {'next': 'https://evil.example/'})
+        self.assertRedirects(response, reverse('article_list'), fetch_redirect_response=False)
+
+
+class LikeEndpointTestCase(TestCase):
+    def setUp(self):
+        self.author = User.objects.create_user(username='author', password='testpass123')
+        self.task = AnalysisTask.objects.create(sha256='1' * 64, goal='g', author=self.author)
+        self.solution = Solution.objects.create(
+            analysis_task=self.task, title='S', solution_type=SolutionType.BLOG,
+            url='https://example.com/', author=self.author,
+        )
+        self.task_like_url = reverse('toggle_like', args=[self.task.sha256, self.task.id])
+        self.solution_like_url = reverse('toggle_solution_like', args=[self.solution.id])
+
+    def test_get_does_not_change_state(self):
+        self.client.login(username='author', password='testpass123')
+        self.assertEqual(self.client.get(self.task_like_url).status_code, 405)
+        self.assertEqual(self.client.get(self.solution_like_url).status_code, 405)
+        self.assertEqual(self.task.favorited_by.count(), 0)
+        self.assertEqual(self.solution.liked_by.count(), 0)
+
+    def test_anonymous_gets_real_login_url(self):
+        for url in (self.task_like_url, self.solution_like_url):
+            response = self.client.post(url)
+            self.assertEqual(response.status_code, 401)
+            self.assertEqual(response.json()['redirect'], settings.LOGIN_URL)
+
+
+class CommentPostingTestCase(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='commenter', password='testpass123')
+        self.task = AnalysisTask.objects.create(sha256='2' * 64, goal='g', author=self.user)
+
+    def comment_data(self, text):
+        return {**CommentSecurityForm(self.task).generate_security_data(), 'comment': text, 'reply_to': 0}
+
+    def test_anonymous_post_is_rejected(self):
+        response = self.client.post(reverse('comments-post-comment'), self.comment_data('spam'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(settings.LOGIN_URL, response['Location'])
+        self.assertEqual(XtdComment.objects.count(), 0)
+
+    def test_comment_api_is_disabled(self):
+        response = self.client.post('/comments/api/comment/', {**self.comment_data('spam'), 'name': 'x', 'email': 'x@x.com'})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(XtdComment.objects.count(), 0)
+
+    def test_author_lands_on_highlighted_comment(self):
+        self.client.login(username='commenter', password='testpass123')
+        response = self.client.post(reverse('comments-post-comment'), self.comment_data('hello'), follow=True)
+        comment = XtdComment.objects.get()
+        self.assertEqual(comment.user, self.user)
+        expected = f'{self.task.get_absolute_url()}?highlight=comment-{comment.id}'
+        self.assertEqual(response.redirect_chain[-1][0], f'{expected}#comment-{comment.id}')
+
+    def test_posted_with_bad_id_is_404(self):
+        self.assertEqual(self.client.get(reverse('comments-comment-done'), {'c': 'abc'}).status_code, 404)
+
+
+class EditorImageUploadTestCase(TestCase):
+    def test_upload_error_does_not_leak_details(self):
+        User.objects.create_user(username='writer', password='testpass123')
+        self.client.login(username='writer', password='testpass123')
+        image = SimpleUploadedFile('a.png', b'\x89PNG', content_type='image/png')
+        with mock.patch('samples.views.solutions.EditorImage.objects.create', side_effect=Exception('api_secret=xyz')):
+            with self.assertLogs('samples.views.solutions', level='ERROR'):
+                response = self.client.post(reverse('upload_editor_image'), {'image': image})
+        self.assertEqual(response.status_code, 500)
+        self.assertNotIn('api_secret', response.content.decode())

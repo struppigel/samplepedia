@@ -1,18 +1,22 @@
-from django.shortcuts import get_object_or_404
+from django.conf import settings
+from django.shortcuts import get_object_or_404, resolve_url
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 from ..models import AnalysisTask, Solution, Notification
 
 
+def login_required_response():
+    return JsonResponse({'error': 'Login required', 'redirect': resolve_url(settings.LOGIN_URL)}, status=401)
+
+
+@require_POST
 def toggle_like(request, sha256, task_id):
     """Toggle favorite for a sample (requires authentication)"""
     if not request.user.is_authenticated:
-        return JsonResponse({
-            'error': 'Login required',
-            'redirect': '/login/'
-        }, status=401)
+        return login_required_response()
     
     sample = get_object_or_404(AnalysisTask, id=task_id)
     
@@ -99,15 +103,13 @@ def toggle_like(request, sha256, task_id):
     })
 
 
+@require_POST
 def toggle_solution_like(request, solution_id):
     """Toggle like for a solution (requires authentication)"""
     TITLE_MAX_LENGTH = 60
     
     if not request.user.is_authenticated:
-        return JsonResponse({
-            'error': 'Login required',
-            'redirect': '/accounts/login/'
-        }, status=401)
+        return login_required_response()
     
     solution = get_object_or_404(Solution, id=solution_id)
     

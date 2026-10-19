@@ -4,9 +4,10 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import F, Q
 from django.http import JsonResponse
-from ..utils.markdown import render_markdown
 from ..design_tokens import difficulty_css_class
 from ..models import Article, AnalysisTask, Solution
+from ..utils.http import safe_next_url
+from ..utils.markdown import render_markdown
 
 
 @login_required
@@ -173,94 +174,66 @@ def article_view(request, article_id):
 def article_delete(request, article_id):
     """Delete an article (and cascade delete solution if published)"""
     article = get_object_or_404(Article, id=article_id)
-    
-    # Get redirect target from POST data or referrer
-    redirect_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
-    default_redirect = 'article_list'
-    
+    next_url = safe_next_url(request, 'article_list')
+
     # Only allow the author or staff to delete
     if not article.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to delete this article.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect)
-    
+        return redirect(next_url)
+
     # Prevent deleting if it's the last reference solution
     if article.is_published():
         solution = article.solution
         task = solution.analysis_task
         is_reference_solution = solution.author == task.author
-        
+
         if is_reference_solution:
             reference_solution_count = task.solutions.filter(author=task.author).count()
             if reference_solution_count <= 1:
                 messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
-                if redirect_url:
-                    return redirect(redirect_url)
-                return redirect(default_redirect)
-    
+                return redirect(next_url)
+
     if request.method == 'POST':
         article_title = article.title
         article.delete()  # This will cascade delete the solution if published
         messages.success(request, f'Article "{article_title}" has been deleted.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect)
-    
-    # If not POST, redirect back
-    if redirect_url:
-        return redirect(redirect_url)
-    return redirect(default_redirect)
+
+    return redirect(next_url)
 
 
 @login_required
 def article_unpublish(request, article_id):
     """Unpublish an article (delete solution, keep article as draft)"""
     article = get_object_or_404(Article, id=article_id)
-    
-    # Get redirect target from POST data or referrer
-    redirect_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
-    default_redirect = 'article_list'
-    
+    next_url = safe_next_url(request, 'article_list')
+
     # Only allow the author or staff to unpublish
     if not article.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to unpublish this article.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect)
-    
+        return redirect(next_url)
+
     # Check if it's published
     if not article.is_published():
         messages.error(request, 'This article is not published.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect)
-    
+        return redirect(next_url)
+
     # Prevent unpublishing if it's the last reference solution
     solution = article.solution
     task = solution.analysis_task
     is_reference_solution = solution.author == task.author
-    
+
     if is_reference_solution:
         reference_solution_count = task.solutions.filter(author=task.author).count()
         if reference_solution_count <= 1:
             messages.error(request, 'Cannot unpublish the last reference solution. At least one reference solution must remain.')
-            if redirect_url:
-                return redirect(redirect_url)
-            return redirect(default_redirect)
-    
+            return redirect(next_url)
+
     if request.method == 'POST':
         article_title = article.title
         solution.delete()  # Delete only the solution, keep the article
         messages.success(request, f'Article "{article_title}" has been unpublished and converted to a draft.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect)
-    
-    # If not POST, redirect back
-    if redirect_url:
-        return redirect(redirect_url)
-    return redirect(default_redirect)
+
+    return redirect(next_url)
 
 
 @login_required

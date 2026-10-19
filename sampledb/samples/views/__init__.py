@@ -21,7 +21,9 @@ from .auth import (
     delete_account
 )
 from .pages import impressum, privacy_policy, markdown_editor
-from .comments import edit_comment, delete_comment, post_comment, search_users
+from .comments import (
+    edit_comment, delete_comment, post_comment, comment_posted, comments_api_disabled, search_users
+)
 from .notifications import (
     notification_list,
     notification_dropdown,
@@ -81,6 +83,10 @@ __all__ = [
     # Comments
     'edit_comment',
     'delete_comment',
+    'post_comment',
+    'comment_posted',
+    'comments_api_disabled',
+    'search_users',
     # Notifications
     'notification_list',
     'notification_dropdown',
