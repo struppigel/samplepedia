@@ -149,7 +149,7 @@ def create_solution(request, sha256, task_id):
     sample = get_object_or_404(AnalysisTask, id=task_id)
     
     if request.method == 'POST':
-        form = SolutionForm(request.POST)
+        form = SolutionForm(request.POST, task=sample)
         if form.is_valid():
             draft_article_id = form.cleaned_data.get('draft_article_id')
             
@@ -203,7 +203,7 @@ def create_solution(request, sha256, task_id):
             
             return redirect('sample_detail', sha256=sha256, task_id=task_id)
     else:
-        form = SolutionForm()
+        form = SolutionForm(task=sample)
     
     return render(request, 'samples/solution_form.html', {
         'form': form,
@@ -229,13 +229,13 @@ def edit_solution(request, sha256, task_id, solution_id):
         return redirect('edit_onsite_solution', sha256=sha256, task_id=task_id, solution_id=solution_id)
     
     if request.method == 'POST':
-        form = SolutionForm(request.POST, instance=solution)
+        form = SolutionForm(request.POST, instance=solution, task=sample)
         if form.is_valid():
             form.save()
             messages.success(request, 'Solution updated successfully!')
             return redirect('sample_detail', sha256=sha256, task_id=task_id)
     else:
-        form = SolutionForm(instance=solution)
+        form = SolutionForm(instance=solution, task=sample)
     
     return render(request, 'samples/solution_form.html', {
         'form': form,
@@ -286,18 +286,18 @@ def view_onsite_solution(request, sha256, task_id, solution_id):
     sample = get_object_or_404(AnalysisTask, id=task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type='onsite')
     
-    # Increment article view count using F expression for atomic update
-    if solution.article:
-        Article.objects.filter(id=solution.article.id).update(view_count=F('view_count') + 1)
-        solution.article.refresh_from_db()
-    
     # Check if solution is hidden and user has permission to view
     if solution.hidden_until and timezone.now() < solution.hidden_until:
-        if not (request.user.is_authenticated and 
+        if not (request.user.is_authenticated and
                 (request.user.is_staff or request.user == solution.author or request.user == sample.author)):
             messages.error(request, 'This solution is not yet available.')
             return redirect('sample_detail', sha256=sha256, task_id=task_id)
-    
+
+    # Count only views that actually show the solution (atomic F-expression update)
+    if solution.article:
+        Article.objects.filter(id=solution.article.id).update(view_count=F('view_count') + 1)
+        solution.article.refresh_from_db()
+
     # Check if user liked this solution
     user_has_liked = False
     if request.user.is_authenticated:
@@ -356,20 +356,22 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
         content = request.POST.get('content', '').strip()
         
         # Validation
+        error = None
         if not title:
-            messages.error(request, 'Title is required.')
-            return render(request, 'samples/onsite_solution_editor.html', {
-                'sample': sample,
-                'solution': solution,
-                'form': {'title': {'value': title}, 'content': {'value': content}},
-            })
+            error = 'Title is required.'
+        elif not content:
+            error = 'Content is required.'
+        elif Solution.title_taken(sample, title, exclude_pk=solution.pk if solution else None):
+            error = f'This task already has a solution titled "{title}".'
         
-        if not content:
-            messages.error(request, 'Content is required.')
+        if error:
+            # Re-render with what the user typed so nothing is lost
+            messages.error(request, error)
             return render(request, 'samples/onsite_solution_editor.html', {
                 'sample': sample,
                 'solution': solution,
-                'form': {'title': {'value': title}, 'content': {'value': content}},
+                'initial_title': title,
+                'initial_content': content,
             })
         
         # Create or update solution with Article
@@ -385,7 +387,7 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
                 article = Article.objects.create(
                     title=title,
                     content=content,
-                    author=request.user,
+                    author=solution.author,
                 )
                 solution.article = article
             

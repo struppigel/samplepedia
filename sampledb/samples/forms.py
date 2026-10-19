@@ -67,8 +67,10 @@ class SolutionForm(forms.ModelForm):
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 15, 'id': 'id_content'}),
         }
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, task=None, **kwargs):
         super().__init__(*args, **kwargs)
+        # The task isn't a form field, so the per-task title uniqueness is checked in clean()
+        self.task = task
         # Make title not required by default - we'll validate conditionally
         self.fields['title'].required = False
     
@@ -93,6 +95,8 @@ class SolutionForm(forms.ModelForm):
         content = cleaned_data.get('content')
         draft_article_id = cleaned_data.get('draft_article_id')
         
+        title = cleaned_data.get('title')
+
         # If draft article is selected, validate it
         if draft_article_id:
             try:
@@ -102,11 +106,17 @@ class SolutionForm(forms.ModelForm):
                     raise forms.ValidationError('Selected draft article is already published.')
             except Article.DoesNotExist:
                 raise forms.ValidationError('Selected draft article does not exist.')
-            
+
             # If draft is selected, content should not be provided
             if content and content.strip():
                 raise forms.ValidationError('You cannot provide both a draft article and manual content. Please choose one.')
-        
+
+            # The solution takes the draft's title
+            title = article.title
+
+        if self.task and title and Solution.title_taken(self.task, title, exclude_pk=self.instance.pk):
+            raise forms.ValidationError(f'This task already has a solution titled "{title}".')
+
         # For onsite solutions without draft: require content
         if solution_type == 'onsite' and not draft_article_id and not content:
             raise forms.ValidationError('On-site solutions must have content or a draft article selected.')

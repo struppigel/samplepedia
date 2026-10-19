@@ -12,6 +12,14 @@ document.addEventListener('click', function(e) {
   }
 });
 
+// Ask before submitting destructive forms: <form data-confirm="Really delete?">
+document.addEventListener('submit', function(e) {
+  const form = e.target;
+  if (form.dataset.confirm && !confirm(form.dataset.confirm)) {
+    e.preventDefault();
+  }
+});
+
 // Generate consistent color for each tag based on tag name
 function hashString(str) {
   let hash = 0;

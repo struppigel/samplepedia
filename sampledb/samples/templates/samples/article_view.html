@@ -49,9 +49,14 @@
               <a href="{{ edit_url }}" class="btn btn-primary btn-sm">
                 <i class="fas fa-edit"></i> Edit
               </a>
-              <a href="{% url 'article_delete' article.id %}" class="btn btn-danger btn-sm">
-                <i class="fas fa-trash"></i> Delete
-              </a>
+              <form method="post" action="{% url 'article_delete' article.id %}" class="d-inline"
+                    data-confirm="Delete the article &quot;{{ article.title }}&quot;? This cannot be undone.">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'article_list' %}">
+                <button type="submit" class="btn btn-danger btn-sm">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </form>
             </div>
             {% endif %}
           </div>

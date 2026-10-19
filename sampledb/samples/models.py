@@ -525,7 +525,17 @@ class Solution(models.Model):
         if not user or not user.is_authenticated:
             return False
         return user.is_staff or user == self.analysis_task.author or user == self.author
-    
+
+    @property
+    def is_hidden(self):
+        """True while the solution is still hidden from other users"""
+        return bool(self.hidden_until and self.hidden_until > timezone.now())
+
+    @classmethod
+    def title_taken(cls, task, title, exclude_pk=None):
+        """Titles are unique per task (unique_together); check before saving to avoid an IntegrityError"""
+        return cls.objects.filter(analysis_task=task, title=title).exclude(pk=exclude_pk).exists()
+
     class Meta:
         unique_together = ['title', 'analysis_task']
         ordering = ['-created_at']

@@ -86,18 +86,19 @@ def article_editor(request, article_id=None):
         content = request.POST.get('content', '').strip()
         
         # Validation
+        error = None
         if not title:
-            messages.error(request, 'Title is required.')
-            return render(request, 'samples/article_editor.html', {
-                'article': article,
-                'form': {'title': {'value': title}, 'content': {'value': content}},
-            })
+            error = 'Title is required.'
+        elif not content:
+            error = 'Content is required.'
         
-        if not content:
-            messages.error(request, 'Content is required.')
+        if error:
+            # Re-render with what the user typed so nothing is lost
+            messages.error(request, error)
             return render(request, 'samples/article_editor.html', {
                 'article': article,
-                'form': {'title': {'value': title}, 'content': {'value': content}},
+                'initial_title': title,
+                'initial_content': content,
             })
         
         # Create or update article
@@ -305,6 +306,9 @@ def publish_article(request, article_id):
     
     sample = get_object_or_404(AnalysisTask, id=sample_id)
     
+    if Solution.title_taken(sample, article.title):
+        return JsonResponse({'error': f'This task already has a solution titled "{article.title}".'}, status=400)
+    
     # Create the solution
     solution = Solution.objects.create(
         analysis_task=sample,
@@ -339,6 +343,9 @@ def attach_draft_to_sample(request, sha256, task_id):
     # Check if already published
     if article.is_published():
         return JsonResponse({'error': 'Article is already published'}, status=400)
+    
+    if Solution.title_taken(sample, article.title):
+        return JsonResponse({'error': f'This task already has a solution titled "{article.title}".'}, status=400)
     
     # Create the solution
     solution = Solution.objects.create(

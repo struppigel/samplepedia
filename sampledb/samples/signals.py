@@ -173,8 +173,10 @@ def notify_on_solution(sender, instance, created, **kwargs):
     # Get the analysis task
     task = instance.analysis_task
     
-    # Send Discord notification for all new solutions (after transaction commits)
-    transaction.on_commit(lambda: _send_solution_discord_notification(instance))
+    # Announce new solutions on Discord (after transaction commits). Hidden ones are
+    # skipped: the embed links the solution directly, which would defeat the hiding.
+    if not instance.is_hidden:
+        transaction.on_commit(lambda: _send_solution_discord_notification(instance))
     
     # Send in-app notification to task author (only if different from solution author)
     if task.author and task.author != instance.author:
