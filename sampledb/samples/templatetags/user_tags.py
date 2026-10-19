@@ -1,9 +1,7 @@
-from django.utils import timezone
 from django import template
 
-from django.db.models import Q
-
 from samples.design_tokens import difficulty_css_class
+from samples.models import SolutionType
 
 register = template.Library()
 
@@ -139,31 +137,30 @@ def platform_icon(platform):
 @register.inclusion_tag('samples/_solution_icons.html')
 def solution_icons(task):
     """
-    Display solution type icons for an analysis task.
-    Shows one icon per solution type (blog, paper, video, onsite).
-    Dynamically detects all solution types present.
+    One icon per type of publicly visible solution, plus their count.
+    Rows from AnalysisTask.objects.for_listing() carry both precomputed.
     """
-    from collections import Counter
-    
-    # Filter out currently hidden solutions
-    solutions = task.solutions.filter(
-        Q(hidden_until__isnull=True) | Q(hidden_until__lte=timezone.now())
-    )
-    total_count = solutions.count()
-    
-    # Get all solution types present (ordered by the keys in solution_icon for consistency)
-    solution_types_present = []
-    if total_count > 0:
-        type_counts = Counter(solutions.values_list('solution_type', flat=True))
-        # Order by the keys in solution_icon filter for consistent display
-        icon_order = ['blog', 'paper', 'video', 'onsite']
-        solution_types_present = [st for st in icon_order if st in type_counts]
-    
+    if hasattr(task, 'solution_count_annotated'):
+        total_count = task.solution_count_annotated
+        present = {value for value in SolutionType.values if getattr(task, f'has_{value}_solution')}
+    else:
+        solutions = task.solutions.publicly_visible()
+        total_count = solutions.count()
+        present = set(solutions.values_list('solution_type', flat=True))
+
+    # Declaration order of SolutionType keeps the icons in a stable order
+    solution_types_present = [value for value in SolutionType.values if value in present]
     return {
         'solution_types': solution_types_present,
         'has_any': bool(solution_types_present),
         'total_count': total_count
     }
+
+
+@register.filter
+def editable_by(obj, user):
+    """{% if solution|editable_by:user %}: asks the model's user_can_edit(user)."""
+    return obj.user_can_edit(user)
 
 @register.inclusion_tag('samples/_solution_like_button.html')
 def solution_like_button(solution, is_liked_or_set):

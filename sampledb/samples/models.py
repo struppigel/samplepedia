@@ -10,6 +10,8 @@ from taggit.models import TaggedItemBase
 from cloudinary.models import CloudinaryField
 from django.core.validators import RegexValidator
 
+from .querysets import AnalysisTaskQuerySet, SolutionQuerySet
+
 
 # Difficulty point multipliers - SINGLE SOURCE OF TRUTH
 # Used in score calculation and displayed in UI
@@ -310,7 +312,9 @@ class AnalysisTask(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     send_discord_notification = models.BooleanField(default=True, verbose_name="Send Discord notification")
-    
+
+    objects = AnalysisTaskQuerySet.as_manager()
+
     class Meta:
         indexes = [
             models.Index(fields=['difficulty'], name='idx_difficulty'),
@@ -322,7 +326,9 @@ class AnalysisTask(models.Model):
     
     @property
     def favorite_count(self):
-        return self.favorited_by.count()
+        # Use the list annotation when the queryset provides it
+        annotated = getattr(self, 'favorite_count_annotated', None)
+        return self.favorited_by.count() if annotated is None else annotated
     
     def user_can_edit(self, user):
         """Check if a user has permission to edit this task"""
@@ -393,32 +399,15 @@ class Article(models.Model):
         return hasattr(self, 'solution') and self.solution is not None
     
     def get_publication_date(self):
-        """Get the date when this article was published (not hidden)"""
-        if not self.is_published():
+        """When the article became visible: None while unpublished or hidden"""
+        if not self.is_visible():
             return None
-        
-        solution = self.solution
-        # If solution has hidden_until and it's in the future, not yet published
-        if solution.hidden_until and solution.hidden_until > timezone.now():
-            return None
-        
-        # If solution was hidden, publication date is when it became visible
-        if solution.hidden_until:
-            return solution.hidden_until
-        
-        # Otherwise, publication date is when solution was created
-        return solution.created_at
-    
+        # A hidden solution was published when its hidden period ended
+        return self.solution.hidden_until or self.solution.created_at
+
     def is_visible(self):
         """Check if this article is visible (published and not hidden)"""
-        if not self.is_published():
-            return False
-        
-        solution = self.solution
-        if solution.hidden_until and solution.hidden_until > timezone.now():
-            return False
-        
-        return True
+        return self.is_published() and not self.solution.is_hidden
     
     def user_can_edit(self, user):
         """Check if a user has permission to edit this article"""
@@ -502,9 +491,13 @@ class Solution(models.Model):
         help_text="Date and time when this solution becomes visible. Leave blank for immediate visibility."
     )
     
+    objects = SolutionQuerySet.as_manager()
+
     @property
     def like_count(self):
-        return self.liked_by.count()
+        # Use the list annotation when the queryset provides it
+        annotated = getattr(self, 'like_count_annotated', None)
+        return self.liked_by.count() if annotated is None else annotated
     
     @property
     def get_content(self):
@@ -521,7 +514,7 @@ class Solution(models.Model):
         return self.title
     
     def user_can_see_hidden_status(self, user):
-        """Check if user should see the hidden badge/status (staff, task author, or solution author)"""
+        """Staff, the task author and the solution author may see a hidden solution"""
         if not user or not user.is_authenticated:
             return False
         return user.is_staff or user == self.analysis_task.author or user == self.author
@@ -530,6 +523,39 @@ class Solution(models.Model):
     def is_hidden(self):
         """True while the solution is still hidden from other users"""
         return bool(self.hidden_until and self.hidden_until > timezone.now())
+
+    def user_can_view(self, user):
+        """The instance-level twin of Solution.objects.visible_to(user)"""
+        return not self.is_hidden or self.user_can_see_hidden_status(user)
+
+    def user_can_edit(self, user):
+        return user.is_authenticated and (user == self.author or user.is_staff)
+
+    @property
+    def is_reference(self):
+        """Written by the task's own author"""
+        return self.author_id == self.analysis_task.author_id
+
+    def is_last_reference(self):
+        """Every task keeps at least one reference solution, so its last one can't be removed"""
+        if not self.is_reference:
+            return False
+        count = getattr(self, 'reference_count', None)  # from with_reference_count()
+        if count is None:
+            count = Solution.objects.filter(analysis_task_id=self.analysis_task_id).reference().count()
+        return count <= 1
+
+    def user_can_delete(self, user):
+        return self.user_can_edit(user) and not self.is_last_reference()
+
+    def get_absolute_url(self):
+        task = self.analysis_task
+        if self.solution_type == SolutionType.ONSITE:
+            return reverse('view_onsite_solution', kwargs={
+                'sha256': task.sha256, 'task_id': task.id, 'solution_id': self.id,
+            })
+        # External solutions live elsewhere; their page here is the task
+        return task.get_absolute_url()
 
     @classmethod
     def title_taken(cls, task, title, exclude_pk=None):

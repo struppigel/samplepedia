@@ -32,8 +32,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for item in page_obj %}
-                  {% with article=item.article reference_solution_count=item.reference_solution_count %}
+                  {% for article in page_obj %}
                   <tr>
                     <td class="text-truncate" style="max-width: 400px;">
                       <i class="fas fa-file-alt text-success me-2"></i>
@@ -100,7 +99,7 @@
                           <i class="fas fa-edit"></i>
                         </a>
                         {% comment %}Unpublish and Delete buttons - disable if it's the last reference solution{% endcomment %}
-                        {% if article.solution.author.id != article.solution.analysis_task.author.id or reference_solution_count > 1 %}
+                        {% if not article.solution.is_last_reference %}
                           <button class="btn btn-sm btn-link text-warning p-0 me-2" 
                                   onclick="confirmUnpublishArticle('{{ article.id }}', '{{ article.title|escapejs }}')"
                                   title="Unpublish (convert to draft)">
@@ -139,7 +138,6 @@
                       {% endif %}
                     </td>
                   </tr>
-                  {% endwith %}
                   {% empty %}
                   <tr>
                     <td colspan="7" class="text-center text-muted">

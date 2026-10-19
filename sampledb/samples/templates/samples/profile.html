@@ -1,7 +1,6 @@
 {% extends "samples/base.html" %}
 {% load static %}
 {% load user_tags %}
-{% load comments %}
 {% load url_helpers %}
 
 {% block title %}{{ profile_user.username }}'s Profile - Samplepedia{% endblock %}
@@ -123,7 +122,7 @@
                             {{ solution.title|truncatechars:50 }}
                           </a>
                           {% endif %}
-                          {% if solution.hidden_until and solution.user_can_see_hidden_status %}
+                          {% if solution.is_hidden %}
                             <span class="badge badge-warning ms-2" title="Hidden until {{ solution.hidden_until|date:'M d, Y H:i' }}">
                               <i class="fas fa-eye-slash"></i> Hidden
                             </span>
@@ -174,7 +173,7 @@
                           <a href="{% url 'edit_solution' solution.analysis_task.sha256 solution.analysis_task.id solution.id %}" class="btn btn-sm btn-link text-primary p-0 me-2" title="Edit Solution">
                             <i class="fas fa-edit"></i>
                           </a>
-                          {% if solution.is_undeletable %}
+                          {% if solution.is_last_reference %}
                             <span class="text-muted" title="Cannot delete the last reference solution">
                               <i class="fas fa-lock"></i>
                             </span>
@@ -307,9 +306,8 @@
 
                         <!-- Comments -->
                         <td class="text-center">
-                          {% get_comment_count for task as comment_count %}
                           <a href="{% url 'sample_detail' task.sha256 task.id %}" class="text-strong">
-                            <i class="fas fa-comment"></i> {{ comment_count }}
+                            <i class="fas fa-comment"></i> {{ task.comment_count_annotated }}
                           </a>
                         </td>
 

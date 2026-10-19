@@ -2,19 +2,18 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models.functions import Lower, Cast
-from django.db.models import Count, Case, When, IntegerField, CharField, Q, OuterRef, Subquery, F
+from django.db.models.functions import Lower
+from django.db.models import Case, When, IntegerField, F
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from taggit.models import Tag
 import re
-from django.contrib.contenttypes.models import ContentType
-from django_comments.models import Comment
 
 from ..models import AnalysisTask, Difficulty, SampleImage, Solution
 from ..forms import AnalysisTaskForm
+from ..querysets import difficulty_order
 from ..utils.markdown import render_markdown
 
 
@@ -34,39 +33,15 @@ def sample_list(request):
     if not request.user.is_authenticated and not has_filter_params:
         return render(request, "samples/landing.html")
 
-    # Get ContentType for AnalysisTask
-    analysistask_ct = ContentType.objects.get_for_model(AnalysisTask)
-
-    # Subquery to count comments for each task
-    comment_count_subquery = Comment.objects.filter(
-        content_type=analysistask_ct,
-        object_pk=Cast(OuterRef('pk'), output_field=CharField()),
-        is_public=True,
-        is_removed=False
-    ).values('object_pk').annotate(
-        count=Count('pk')
-    ).values('count')
-
-    # Annotate with favorite count and difficulty order for sorting
-    samples = AnalysisTask.objects.select_related('author').prefetch_related(
-        'tags', 'tools'
-    ).annotate(
-        favorite_count_annotated=Count('favorited_by'),
-        solution_count_annotated=Count('solutions'),
-        comment_count_annotated=Subquery(comment_count_subquery, output_field=IntegerField()),
-        difficulty_order=Case(
-            When(difficulty='easy', then=1),
-            When(difficulty='medium', then=2),
-            When(difficulty='advanced', then=3),
-            When(difficulty='expert', then=4),
-            output_field=IntegerField(),
-        ),
+    # Counts for display and sorting come from for_listing(), so rows cost no extra queries
+    samples = AnalysisTask.objects.for_listing().prefetch_related('tags', 'tools').annotate(
+        difficulty_order=difficulty_order(),
         has_video=Case(
             When(youtube_id='', then=0),
             default=1,
             output_field=IntegerField(),
         )
-    ).all()
+    )
 
     # filter course samples, those are only displayed in course view
     # if they overlap, they need a different description anyways
@@ -160,37 +135,15 @@ def sample_detail(request, sha256, task_id):
     if request.user.is_authenticated:
         user_has_favorited = sample.favorited_by.filter(id=request.user.id).exists()
     
-    # Get solutions for this sample
-    solutions = sample.solutions.select_related('author').all()
-    
-    # Filter out hidden solutions for non-staff users (but allow seeing own solutions)
-    if not request.user.is_staff and request.user != sample.author:
-        if request.user.is_authenticated:
-            solutions = solutions.filter(
-                Q(hidden_until__isnull=True) | 
-                Q(hidden_until__lte=timezone.now()) |
-                Q(author=request.user)
-            )
-        else:
-            solutions = solutions.filter(
-                Q(hidden_until__isnull=True) | 
-                Q(hidden_until__lte=timezone.now())
-            )
-    
+    # reference_count lets the template lock the last reference solution
+    solutions = list(sample.solutions.visible_to(request.user).for_listing().with_reference_count())
+
     # Get user's liked solution IDs
     user_liked_solution_ids = set()
     if request.user.is_authenticated:
         user_liked_solution_ids = set(
             request.user.liked_solutions.values_list('id', flat=True)
         )
-    
-    # Count reference solutions (by task author) for delete permission check
-    reference_solution_count = solutions.filter(author=sample.author).count()
-    
-    # Add flag to each solution for whether user can see hidden status
-    solutions_list = list(solutions)
-    for solution in solutions_list:
-        solution.user_can_see_hidden_status = solution.user_can_see_hidden_status(request.user)
     
     # Find first YouTube solution if sample doesn't have youtube_id
     youtube_solution = None
@@ -208,11 +161,10 @@ def sample_detail(request, sha256, task_id):
     return render(request, "samples/detail.html", {
         "sample": sample,
         "user_has_liked": user_has_favorited,
-        "solutions": solutions_list,
+        "solutions": solutions,
         "youtube_solution": youtube_solution,
         "user_can_edit": sample.user_can_edit(request.user),
         "user_liked_solution_ids": user_liked_solution_ids,
-        "reference_solution_count": reference_solution_count,
     })
 
 

@@ -3,7 +3,6 @@
 {% load url_helpers %}  
 {% load cloudinary %}
 {% load user_tags %}
-{% load comments %}
 {% block title %}Trainings Samples{% endblock %}
 {% block page_title %}Trainings Samples{% endblock %}
 
@@ -178,9 +177,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
               <!-- Comments -->
               <td class="text-center">
-              {% get_comment_count for s as comment_count %}
               <a href="{% url 'sample_detail' s.sha256 s.id %}" class="text-strong">
-                <i class="fas fa-comment"></i> {{ comment_count }}
+                <i class="fas fa-comment"></i> {{ s.comment_count_annotated }}
               </a>
               </td>
 

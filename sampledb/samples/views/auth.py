@@ -276,48 +276,21 @@ def user_profile(request, username):
     
     profile_user = get_object_or_404(User, username=username)
     
-    # Get user's submitted solutions with related analysis tasks
-    solutions_list = Solution.objects.filter(author=profile_user).select_related('analysis_task').order_by('-created_at')
-    
-    # Filter hidden solutions based on viewer permissions
-    if request.user == profile_user:
-        # Users always see their own solutions (no filtering)
-        pass
-    elif request.user.is_staff:
-        # Staff see everything (no filtering)
-        pass
-    else:
-        # Other authenticated users: hide hidden solutions
-        solutions_list = solutions_list.filter(
-            Q(hidden_until__isnull=True) | 
-            Q(hidden_until__lte=timezone.now()) |
-            Q(author=request.user)
-        )
-    
-    # Get user's submitted analysis tasks
-    analysis_tasks_list = AnalysisTask.objects.filter(author=profile_user).order_by('-created_at')
+    # reference_count lets the template lock the last reference solution
+    solutions_list = (
+        Solution.objects.filter(author=profile_user)
+        .visible_to(request.user)
+        .for_listing()
+        .with_reference_count()
+        .order_by('-created_at')
+    )
+    analysis_tasks_list = AnalysisTask.objects.for_listing().filter(author=profile_user).order_by('-created_at')
     
     # Pagination for solutions
     solutions_page = request.GET.get('solutions_page', 1)
     solutions_paginator = Paginator(solutions_list, 10)  # 10 solutions per page
     solutions = solutions_paginator.get_page(solutions_page)
-    
-    # Mark solutions that cannot be deleted (last reference solution)
-    # AND add user_can_see_hidden_status flag for template
-    for solution in solutions:
-        is_reference = solution.author == solution.analysis_task.author
-        if is_reference:
-            ref_count = Solution.objects.filter(
-                analysis_task=solution.analysis_task,
-                author=solution.analysis_task.author
-            ).count()
-            solution.is_undeletable = ref_count <= 1
-        else:
-            solution.is_undeletable = False
-        
-        # Add flag for hidden status visibility
-        solution.user_can_see_hidden_status = solution.user_can_see_hidden_status(request.user)
-    
+
     # Pagination for analysis tasks
     tasks_page = request.GET.get('tasks_page', 1)
     tasks_paginator = Paginator(analysis_tasks_list, 10)  # 10 tasks per page

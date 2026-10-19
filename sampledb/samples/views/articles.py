@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import F, Q
+from django.db.models import F, Prefetch, Q
 from django.http import JsonResponse
 from ..design_tokens import difficulty_css_class
 from ..models import Article, AnalysisTask, Solution
@@ -13,15 +13,12 @@ from ..utils.markdown import render_markdown
 @login_required
 def article_list(request):
     """List all articles by the current user (both drafts and published)"""
-    from django.db.models import Count, Q
-    
+    # Published articles carry their solution with like and reference counts
+    solutions = Solution.objects.for_listing().with_reference_count()
     articles = Article.objects.filter(
         author=request.user
     ).select_related('author').prefetch_related(
-        'solution',
-        'solution__analysis_task',
-        'solution__analysis_task__author',
-        'solution__liked_by'
+        Prefetch('solution', queryset=solutions),
     ).order_by('-updated_at')
     
     # Get IDs of solutions liked by current user
@@ -31,28 +28,7 @@ def article_list(request):
             request.user.liked_solutions.values_list('id', flat=True)
         )
     
-    # For each published article, calculate reference solution count
-    articles_with_counts = []
-    for article in articles:
-        article_data = {
-            'article': article,
-            'reference_solution_count': 0
-        }
-        
-        # If article is published and is a reference solution, count reference solutions
-        if article.is_published():
-            solution = article.solution
-            task = solution.analysis_task
-            if solution.author_id == task.author_id:
-                # Count reference solutions for this task
-                article_data['reference_solution_count'] = task.solutions.filter(
-                    author=task.author
-                ).count()
-        
-        articles_with_counts.append(article_data)
-    
-    # Pagination
-    paginator = Paginator(articles_with_counts, 25)
+    paginator = Paginator(articles, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -139,7 +115,7 @@ def article_view(request, article_id):
     article = get_object_or_404(Article, id=article_id)
     
     # Only allow the author or staff to view draft articles
-    if article.author != request.user and not request.user.is_staff:
+    if not article.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to view this article.')
         return redirect('article_list')
     
@@ -182,17 +158,9 @@ def article_delete(request, article_id):
         messages.error(request, 'You do not have permission to delete this article.')
         return redirect(next_url)
 
-    # Prevent deleting if it's the last reference solution
-    if article.is_published():
-        solution = article.solution
-        task = solution.analysis_task
-        is_reference_solution = solution.author == task.author
-
-        if is_reference_solution:
-            reference_solution_count = task.solutions.filter(author=task.author).count()
-            if reference_solution_count <= 1:
-                messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
-                return redirect(next_url)
+    if article.is_published() and article.solution.is_last_reference():
+        messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
+        return redirect(next_url)
 
     if request.method == 'POST':
         article_title = article.title
@@ -218,16 +186,10 @@ def article_unpublish(request, article_id):
         messages.error(request, 'This article is not published.')
         return redirect(next_url)
 
-    # Prevent unpublishing if it's the last reference solution
     solution = article.solution
-    task = solution.analysis_task
-    is_reference_solution = solution.author == task.author
-
-    if is_reference_solution:
-        reference_solution_count = task.solutions.filter(author=task.author).count()
-        if reference_solution_count <= 1:
-            messages.error(request, 'Cannot unpublish the last reference solution. At least one reference solution must remain.')
-            return redirect(next_url)
+    if solution.is_last_reference():
+        messages.error(request, 'Cannot unpublish the last reference solution. At least one reference solution must remain.')
+        return redirect(next_url)
 
     if request.method == 'POST':
         article_title = article.title

@@ -4,13 +4,15 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.utils import timezone
+from django.urls import reverse
 from django.db.models import Q, F
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Lower
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from ..models import AnalysisTask, Solution, SolutionType, EditorImage, Article
+from taggit.models import Tag
+from ..models import AnalysisTask, Difficulty, Platform, Solution, SolutionType, EditorImage, Article
 from ..forms import SolutionForm
+from ..querysets import difficulty_order
 from ..utils.http import safe_next_url
 from ..utils.markdown import render_markdown
 
@@ -19,11 +21,6 @@ logger = logging.getLogger(__name__)
 
 def solution_list(request):
     """List all solutions with optional filtering by solution type, search, and sorting"""
-    from django.db.models import Q, Count, Case, When, IntegerField
-    from django.db.models.functions import Lower
-    from taggit.models import Tag
-    from ..models import Difficulty, Platform
-    
     solution_type = request.GET.get("solution_type", "")
     q = request.GET.get("q", "").strip()
     tag = request.GET.get("tag")
@@ -31,34 +28,12 @@ def solution_list(request):
     platform = request.GET.get("platform")
     sort = request.GET.get("sort", "-created")
     
-    # Get all solutions with like count and difficulty order annotations
-    solutions = Solution.objects.select_related('analysis_task', 'author').prefetch_related(
+    solutions = Solution.objects.visible_to(request.user).for_listing().prefetch_related(
         'analysis_task__tags'
     ).annotate(
-        like_count_annotated=Count('liked_by'),
-        difficulty_order=Case(
-            When(analysis_task__difficulty='easy', then=1),
-            When(analysis_task__difficulty='medium', then=2),
-            When(analysis_task__difficulty='advanced', then=3),
-            When(analysis_task__difficulty='expert', then=4),
-            output_field=IntegerField(),
-        )
+        difficulty_order=difficulty_order('analysis_task__difficulty'),
     )
-    
-    # Filter out hidden solutions for non-staff users (but allow seeing own solutions)
-    if not request.user.is_staff:
-        if request.user.is_authenticated:
-            solutions = solutions.filter(
-                Q(hidden_until__isnull=True) | 
-                Q(hidden_until__lte=timezone.now()) |
-                Q(author=request.user)
-            )
-        else:
-            solutions = solutions.filter(
-                Q(hidden_until__isnull=True) | 
-                Q(hidden_until__lte=timezone.now())
-            )
-    
+
     # Filter by solution type if specified
     if solution_type:
         solutions = solutions.filter(solution_type=solution_type)
@@ -105,15 +80,10 @@ def solution_list(request):
     else:
         solutions = solutions.order_by('-created_at')
     
-    # Paginate the results (18 per page)
     paginator = Paginator(solutions, 17)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-    
-    # Add flag to each solution for whether user can see hidden status
-    for solution in page_obj:
-        solution.user_can_see_hidden_status = solution.user_can_see_hidden_status(request.user)
-    
+
     # Get user's liked solution IDs for display
     user_liked_solution_ids = set()
     if request.user.is_authenticated:
@@ -214,16 +184,13 @@ def create_solution(request, sha256, task_id):
 @login_required
 def edit_solution(request, sha256, task_id, solution_id):
     """Edit a solution (by author or staff)"""
-    from django.urls import reverse
-    
     sample = get_object_or_404(AnalysisTask, id=task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample)
     
-    # Only allow the author or staff to edit
-    if solution.author != request.user and not request.user.is_staff:
+    if not solution.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to edit this solution.')
         return redirect('sample_detail', sha256=sha256, task_id=task_id)
-    
+
     # Redirect onsite solutions to the dedicated editor
     if solution.solution_type == 'onsite':
         return redirect('edit_onsite_solution', sha256=sha256, task_id=task_id, solution_id=solution_id)
@@ -246,32 +213,21 @@ def edit_solution(request, sha256, task_id, solution_id):
 
 @login_required
 def delete_solution(request, sha256, task_id, solution_id):
-    """Delete a solution (only by its author)"""
+    """Delete a solution (by its author or staff)"""
     sample = get_object_or_404(AnalysisTask, id=task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample)
     
     next_url = safe_next_url(request, 'sample_detail', sha256=sha256, task_id=task_id)
 
-    # Only allow the author to delete their own solution
-    if solution.author != request.user and not request.user.is_staff:
+    if not solution.user_can_edit(request.user):
         messages.error(request, 'You can only delete your own solutions.')
         return redirect(next_url)
 
     if request.method == 'POST':
-        # Check if this is a reference solution (author is task author)
-        is_reference_solution = solution.author == sample.author
-        
-        # Prevent deleting the last reference solution (for everyone, including staff)
-        if is_reference_solution:
-            # Count reference solutions for this task
-            reference_solution_count = Solution.objects.filter(
-                analysis_task=sample,
-                author=sample.author
-            ).count()
-            
-            if reference_solution_count <= 1:
-                messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
-                return redirect(next_url)
+        # Applies to everyone, including staff
+        if solution.is_last_reference():
+            messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
+            return redirect(next_url)
 
         solution.delete()
         messages.success(request, 'Solution deleted successfully.')
@@ -281,17 +237,12 @@ def delete_solution(request, sha256, task_id, solution_id):
 
 def view_onsite_solution(request, sha256, task_id, solution_id):
     """View an on-site solution with rendered markdown content"""
-    from django.urls import reverse
-    
     sample = get_object_or_404(AnalysisTask, id=task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type='onsite')
     
-    # Check if solution is hidden and user has permission to view
-    if solution.hidden_until and timezone.now() < solution.hidden_until:
-        if not (request.user.is_authenticated and
-                (request.user.is_staff or request.user == solution.author or request.user == sample.author)):
-            messages.error(request, 'This solution is not yet available.')
-            return redirect('sample_detail', sha256=sha256, task_id=task_id)
+    if not solution.user_can_view(request.user):
+        messages.error(request, 'This solution is not yet available.')
+        return redirect('sample_detail', sha256=sha256, task_id=task_id)
 
     # Count only views that actually show the solution (atomic F-expression update)
     if solution.article:
@@ -303,23 +254,20 @@ def view_onsite_solution(request, sha256, task_id, solution_id):
     if request.user.is_authenticated:
         user_has_liked = solution.liked_by.filter(id=request.user.id).exists()
     
-    # Check if user can edit
-    user_can_edit = False
+    user_can_edit = solution.user_can_edit(request.user)
     edit_solution_url = None
-    if request.user.is_authenticated:
-        user_can_edit = solution.author == request.user or request.user.is_staff
-        if user_can_edit:
-            edit_solution_url = reverse('edit_onsite_solution', kwargs={
-                'sha256': sha256,
-                'task_id': task_id,
-                'solution_id': solution_id
-            })
+    if user_can_edit:
+        edit_solution_url = reverse('edit_onsite_solution', kwargs={
+            'sha256': sha256,
+            'task_id': task_id,
+            'solution_id': solution_id
+        })
     
     # Render markdown content (use get_content property for backward compatibility)
     rendered_content = render_markdown(solution.get_content)
     
     # Prepare URLs for template
-    is_reference = solution.author == sample.author
+    is_reference = solution.is_reference
     user_profile_url = reverse('user_profile', kwargs={'username': solution.author.username})
     task_detail_url = reverse('sample_detail', kwargs={'sha256': sha256, 'task_id': task_id})
     
@@ -346,8 +294,7 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
     if solution_id:
         solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type='onsite')
         
-        # Only allow the author or staff to edit
-        if solution.author != request.user and not request.user.is_staff:
+        if not solution.user_can_edit(request.user):
             messages.error(request, 'You do not have permission to edit this solution.')
             return redirect('sample_detail', sha256=sha256, task_id=task_id)
     
@@ -430,17 +377,11 @@ def solutions_showcase(request):
     # Get all recent solutions with their related data
     # Exclude all hidden solutions from showcase
     # make sure the hidden_until is considered for ordering
-    solutions = Solution.objects.select_related(
-        'analysis_task', 'author'
-    ).filter(
-        Q(hidden_until__isnull=True) | 
-        Q(hidden_until__lte=timezone.now())
-    ).annotate(
+    solutions = Solution.objects.publicly_visible().for_listing().annotate(
         visible_date=Coalesce('hidden_until', 'created_at')
     ).order_by('-visible_date')
     
     # Pagination
-    from django.core.paginator import Paginator
     paginator = Paginator(solutions, 6)  # 6 solutions per page (3 rows of 2)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)

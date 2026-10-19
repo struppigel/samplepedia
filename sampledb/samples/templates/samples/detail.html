@@ -166,12 +166,12 @@
                     {% else %}
                       <a href="{{ solution.url }}" target="_blank" rel="noopener noreferrer" class="ms-2" data-external-confirm>{{ solution.title }}</a>
                     {% endif %}
-                    {% if solution.author == sample.author %}
+                    {% if solution.is_reference %}
                       <span class="badge badge-info ms-2" title="Reference solution by task author">
                         <i class="fas fa-star"></i> Reference
                       </span>
                     {% endif %}
-                    {% if solution.hidden_until and solution.user_can_see_hidden_status %}
+                    {% if solution.is_hidden %}
                       <span class="badge badge-warning ms-2" title="Hidden until {{ solution.hidden_until|date:'M d, Y H:i' }}">
                         <i class="fas fa-eye-slash"></i> Hidden
                       </span>
@@ -185,29 +185,24 @@
                     </span>
                     {% endif %}
                     {% solution_like_button solution user_liked_solution_ids %}
-                    {% if user.is_authenticated %}
-                      {% if solution.author == user or user.is_staff %}
-                        <a href="{% url 'edit_solution' sample.sha256 sample.id solution.id %}" 
-                           class="btn btn-link btn-sm text-primary p-0 ms-2"
-                           title="Edit this solution">
-                          <i class="fas fa-edit"></i>
-                        </a>
-                      {% endif %}
-                      {% if solution.author == user %}
-                      {% comment %}Hide delete button if it's the last reference solution{% endcomment %}
-                      {% if solution.author != sample.author or reference_solution_count > 1 %}
-                        <button class="btn btn-link btn-sm text-danger p-0 ms-2" 
-                                onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256|escapejs }}', '{{ sample.id }}')"
-                                title="Delete this solution">
-                          <i class="fas fa-trash-alt"></i>
-                        </button>
-                      {% else %}
+                    {% if solution|editable_by:user %}
+                      <a href="{% url 'edit_solution' sample.sha256 sample.id solution.id %}"
+                         class="btn btn-link btn-sm text-primary p-0 ms-2"
+                         title="Edit this solution">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                      {% if solution.is_last_reference %}
                         <span class="btn btn-link btn-sm text-muted p-0 ms-2 cursor-not-allowed"
                               title="Cannot delete the last reference solution">
                           <i class="fas fa-lock"></i>
                         </span>
+                      {% else %}
+                        <button class="btn btn-link btn-sm text-danger p-0 ms-2"
+                                onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256|escapejs }}', '{{ sample.id }}')"
+                                title="Delete this solution">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
                       {% endif %}
-                    {% endif %}
                     {% endif %}
                   </div>
                 </li>

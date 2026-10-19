@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 
-from ..models import Course, AnalysisTask
+from ..models import Course, CourseReference, AnalysisTask
 
 
 def course_list(request):
@@ -22,19 +22,18 @@ def course_samples(request, course_id):
     
     # Get all samples that have references to this course
     # We need to get distinct samples and annotate with the minimum section number
+    # Prefetch only this course's references (filtering per sample would re-query each one)
+    course_refs = CourseReference.objects.filter(course=course).order_by('section')
     samples = AnalysisTask.objects.filter(
         course_references__course=course
-    ).prefetch_related('course_references').distinct()
+    ).prefetch_related(
+        Prefetch('course_references', queryset=course_refs, to_attr='refs_in_course')
+    ).distinct()
     
     # Build a list with samples and their course references
     sample_data = []
     for sample in samples:
-        # Get all course references for this sample in this course
-        refs = sample.course_references.filter(
-            course=course
-        ).order_by('section')
-        
-        for ref in refs:
+        for ref in sample.refs_in_course:
             sample_data.append({
                 'sample': sample,
                 'section': ref.section,
