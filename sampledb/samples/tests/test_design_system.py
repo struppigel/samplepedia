@@ -13,6 +13,11 @@ This test suite covers:
 7. Python design tokens (samples/design_tokens.py) match tokens.css
 8. Flash messages, the comments base.html shim, the AJAX difficulty class
    and Discord embed colors use the shared design tokens
+9. Every var(--sp-*) in use is defined, and every defined token is used
+10. JavaScript doesn't set design values through element.style
+
+Checks that still have known violations compare against a baseline that may
+only shrink (see RatchetMixin): fix a violation, then delete its entry.
 """
 
 import re
@@ -48,7 +53,8 @@ EMAIL_TEMPLATES = {
 STATIC_TAG_RE = re.compile(r"""{%\s*static\s+['"]([^'"]+)['"]\s*%}""")
 STYLE_ATTR_RE = re.compile(r'\sstyle="([^"]*)"')
 COMMENT_RE = re.compile(r'/\*.*?\*/', re.S)
-DECLARATION_RE = re.compile(r'(?<=[{;])\s*(-?[a-z][a-z-]*)\s*:\s*([^;{}]+)')
+# Property names, including vendor prefixes and custom properties (--bs-*, --sp-*)
+DECLARATION_RE = re.compile(r'(?<=[{;])\s*(-{0,2}[a-z][\w-]*)\s*:\s*([^;{}]+)')
 VAR_RE = re.compile(r'var\([^()]*\)')
 HEX_COLOR_RE = re.compile(r'#[0-9a-fA-F]{3,8}\b')
 COLOR_FUNCTION_RE = re.compile(r'\b(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(([^()]*)\)', re.I)
@@ -59,13 +65,18 @@ NAMED_COLOR_RE = re.compile(
 
 # Properties whose values must come from tokens outside tokens.css
 TOKEN_ONLY_PROPERTIES = {
-    'font-family', 'font-size', 'border-radius', 'box-shadow', 'z-index', 'transition', 'animation',
+    'font', 'font-family', 'font-size', 'font-weight', 'line-height',
+    'border-radius', 'box-shadow', 'z-index', 'transition', 'animation',
 }
 KEYWORDS = {'0', 'none', 'inherit', 'initial', 'unset', 'auto', 'transparent', 'currentcolor'}
 
 
 def template_files():
     return sorted(TEMPLATES_DIR.rglob('*.html'))
+
+
+def js_files():
+    return sorted(JS_DIR.glob('*.js'))
 
 
 def relative(path):
@@ -90,22 +101,52 @@ def css_declarations(text):
 
 
 def raw_color_violations(value):
-    literal = strip_vars(value)
+    # Keep a marker where var() was, so rgba(var(--sp-brand-rgb), 0.1) counts as token-based
+    literal = value
+    previous = None
+    while previous != literal:
+        previous = literal
+        literal = VAR_RE.sub('VAR', literal)
     problems = HEX_COLOR_RE.findall(literal) + NAMED_COLOR_RE.findall(literal)
     for name, args in COLOR_FUNCTION_RE.findall(literal):
-        if args.strip(' ,/'):
+        if 'VAR' not in args and args.strip(' ,/'):
             problems.append(f'{name}({args})')
     return problems
 
 
 def inline_styles():
-    """(template, style value) for every style="" outside the email templates."""
+    """(file, style value) for every style="" in templates (except emails) and in HTML built by JS."""
     for path in template_files():
         if relative(path) in EMAIL_TEMPLATES:
             continue
         for style in STYLE_ATTR_RE.findall(path.read_text(encoding='utf-8')):
             # template expressions ({{ }}, {% %}) are data, not design values
             yield relative(path), re.sub(r'{[{%].*?[%}]}', '', style)
+    for path in js_files():
+        for style in STYLE_ATTR_RE.findall(path.read_text(encoding='utf-8')):
+            # ${...} interpolations are data, not design values
+            yield path.name, re.sub(r'\$\{.*?\}', '', style)
+
+
+def token_block_names(selector):
+    """--sp-* names declared in every tokens.css block with this selector (regex)."""
+    text = COMMENT_RE.sub('', TOKENS_CSS.read_text(encoding='utf-8'))
+    blocks = re.findall(selector + r'\s*{(.*?)}', text, re.S)
+    return {name for block in blocks for name in re.findall(r'--sp-([\w-]+)\s*:', block)}
+
+
+class RatchetMixin:
+    """
+    For checks with known violations: anything outside the baseline fails, and
+    so does a baseline entry that no longer occurs, so the list can only shrink.
+    """
+
+    def assertWithinBaseline(self, found, baseline):
+        found = set(found)
+        new = sorted(found - baseline)
+        fixed = sorted(baseline - found)
+        self.assertEqual(new, [], 'New violations:\n' + '\n'.join(new))
+        self.assertEqual(fixed, [], 'Fixed; remove these from the baseline:\n' + '\n'.join(fixed))
 
 
 class StaticReferencesTestCase(SimpleTestCase):
@@ -135,8 +176,15 @@ class NoImportantTestCase(SimpleTestCase):
         self.assertEqual(offenders, [])
 
 
-class TokensOnlyTestCase(SimpleTestCase):
+class TokensOnlyTestCase(RatchetMixin, SimpleTestCase):
     """Raw design values live in tokens.css; everything else uses var(--sp-*)"""
+
+    KNOWN_RAW_VALUES = {
+        'components.css: line-height: 1.4',
+        'components.css: line-height: 1.6',
+        'components.css: line-height: 1.6em',
+        'solutions-showcase.css: line-height: 1.25em',
+    }
 
     def test_no_raw_colors_outside_tokens(self):
         offenders = []
@@ -170,7 +218,7 @@ class TokensOnlyTestCase(SimpleTestCase):
                         offenders.append(f"{path.name}: {prop}: {value.strip()}")
                 elif literal and literal.lower() not in KEYWORDS:
                     offenders.append(f"{path.name}: {prop}: {value.strip()}")
-        self.assertEqual(offenders, [], "\n".join(offenders))
+        self.assertWithinBaseline(offenders, self.KNOWN_RAW_VALUES)
 
     def test_inline_styles_have_no_design_values(self):
         design_props = TOKEN_ONLY_PROPERTIES | {'color', 'background', 'background-color', 'border-color'}
@@ -180,6 +228,58 @@ class TokensOnlyTestCase(SimpleTestCase):
                 prop = declaration.split(':', 1)[0].strip().lower()
                 if prop in design_props:
                     offenders.append(f"{name}: {declaration.strip()}")
+        self.assertEqual(offenders, [], "\n".join(offenders))
+
+
+class TokenUsageTestCase(RatchetMixin, SimpleTestCase):
+    """Tokens that are used exist, and tokens that exist are used"""
+
+    TOKEN_USE_RE = re.compile(r'var\(\s*--sp-([\w-]+)')
+    # JS reads or writes tokens by name, e.g. style.setProperty('--sp-x', ...)
+    TOKEN_NAME_RE = re.compile(r"""['"]--sp-([\w-]+)['"]""")
+
+    KNOWN_UNUSED = {
+        'black', 'brand-tint', 'brand-tint-strong', 'close-color', 'editor-help-code-bg',
+        'editor-help-heading', 'ext-badge-bg', 'ext-badge-fg', 'fs-close', 'fs-code', 'fs-icon',
+        'fs-lg', 'lh-tight', 'radius-round', 'shadow-close-text', 'shadow-raised',
+        'shadow-thumbnail', 'space-5', 'surface-raised', 'surface-sunken', 'z-ext-badge',
+    }
+
+    def used_tokens(self):
+        used = set()
+        for path in [*project_css_files(), *template_files(), *js_files()]:
+            text = path.read_text(encoding='utf-8')
+            used |= set(self.TOKEN_USE_RE.findall(text)) | set(self.TOKEN_NAME_RE.findall(text))
+        return used
+
+    def test_used_tokens_are_defined(self):
+        undefined = sorted(self.used_tokens() - token_block_names(r':root'))
+        self.assertEqual(undefined, [], 'Used but not defined in tokens.css :root')
+
+    def test_defined_tokens_are_used(self):
+        self.assertWithinBaseline(token_block_names(r':root') - self.used_tokens(), self.KNOWN_UNUSED)
+
+    def test_dark_theme_only_overrides_existing_tokens(self):
+        extra = sorted(token_block_names(r'\[data-bs-theme="dark"\]') - token_block_names(r':root'))
+        self.assertEqual(extra, [], 'Dark tokens without a light (:root) value')
+
+
+class ScriptStylesTestCase(SimpleTestCase):
+    """JS toggles classes or token-based custom properties; it never sets design values"""
+
+    DESIGN_STYLE_RE = re.compile(
+        r'\.style\.(color|background\w*|font\w*|border\w*|boxShadow|zIndex|lineHeight|transition|animation)\b'
+        r"|\.style\.setProperty\(\s*['\"](?!--)"
+        r'|\.cssText\b'
+    )
+
+    def test_no_design_values_set_from_js(self):
+        offenders = []
+        for path in js_files():
+            text = path.read_text(encoding='utf-8')
+            for match in self.DESIGN_STYLE_RE.finditer(text):
+                line = text.count('\n', 0, match.start()) + 1
+                offenders.append(f"{path.name}:{line} {match.group(0)}")
         self.assertEqual(offenders, [], "\n".join(offenders))
 
 
@@ -231,7 +331,7 @@ class LegacyFrameworkTestCase(SimpleTestCase):
 
     def files(self):
         yield from (p for p in template_files() if relative(p) not in EMAIL_TEMPLATES)
-        yield from sorted(JS_DIR.glob('*.js'))
+        yield from js_files()
         yield BASE_DIR / 'samples' / 'forms.py'
 
     def test_no_legacy_framework_usage(self):
@@ -245,13 +345,70 @@ class LegacyFrameworkTestCase(SimpleTestCase):
         self.assertEqual(offenders, [], "\n".join(offenders))
 
 
+class Bootstrap4ShimTestCase(RatchetMixin, SimpleTestCase):
+    """Bootstrap 4 / AdminLTE class names that components.css still re-creates as shims"""
+
+    SHIM_RE = re.compile(
+        r'(?<![\w-])(badge-(?:primary|secondary|info|warning|danger|dark|success)|btn-default|btn-xs|card-tools)(?![\w-])'
+    )
+    KNOWN_SHIMS = {
+        'samples/templates/samples/_article_header.html: badge-info',
+        'samples/templates/samples/_onsite_editor.html: badge-info',
+        'samples/templates/samples/_onsite_editor.html: card-tools',
+        'samples/templates/samples/_user_groups.html: badge-danger',
+        'samples/templates/samples/_user_groups.html: badge-primary',
+        'samples/templates/samples/_user_groups.html: badge-secondary',
+        'samples/templates/samples/article_list.html: badge-secondary',
+        'samples/templates/samples/article_list.html: badge-warning',
+        'samples/templates/samples/course_list.html: badge-primary',
+        'samples/templates/samples/course_samples.html: badge-info',
+        'samples/templates/samples/course_samples.html: badge-secondary',
+        'samples/templates/samples/course_samples.html: btn-xs',
+        'samples/templates/samples/course_samples.html: card-tools',
+        'samples/templates/samples/detail.html: badge-info',
+        'samples/templates/samples/detail.html: badge-secondary',
+        'samples/templates/samples/detail.html: badge-warning',
+        'samples/templates/samples/detail.html: card-tools',
+        'samples/templates/samples/list.html: btn-default',
+        'samples/templates/samples/list.html: card-tools',
+        'samples/templates/samples/notifications.html: badge-primary',
+        'samples/templates/samples/notifications.html: card-tools',
+        'samples/templates/samples/profile.html: badge-warning',
+        'samples/templates/samples/ranking.html: badge-danger',
+        'samples/templates/samples/solutions_list.html: badge-warning',
+        'samples/templates/samples/solutions_list.html: btn-default',
+        'samples/templates/samples/solutions_list.html: card-tools',
+        'static/js/tag-list.js: badge-secondary',
+        'static/css/bootstrap-theme.css: card-tools',
+        'static/css/components.css: badge-danger',
+        'static/css/components.css: badge-dark',
+        'static/css/components.css: badge-info',
+        'static/css/components.css: badge-primary',
+        'static/css/components.css: badge-secondary',
+        'static/css/components.css: badge-warning',
+        'static/css/components.css: btn-default',
+        'static/css/components.css: btn-xs',
+        'static/css/components.css: card-tools',
+    }
+
+    def test_no_new_shim_classes(self):
+        found = set()
+        files = [p for p in template_files() if relative(p) not in EMAIL_TEMPLATES]
+        for path in [*files, *js_files(), *project_css_files()]:
+            for match in self.SHIM_RE.finditer(path.read_text(encoding='utf-8')):
+                found.add(f'{path.relative_to(BASE_DIR).as_posix()}: {match.group(0)}')
+        self.assertWithinBaseline(found, self.KNOWN_SHIMS)
+
+
 class DesignTokensSyncTestCase(SimpleTestCase):
     """samples/design_tokens.py mirrors the matching tokens in tokens.css"""
 
     def root_tokens(self):
         text = COMMENT_RE.sub('', TOKENS_CSS.read_text(encoding='utf-8'))
-        root_block = re.search(r':root\s*{(.*?)}', text, re.S).group(1)
-        return dict(re.findall(r'--sp-([\w-]+)\s*:\s*([^;]+);', root_block))
+        tokens = {}
+        for block in re.findall(r':root\s*{(.*?)}', text, re.S):
+            tokens.update(re.findall(r'--sp-([\w-]+)\s*:\s*([^;]+);', block))
+        return tokens
 
     def test_difficulty_colors_match_tokens(self):
         tokens = self.root_tokens()
