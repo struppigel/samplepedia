@@ -10,7 +10,7 @@ Parameters:
 
 {% if show_title|default:True %}
 <!-- Title Input -->
-<div class="form-group">
+<div class="mb-3">
   <label for="solutionTitle">Solution Title</label>
   <input type="text" 
          class="form-control" 
@@ -22,21 +22,21 @@ Parameters:
 </div>
 {% endif %}
 
-<!-- Editor Card -->
-<div class="card">
+<!-- Editor Card (styles: css/components.css .md-editor) -->
+<div class="card md-editor">
   <div class="card-header">
     <h3 class="card-title">Solution Content</h3>
     <div class="card-tools">
-      <button type="button" class="btn btn-sm btn-info mr-2" id="uploadImageBtn" title="Upload Image">
+      <button type="button" class="btn btn-sm btn-info me-2" id="uploadImageBtn" title="Upload Image">
         <i class="fas fa-image"></i> Upload Image
       </button>
-      <span class="badge badge-info" id="charCount">0 characters</span>
+      <span class="badge badge-info md-editor-count" id="charCount">0 characters</span>
     </div>
   </div>
   <div class="card-body p-0">
-    
+
     <!-- Hidden file input for image upload -->
-    <input type="file" id="imageFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
+    <input type="file" id="imageFileInput" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
     
     <!-- Editor Tabs -->
     <div class="markdown-tabs">
@@ -56,9 +56,9 @@ Parameters:
       
       <!-- Write Pane -->
       <div class="markdown-pane active" data-pane="write">
-        <textarea 
-          id="markdownTextarea" 
-          class="form-control border-0" 
+        <textarea
+          id="markdownTextarea"
+          class="form-control border-0 md-editor-textarea"
           rows="25" 
           placeholder="Start writing your solution using markdown...
 
@@ -87,8 +87,7 @@ def hello_world():
 ## Blockquotes
 
 > This is a blockquote
-"
-          style="resize: vertical; min-height: 500px;">{{ initial_content|default:'' }}</textarea>
+">{{ initial_content|default:'' }}</textarea>
         <div class="px-3 pb-3">
           <small class="form-text text-muted">
             <i class="fas fa-info-circle"></i> 
@@ -121,7 +120,7 @@ def hello_world():
                 {% endif %}
 
                 <!-- Article Content -->
-                <div class="article-content markdown-preview-content">
+                <div class="prose prose-article" data-md-preview>
                   <p class="text-muted">Nothing to preview</p>
                 </div>
               </article>
@@ -211,114 +210,6 @@ or
   </div>
 </div>
 
-<style>
-/* Editor-specific styles */
-#markdownTextarea {
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.markdown-help-content h4 {
-  color: var(--primary-red);
-  margin-bottom: 1rem;
-}
-
-.markdown-help-content h5 {
-  color: var(--body-color);
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.markdown-help-content pre {
-  background-color: rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--form-border);
-  border-radius: 4px;
-  padding: 0.75rem;
-  margin: 0.5rem 0;
-}
-
-.markdown-help-content code {
-  color: var(--body-color);
-  font-size: 0.9em;
-}
-
-.dark-mode .markdown-help-content pre {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-/* Preview pane styling */
-.markdown-pane[data-pane="preview"] {
-  background-color: #f8f9fa;
-  min-height: 500px;
-  max-height: 800px;
-  overflow-y: auto;
-}
-
-.preview-container {
-  padding: 2rem 1rem;
-}
-
-.markdown-pane[data-pane="help"] {
-  max-height: 800px;
-  overflow-y: auto;
-}
-
-/* Dark mode adjustments for preview */
-.dark-mode .markdown-pane[data-pane="preview"] {
-  background-color: #1a1a1a;
-}
-
-.dark-mode .preview-container {
-  color: var(--text-color);
-}
-
-.dark-mode .task-reference {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-}
-
-.preview-container .task-reference {
-  background-color: #f0f0f0;
-  border-left: 4px solid #dc3545;
-  border-radius: 6px;
-}
-
-.dark-mode .preview-container .task-reference {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-left-color: #17a2b8;
-}
-
-/* Character count badge styling */
-#charCount {
-  font-size: 0.85rem;
-  padding: 0.35rem 0.6rem;
-}
-
-/* Keyboard shortcut badge */
-kbd {
-  background-color: #f7f7f7;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 0 0 2px #fff inset;
-  color: #333;
-  display: inline-block;
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-  line-height: 1.4;
-  margin: 0 0.1em;
-  padding: 0.1em 0.6em;
-  text-shadow: 0 1px 0 #fff;
-}
-
-.dark-mode kbd {
-  background-color: #3a3a3a;
-  border-color: #555;
-  color: #eee;
-  text-shadow: none;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 0 0 2px #2a2a2a inset;
-}
-</style>
-
 <script>
 // Common editor functionality - initialized immediately when partial is included
 (function() {
@@ -334,7 +225,7 @@ kbd {
     const panes = document.querySelectorAll('.markdown-pane');
     const textarea = document.getElementById('markdownTextarea');
     const charCount = document.getElementById('charCount');
-    const previewContent = document.querySelector('.markdown-preview-content');
+    const previewContent = document.querySelector('[data-md-preview]');
     const titleInput = document.getElementById('solutionTitle');
     const previewTitle = document.getElementById('previewTitle');
     
@@ -591,21 +482,16 @@ kbd {
       }
       
       function showUploadMessage(message, type) {
-        // Create temporary message element
+        // Create temporary message element (positioned by .upload-toast)
         const messageEl = document.createElement('div');
-        messageEl.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
-        messageEl.style.position = 'fixed';
-        messageEl.style.top = '20px';
-        messageEl.style.right = '20px';
-        messageEl.style.zIndex = '9999';
-        messageEl.style.minWidth = '300px';
+        messageEl.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show upload-toast`;
         messageEl.innerHTML = `
-          <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+          <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> <span class="upload-toast-text"></span>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         `;
-        
+        // The message can contain server error text: insert it as text, not HTML
+        messageEl.querySelector('.upload-toast-text').textContent = message;
+
         document.body.appendChild(messageEl);
         
         // Auto-dismiss after 5 seconds

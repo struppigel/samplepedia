@@ -12,9 +12,7 @@ Parameters:
         <h5 class="modal-title" id="{{ modal_id|default:'draftSelectionModal' }}Label">
           <i class="fas fa-file-alt"></i> {{ modal_title|default:'Select Draft Article' }}
         </h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div id="draftsLoading" class="text-center py-4">
@@ -33,7 +31,7 @@ Parameters:
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

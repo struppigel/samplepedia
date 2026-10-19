@@ -151,7 +151,10 @@ function selectImage(imageUrl, imageId) {
   hideImageSelectionSections();
   
   // Close modal
-  $('#imageGalleryModal').modal('hide');
+  const galleryModal = document.getElementById('imageGalleryModal');
+  if (galleryModal) {
+    bootstrap.Modal.getOrCreateInstance(galleryModal).hide();
+  }
 }
 
 /**
@@ -475,7 +478,7 @@ function initializeMarkdownPreviewTabs() {
   const tabs = document.querySelectorAll('.markdown-tab');
   const panes = document.querySelectorAll('.markdown-pane');
   const textarea = document.getElementById('id_description');
-  const previewContent = document.querySelector('.markdown-preview-content');
+  const previewContent = document.querySelector('[data-md-preview]');
   let previewCache = '';
   
   // Toggle reference solution fields

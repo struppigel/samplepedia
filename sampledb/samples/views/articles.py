@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 from django.db.models import F, Q
 from django.http import JsonResponse
 from markdownx.utils import markdownify
+from ..design_tokens import difficulty_css_class
 from ..models import Article, AnalysisTask, Solution
 
 
@@ -286,6 +287,7 @@ def search_samples_ajax(request):
             'goal': sample.goal[:80] + '...' if len(sample.goal) > 80 else sample.goal,
             'difficulty': sample.difficulty,
             'difficulty_display': sample.get_difficulty_display(),
+            'difficulty_class': difficulty_css_class(sample.difficulty),
             'author': sample.author.username,
         })
     

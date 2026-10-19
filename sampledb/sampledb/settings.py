@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from decouple import config, Csv
+from django.contrib.messages import constants as message_constants
 import dj_database_url
 import cloudinary
 import sys
@@ -209,12 +210,21 @@ STATICFILES_DIRS = [
 # Where collectstatic will collect static files for production
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# WhiteNoise configuration for efficient static file serving
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# Cache static files for 1 year (they have content hashes in filenames)
-# WhiteNoise automatically adds immutable directive for hashed files
-WHITENOISE_MAX_AGE = 31536000  # 1 year in seconds
+STORAGES = {
+    # Media goes through CloudinaryField (uploader API), not default_storage
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    # Hashed filenames, so WhiteNoise can cache them forever (immutable) and
+    # every deploy busts the browser cache. Tests skip the manifest.
+    "staticfiles": {
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if TESTING
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        ),
+    },
+}
 
 # Cloudinary configuration for media file storage (required)
 cloudinary.config(
@@ -224,10 +234,14 @@ cloudinary.config(
     secure=True
 )
 
-# Use Cloudinary for media storage
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Map message levels onto alert styles (alert-{{ message.level_tag }})
+MESSAGE_TAGS = {
+    message_constants.DEBUG: 'secondary',
+    message_constants.ERROR: 'danger',
+}
 
 # Authentication settings
 LOGIN_REDIRECT_URL = '/'

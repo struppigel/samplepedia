@@ -21,12 +21,8 @@
         const pluralSpan = document.getElementById('notificationPlural');
         
         if (badge && countSpan) {
-            if (count > 0) {
-                badge.textContent = count;
-                badge.style.display = 'inline-block';
-            } else {
-                badge.style.display = 'none';
-            }
+            badge.textContent = count;
+            badge.hidden = !(count > 0);
             
             countSpan.textContent = count;
             if (pluralSpan) {
@@ -72,24 +68,26 @@
                         </div>
                     `;
                 } else {
+                    const escapeHtml = window.sp.escapeHtml;
                     let html = '';
                     data.notifications.forEach(notification => {
                         const timeAgo = formatTimeAgo(new Date(notification.timestamp));
                         let icon = '';
-                        
+
                         if (notification.description.includes('liked')) {
-                            icon = '<i class="fas fa-heart text-danger mr-2"></i>';
+                            icon = '<i class="fas fa-heart text-danger me-2"></i>';
                         } else if (notification.description.includes('commented')) {
-                            icon = '<i class="fas fa-comment text-info mr-2"></i>';
+                            icon = '<i class="fas fa-comment text-info me-2"></i>';
                         } else if (notification.description.includes('solution')) {
-                            icon = '<i class="fas fa-lightbulb text-warning mr-2"></i>';
+                            icon = '<i class="fas fa-lightbulb text-warning me-2"></i>';
                         }
-                        
+
+                        // Descriptions contain user-provided text (usernames, titles): always escape
                         html += `
-                            <a href="/notifications/${notification.id}/read/" class="dropdown-item">
+                            <a href="/notifications/${Number(notification.id)}/read/" class="dropdown-item">
                                 ${icon}
-                                <span>${notification.description}</span>
-                                ${notification.sha256 ? `<span class="text-muted small d-block">[SHA256: ${notification.sha256}...]</span>` : ''}
+                                <span>${escapeHtml(notification.description)}</span>
+                                ${notification.sha256 ? `<span class="text-muted small d-block">[SHA256: ${escapeHtml(notification.sha256)}...]</span>` : ''}
                                 <span class="text-muted small d-block">
                                     <i class="far fa-clock"></i> ${timeAgo}
                                 </span>
@@ -144,20 +142,14 @@
         // Start polling for notification count
         pollTimer = setInterval(pollNotificationCount, POLL_INTERVAL);
         
-        // Load notifications when dropdown is clicked
+        // Load notifications when dropdown is clicked (kept loaded afterwards)
         const notificationBell = document.getElementById('notificationBell');
         if (notificationBell) {
             notificationBell.addEventListener('click', function(e) {
                 loadNotifications();
             });
         }
-        
-        // Reset dropdown loaded flag when dropdown is closed
-        $('#notificationDropdown').parent().on('hide.bs.dropdown', function() {
-            // Don't reset - keep loaded for better UX
-            // dropdownLoaded = false;
-        });
-        
+
         // Do an initial poll after 5 seconds
         setTimeout(pollNotificationCount, 5000);
     }

@@ -6,17 +6,20 @@
 {% load markdownx_filters %}
 {% block title %}{{ sample.sha256 }}{% endblock %}
 
+{# The page title sits inside the centered content column below #}
+{% block page_header %}{% endblock %}
+
 {% block content %}
 {% with max_width_with_sidebar=1600 max_width_no_sidebar=1200 %}
 
-<section class="content">
+<section class="page-content">
   <div class="container-fluid">
 
     <!-- Title -->
     <div class="row justify-content-center mb-3">
       <div class="col-md-12" style="max-width: {% if sample.image or sample.youtube_id or youtube_solution %}{{ max_width_with_sidebar }}px{% else %}{{ max_width_no_sidebar }}px{% endif %};">
-        <div class="content-header">
-          <h1>Sample</h1>
+        <div class="page-header">
+          <h1 class="page-title">Sample</h1>
         </div>
       </div>
     </div>
@@ -35,17 +38,17 @@
             {% if sample.download_link %}
               <a href="{{ sample.download_link }}"
                  target="_blank"
-                 class="btn btn-danger btn-sm mr-2" title="Download Sample">
+                 class="btn btn-danger btn-sm me-2" title="Download Sample">
                 <i class="fas fa-download"></i> <!-- Download sample button -->
               </a>
             {% endif %}
             <!-- Comments button -->
-            <a href="#commentFormSection" class="btn btn-danger btn-sm mr-2" title="Comments" onclick="scrollToComments(event)">
+            <a href="#commentFormSection" class="btn btn-danger btn-sm me-2" title="Comments" onclick="scrollToComments(event)">
             <i class="fas fa-comment"></i>
             </a>
             <!-- Edit button -->
               {% if user_can_edit %}
-                <a href="{% url 'edit_task' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-danger btn-sm mr-2" title="Edit Task">
+                <a href="{% url 'edit_task' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-danger btn-sm me-2" title="Edit Task">
                   <i class="fas fa-edit"></i>
                 </a>
               {% endif %}
@@ -58,7 +61,7 @@
               <dt class="col-sm-3">SHA256</dt>
               <dd class="col-sm-9">
                 <code id="sha256Text" class="text-danger">{{ sample.sha256 }}</code>
-                <button class="btn btn-sm btn-link text-muted ml-2" id="copySha256" title="Copy SHA256" style="text-decoration: none; box-shadow: none !important; outline: none !important;">
+                <button class="btn btn-sm btn-link btn-icon-plain text-muted ms-2" id="copySha256" title="Copy SHA256">
                   <i class="fas fa-copy"></i>
                 </button>
               </dd>
@@ -71,7 +74,7 @@
               <dt class="col-sm-3">Platform</dt>
               <dd class="col-sm-9">
                 <i class="{{ sample.platform|platform_icon }}"></i>
-                <span class="ml-2">{{ sample.get_platform_display }}</span>
+                <span class="ms-2">{{ sample.get_platform_display }}</span>
               </dd>
 
               <dt class="col-sm-3">Tags</dt>
@@ -112,17 +115,17 @@
           <div class="card-body">
             {% if sample.goal %}
               <h6>Goal</h6>
-              <div class="markdown-content">{{ sample.goal|markdownify}}</div>
+              <div class="prose">{{ sample.goal|markdownify}}</div>
             {% endif %}
 
             {% if sample.description %}
               <h6>Description</h6>
-              <div class="spoiler" style="width: 100%;">
-                <div class="spoiler-text" style="margin: 0; width: 100%;">{{ sample.description|markdownify }}</div>
+              <div class="spoiler">
+                <div class="spoiler-text prose">{{ sample.description|markdownify }}</div>
               </div>
             {% endif %}
 
-            <h6 style="margin-top: 0.5rem;">Recommended Tools</h6>
+            <h6 class="mt-2">Recommended Tools</h6>
             <p class="mb-2">
               {% for tool in sample.tools.all %}
                 <span class="badge badge-secondary">{{ tool.name }}</span>
@@ -140,7 +143,7 @@
             <div class="card-tools" style="margin-right: 0.1rem;">
               {% if user.is_authenticated %}
               <button onclick="openDetailPageDraftModal()"
-                      class="btn btn-danger btn-sm mr-1"
+                      class="btn btn-danger btn-sm me-1"
                       title="Publish draft">
                 <i class="fas fa-upload"></i>
               </button>
@@ -155,29 +158,29 @@
             {% if solutions %}
               <ul class="list-unstyled mb-0">
                 {% for solution in solutions %}
-                <li class="solution-item {% if not forloop.last %}mb-1{% else %}mb-0{% endif %} d-flex align-items-center justify-content-between" style="padding: 0.5rem; margin-left: -0.5rem; margin-right: -0.5rem; border-radius: 4px;" data-solution-id="{{ solution.id }}">
+                <li class="solution-item {% if not forloop.last %}mb-1{% else %}mb-0{% endif %} d-flex align-items-center justify-content-between" data-solution-id="{{ solution.id }}">
                   <div class="d-flex align-items-center flex-grow-1">
                     <i class="fas {{ solution.solution_type|solution_icon }}"></i>
                     {% if solution.solution_type == 'onsite' %}
-                      <a href="{% url 'view_onsite_solution' sha256=sample.sha256 task_id=sample.id solution_id=solution.id %}" class="ml-2">{{ solution.title }}</a>
+                      <a href="{% url 'view_onsite_solution' sha256=sample.sha256 task_id=sample.id solution_id=solution.id %}" class="ms-2">{{ solution.title }}</a>
                     {% else %}
-                      <a href="{{ solution.url }}" target="_blank" class="ml-2" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">{{ solution.title }}</a>
+                      <a href="{{ solution.url }}" target="_blank" class="ms-2" onclick="return confirm('You are about to visit an external website:\n\n{{ solution.url }}\n\nDo you want to continue?');">{{ solution.title }}</a>
                     {% endif %}
                     {% if solution.author == sample.author %}
-                      <span class="badge badge-info ml-2" title="Reference solution by task author">
+                      <span class="badge badge-info ms-2" title="Reference solution by task author">
                         <i class="fas fa-star"></i> Reference
                       </span>
                     {% endif %}
                     {% if solution.hidden_until and solution.user_can_see_hidden_status %}
-                      <span class="badge badge-warning ml-2" title="Hidden until {{ solution.hidden_until|date:'M d, Y H:i' }}">
+                      <span class="badge badge-warning ms-2" title="Hidden until {{ solution.hidden_until|date:'M d, Y H:i' }}">
                         <i class="fas fa-eye-slash"></i> Hidden
                       </span>
                     {% endif %}
-                    <span class="text-muted small ml-2">by <a href="{% url 'user_profile' solution.author.username %}">{{ solution.author.username }}</a></span>
+                    <span class="text-muted small ms-2">by <a href="{% url 'user_profile' solution.author.username %}">{{ solution.author.username }}</a></span>
                   </div>
-                  <div class="d-flex align-items-center" style="white-space: nowrap;">
+                  <div class="d-flex align-items-center text-nowrap">
                     {% if solution.solution_type == 'onsite' and solution.article %}
-                    <span class="text-dark mr-2" title="{{ solution.article.view_count }} view{{ solution.article.view_count|pluralize }}" style="cursor: default; pointer-events: none;">
+                    <span class="text-strong static-stat me-2" title="{{ solution.article.view_count }} view{{ solution.article.view_count|pluralize }}">
                       <i class="fas fa-eye"></i> {{ solution.article.view_count }}
                     </span>
                     {% endif %}
@@ -185,8 +188,7 @@
                     {% if user.is_authenticated %}
                       {% if solution.author == user or user.is_staff %}
                         <a href="{% url 'edit_solution' sample.sha256 sample.id solution.id %}" 
-                           class="btn btn-link btn-sm text-primary p-0 ml-2"
-                           style="border: none; background: none; cursor: pointer;"
+                           class="btn btn-link btn-sm text-primary p-0 ms-2"
                            title="Edit this solution">
                           <i class="fas fa-edit"></i>
                         </a>
@@ -194,15 +196,13 @@
                       {% if solution.author == user %}
                       {% comment %}Hide delete button if it's the last reference solution{% endcomment %}
                       {% if solution.author != sample.author or reference_solution_count > 1 %}
-                        <button class="btn btn-link btn-sm text-danger p-0 ml-2" 
+                        <button class="btn btn-link btn-sm text-danger p-0 ms-2" 
                                 onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256 }}', '{{ sample.id }}')"
-                                style="border: none; background: none; cursor: pointer;"
                                 title="Delete this solution">
                           <i class="fas fa-trash-alt"></i>
                         </button>
                       {% else %}
-                        <span class="btn btn-link btn-sm text-muted p-0 ml-2"
-                              style="border: none; background: none; cursor: not-allowed;"
+                        <span class="btn btn-link btn-sm text-muted p-0 ms-2 cursor-not-allowed"
                               title="Cannot delete the last reference solution">
                           <i class="fas fa-lock"></i>
                         </span>
@@ -243,9 +243,9 @@
             <h3 class="card-title">Video</h3>
           </div>
           <div class="card-body">
-            <div class="embed-responsive embed-responsive-16by9"
+            <div class="ratio ratio-16x9"
                  style="max-width: 560px; margin-left: auto; margin-right: auto;">
-              <iframe class="embed-responsive-item" width="560" height="315" src="https://www.youtube.com/embed/{{ sample.youtube_id }}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+              <iframe width="560" height="315" src="https://www.youtube.com/embed/{{ sample.youtube_id }}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
             </div>
           </div>
         </div>
@@ -255,9 +255,9 @@
             <h3 class="card-title">Video</h3>
           </div>
           <div class="card-body">
-            <div class="embed-responsive embed-responsive-16by9"
+            <div class="ratio ratio-16x9"
                  style="max-width: 560px; margin-left: auto; margin-right: auto;">
-              <iframe class="embed-responsive-item" width="560" height="315" src="https://www.youtube.com/embed/{{ youtube_solution.youtube_id }}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+              <iframe width="560" height="315" src="https://www.youtube.com/embed/{{ youtube_solution.youtube_id }}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
             </div>
             <p class="text-muted small text-center mt-2 mb-0">
               Solution by <a href="{% url 'user_profile' youtube_solution.author.username %}">{{ youtube_solution.author.username }}</a>: {{ youtube_solution.title }}

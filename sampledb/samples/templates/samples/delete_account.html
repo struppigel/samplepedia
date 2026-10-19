@@ -3,20 +3,10 @@
 
 {% block title %}Delete Account - Samplepedia{% endblock %}
 
-{% block content %}
-<div class="content-header">
-  <div class="container-fluid">
-    <div class="row mb-2">
-      <div class="col-sm-12">
-        <h1 class="m-0 text-danger">
-          <i class="fas fa-exclamation-triangle"></i> Delete Account
-        </h1>
-      </div>
-    </div>
-  </div>
-</div>
+{% block page_title %}<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Delete Account</span>{% endblock %}
 
-<section class="content">
+{% block content %}
+<section class="page-content">
   <div class="container-fluid">
     
     <div class="row">
@@ -61,7 +51,7 @@
                 </div>
               {% endif %}
 
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
                 {{ form.password }}
                 {% if form.password.errors %}
@@ -74,7 +64,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 <div class="form-check">
                   {{ form.confirm_deletion }}
                   <label class="form-check-label" for="{{ form.confirm_deletion.id_for_label }}">
@@ -88,7 +78,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 {{ form.turnstile }}
                 {% if form.turnstile.errors %}
                   <div class="text-danger mt-1">

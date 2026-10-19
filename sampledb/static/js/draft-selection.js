@@ -1,7 +1,7 @@
 /**
  * Shared Draft Article Selection Component
  * Handles selecting existing draft articles in both detail.html and submit_task.html
- * 
+ *
  * Usage:
  *   1. Include the _draft_selection_modal.html partial in your template
  *   2. Call openDraftSelectionModal(modalId, onSelectCallback) to open modal
@@ -13,6 +13,11 @@ let currentDraftSelectionCallback = null;
 let currentModalId = 'draftSelectionModal';
 let currentDraftsData = {}; // Store draft data by ID to avoid inline JS issues
 
+function setVisible(id, visible) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = visible ? '' : 'none';
+}
+
 /**
  * Open draft selection modal and fetch user's drafts
  * @param {string} modalId - The ID of the modal to open (default: 'draftSelectionModal')
@@ -21,35 +26,35 @@ let currentDraftsData = {}; // Store draft data by ID to avoid inline JS issues
 function openDraftSelectionModal(modalId, onSelectCallback) {
   currentModalId = modalId || 'draftSelectionModal';
   currentDraftSelectionCallback = onSelectCallback;
-  
-  const modal = $('#' + currentModalId);
-  modal.modal('show');
-  
+
+  bootstrap.Modal.getOrCreateInstance(document.getElementById(currentModalId)).show();
+
   // Show loading state
-  $('#draftsLoading').show();
-  $('#draftList').hide();
-  $('#noDrafts').hide();
-  
+  setVisible('draftsLoading', true);
+  setVisible('draftList', false);
+  setVisible('noDrafts', false);
+
   // Fetch user's drafts via AJAX
   fetch('/ajax/get-user-drafts/')
     .then(response => response.json())
     .then(data => {
-      $('#draftsLoading').hide();
-      
+      setVisible('draftsLoading', false);
+
       if (data.results && data.results.length > 0) {
         displayDraftsList(data.results);
       } else if (data.drafts && data.drafts.length > 0) {
         // Handle alternative response format
         displayDraftsList(data.drafts);
       } else {
-        $('#draftList').hide();
-        $('#noDrafts').show();
+        setVisible('draftList', false);
+        setVisible('noDrafts', true);
       }
     })
     .catch(error => {
       console.error('Error fetching drafts:', error);
-      $('#draftsLoading').hide();
-      $('#draftList').html('<div class="alert alert-danger">Error loading drafts. Please try again.</div>').show();
+      setVisible('draftsLoading', false);
+      document.getElementById('draftList').innerHTML = '<div class="alert alert-danger">Error loading drafts. Please try again.</div>';
+      setVisible('draftList', true);
     });
 }
 
@@ -57,12 +62,12 @@ function openDraftSelectionModal(modalId, onSelectCallback) {
  * Display list of draft articles in modal
  */
 function displayDraftsList(drafts) {
-  const container = $('#draftList');
+  const container = document.getElementById('draftList');
   let html = '';
-  
+
   // Clear and store draft data
   currentDraftsData = {};
-  
+
   drafts.forEach(draft => {
     // Store draft data by ID
     currentDraftsData[draft.id] = {
@@ -72,31 +77,33 @@ function displayDraftsList(drafts) {
       updated_at: draft.updated_at || 'Unknown date',
       view_count: draft.view_count || 0
     };
-    
-    const preview = currentDraftsData[draft.id].preview;
-    
+
+    const info = currentDraftsData[draft.id];
+    const draftId = Number(draft.id);
+
     html += `
-      <div class="list-group-item list-group-item-action" style="cursor: pointer;" onclick="handleDraftSelection(event, ${draft.id})">
+      <div class="list-group-item list-group-item-action cursor-pointer" onclick="handleDraftSelection(event, ${draftId})">
         <div class="d-flex justify-content-between align-items-start">
           <div class="flex-grow-1">
-            <h6 class="mb-1"><i class="fas fa-file-alt text-primary"></i> ${escapeHtml(draft.title)}</h6>
-            <p class="mb-1 small text-muted">${escapeHtml(preview)}</p>
+            <h6 class="mb-1"><i class="fas fa-file-alt text-primary"></i> ${escapeHtml(info.title)}</h6>
+            <p class="mb-1 small text-muted">${escapeHtml(info.preview)}</p>
             <small class="text-muted">
-              <i class="fas fa-clock"></i> ${currentDraftsData[draft.id].updated_at}
+              <i class="fas fa-clock"></i> ${escapeHtml(info.updated_at)}
               <span class="mx-2">|</span>
-              <i class="fas fa-eye"></i> ${currentDraftsData[draft.id].view_count} views
+              <i class="fas fa-eye"></i> ${escapeHtml(info.view_count)} views
             </small>
           </div>
-          <button type="button" class="btn btn-sm btn-primary ml-3" style="min-width: 85px; white-space: nowrap;" onclick="event.stopPropagation(); handleDraftSelection(event, ${draft.id})">
+          <button type="button" class="btn btn-sm btn-primary ms-3 text-nowrap" style="min-width: 85px;" onclick="event.stopPropagation(); handleDraftSelection(event, ${draftId})">
             <i class="fas fa-check"></i> Select
           </button>
         </div>
       </div>
     `;
   });
-  
-  container.html(html).show();
-  $('#noDrafts').hide();
+
+  container.innerHTML = html;
+  setVisible('draftList', true);
+  setVisible('noDrafts', false);
 }
 
 /**
@@ -105,21 +112,21 @@ function displayDraftsList(drafts) {
 function handleDraftSelection(event, draftId) {
   event.preventDefault();
   event.stopPropagation();
-  
+
   // Look up draft data
   const draftData = currentDraftsData[draftId];
-  
+
   if (!draftData) {
     console.error('Draft data not found for ID:', draftId);
     return;
   }
-  
+
   if (currentDraftSelectionCallback && typeof currentDraftSelectionCallback === 'function') {
     // Call the callback with draft data
     currentDraftSelectionCallback(draftData);
-    
+
     // Close the modal
-    $('#' + currentModalId).modal('hide');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById(currentModalId)).hide();
   } else {
     console.error('No draft selection callback defined');
   }
@@ -129,14 +136,5 @@ function handleDraftSelection(event, draftId) {
  * Helper function to escape HTML in strings
  */
 function escapeHtml(text) {
-  if (!text) return '';
-  const map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-    '\\': '&#92;'
-  };
-  return text.toString().replace(/[&<>"'\\]/g, m => map[m]);
+  return window.sp.escapeHtml(text);
 }

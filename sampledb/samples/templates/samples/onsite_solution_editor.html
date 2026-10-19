@@ -2,43 +2,43 @@
 {% load user_tags %}
 {% block title %}{% if solution %}Edit On-Site Solution{% else %}Create On-Site Solution{% endif %}{% endblock %}
 
-{% block content %}
-
-<section class="content-header">
+{% block page_header %}
+<header class="page-header">
   <div class="container-fluid">
-    <div class="row mb-2">
-      <div class="col-sm-6">
-        <h1>{% if solution %}Edit On-Site Solution{% else %}Create On-Site Solution{% endif %}</h1>      
+    <div class="page-header-inner mb-2">
+      <div>
+        <h1 class="page-title">{% if solution %}Edit On-Site Solution{% else %}Create On-Site Solution{% endif %}</h1>
         <p class="text-muted mb-0">
-          <i class="fas fa-hashtag"></i> Sample: 
+          <i class="fas fa-hashtag"></i> Sample:
           <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}">
             <code class="text-danger">{{ sample.sha256|slice:":12" }}</code>
           </a>
           {% if sample.goal %}— {{ sample.goal|truncatewords:10 }}{% endif %}
         </p>
       </div>
-      <div class="col-sm-6">
-        <div class="float-right">
-          <button type="button" class="btn btn-secondary" id="clearEditor" {% if solution %}style="display:none;"{% endif %}>
-            <i class="fas fa-trash"></i> Clear
-          </button>
-          <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-outline-secondary">
-            <i class="fas fa-times"></i> Cancel
-          </a>
-          <button type="button" class="btn {% if solution %}btn-danger{% else %}btn-primary{% endif %}" id="submitSolution">
-            <i class="fas fa-save"></i> {% if solution %}Update Solution{% else %}Save Solution{% endif %}
-          </button>
-        </div>
+      <div>
+        <button type="button" class="btn btn-secondary{% if solution %} d-none{% endif %}" id="clearEditor">
+          <i class="fas fa-trash"></i> Clear
+        </button>
+        <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-outline-secondary">
+          <i class="fas fa-times"></i> Cancel
+        </a>
+        <button type="button" class="btn {% if solution %}btn-danger{% else %}btn-primary{% endif %}" id="submitSolution">
+          <i class="fas fa-save"></i> {% if solution %}Update Solution{% else %}Save Solution{% endif %}
+        </button>
       </div>
     </div>
-     <div class="alert alert-warning mt-3" role="alert">
-            <i class="fas fa-exclamation-triangle mr-2"></i>
-            Please do not post any malware code directly or this site will be detected by antivirus software, use screenshots of malicious code instead.
-        </div>
+    <div class="alert alert-warning mt-3" role="alert">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      Please do not post any malware code directly or this site will be detected by antivirus software, use screenshots of malicious code instead.
+    </div>
   </div>
-</section>
+</header>
+{% endblock %}
 
-<section class="content">
+{% block content %}
+
+<section class="page-content">
   <div class="container-fluid">
     <div class="row">
       <div class="col-12">
@@ -50,7 +50,7 @@
   </div>
 </section>
 
-<form method="post" id="solutionForm" style="display:none;">
+<form method="post" id="solutionForm" class="d-none">
   {% csrf_token %}
   <input type="hidden" name="title" id="hiddenTitle">
   <input type="hidden" name="content" id="hiddenContent">

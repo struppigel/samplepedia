@@ -1,16 +1,11 @@
 {% extends "samples/base.html" %}
 
 {% block title %}{% if solution %}Edit Solution{% else %}Add Solution{% endif %}{% endblock %}
+{% block page_title %}{% if solution %}Edit Solution{% else %}Add Solution{% endif %}{% endblock %}
 
 {% block content %}
 
-<section class="content-header">
-  <div class="container-fluid">
-    <h1>{% if solution %}Edit Solution{% else %}Add Solution{% endif %}</h1>
-  </div>
-</section>
-
-<section class="content">
+<section class="page-content">
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-8">
@@ -46,7 +41,7 @@
             <form method="post" novalidate>
               {% csrf_token %}
 
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.solution_type.id_for_label }}">Solution Type</label>
                 {{ form.solution_type }}
                 {% if form.solution_type.errors %}
@@ -60,20 +55,20 @@
               {{ form.draft_article_id }}
 
               <!-- Onsite solution: Choose between writing new or using draft -->
-              <div class="form-group" id="onsite-choice-field" style="display: none;">
+              <div class="mb-3" id="onsite-choice-field" style="display: none;">
                 <label>How do you want to create this solution?</label>
-                <div class="card bg-light">
+                <div class="card bg-body-tertiary">
                   <div class="card-body">
-                    <div class="custom-control custom-radio mb-3">
-                      <input type="radio" id="choice-write-new" name="solution-choice" class="custom-control-input" value="write" checked>
-                      <label class="custom-control-label" for="choice-write-new">
+                    <div class="form-check mb-3">
+                      <input type="radio" id="choice-write-new" name="solution-choice" class="form-check-input" value="write" checked>
+                      <label class="form-check-label" for="choice-write-new">
                         <strong>Write a new solution</strong>
                         <span class="d-block text-muted small">Create content directly on this page</span>
                       </label>
                     </div>
-                    <div class="custom-control custom-radio">
-                      <input type="radio" id="choice-use-draft" name="solution-choice" class="custom-control-input" value="draft">
-                      <label class="custom-control-label" for="choice-use-draft">
+                    <div class="form-check">
+                      <input type="radio" id="choice-use-draft" name="solution-choice" class="form-check-input" value="draft">
+                      <label class="form-check-label" for="choice-use-draft">
                         <strong>Publish an existing draft</strong>
                         <span class="d-block text-muted small">Select a draft article you've already written</span>
                       </label>
@@ -83,7 +78,7 @@
               </div>
 
               <!-- Draft article selection (shown when user chooses draft option) -->
-              <div class="form-group" id="draft-selection-field" style="display: none;">
+              <div class="mb-3" id="draft-selection-field" style="display: none;">
                 <label>Select Draft Article</label>
                 <div class="card">
                   <div class="card-body">
@@ -119,7 +114,7 @@
               <!-- Title and content fields (shown when writing new solution) -->
               <div id="manual-fields">
 
-              <div class="form-group" id="title-field">
+              <div class="mb-3" id="title-field">
                 <label for="{{ form.title.id_for_label }}">Title</label>
                 {{ form.title }}
                 {% if form.title.errors %}
@@ -129,7 +124,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group" id="url-field">
+              <div class="mb-3" id="url-field">
                 <label for="{{ form.url.id_for_label }}">URL</label>
                 {{ form.url }}
                 {% if form.url.errors %}
@@ -141,7 +136,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group" id="content-field" style="display: none;">
+              <div class="mb-3" id="content-field" style="display: none;">
                 <label for="{{ form.content.id_for_label }}">Content</label>
                 <div class="alert alert-info mb-2">
                   <i class="fas fa-external-link-alt"></i>
@@ -160,7 +155,7 @@
                     {{ form.content }}
                   </div>
                   <div class="markdown-pane" data-pane="preview">
-                    <div class="markdown-preview-content">
+                    <div class="prose" data-md-preview>
                       <p class="text-muted">Nothing to preview</p>
                     </div>
                   </div>
@@ -182,7 +177,7 @@
                 </div>
               {% endif %}
 
-              <div class="form-group mb-0">
+              <div class="mb-0">
                 <button type="submit" class="btn {% if solution %}btn-danger{% else %}btn-primary{% endif %}">
                   <i class="fas fa-save"></i> {% if solution %}Update Solution{% else %}Save Solution{% endif %}
                 </button>
@@ -234,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const tabs = document.querySelectorAll('.markdown-tab');
   const panes = document.querySelectorAll('.markdown-pane');
   const textarea = document.getElementById('id_content');
-  const previewContent = document.querySelector('.markdown-preview-content');
+  const previewContent = document.querySelector('[data-md-preview]');
   let previewCache = '';
   
   // Toggle fields based on solution type

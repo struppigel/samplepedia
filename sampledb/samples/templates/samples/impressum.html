@@ -3,26 +3,16 @@
 
 {% block title %}Impressum - Samplepedia{% endblock %}
 
-{% block content %}
-<div class="content-header">
-    <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <h1 class="m-0">Impressum</h1>
-            </div>
-            <div class="col-sm-6">
-                <div class="float-right">
-                    <button class="btn btn-sm btn-outline-secondary" id="langToggle">
-                        <span id="langDe">🇩🇪 Deutsch</span>
-                        <span id="langEn" style="display: none;">🇬🇧 English</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% block page_title %}Impressum{% endblock %}
+{% block page_actions %}
+    <button class="btn btn-sm btn-outline-secondary" id="langToggle">
+        <span id="langDe">🇩🇪 Deutsch</span>
+        <span id="langEn" style="display: none;">🇬🇧 English</span>
+    </button>
+{% endblock %}
 
-<section class="content">
+{% block content %}
+<section class="page-content">
     <div class="container-fluid">
         <div class="card">
             <div class="card-body">

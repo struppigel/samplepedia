@@ -1,8 +1,8 @@
 {% load url_helpers %}
 {% if sort == field %}
-  <a href="{% url_replace sort=minus_field %}" class="text-dark text-decoration-none">
+  <a href="{% url_replace sort=minus_field %}" class="text-strong text-decoration-none">
 {% else %}
-  <a href="{% url_replace sort=field %}" class="text-dark text-decoration-none">
+  <a href="{% url_replace sort=field %}" class="text-strong text-decoration-none">
 {% endif %}
   {{ label }}
   {% if sort == field %}

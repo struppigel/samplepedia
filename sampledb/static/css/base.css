@@ -1,0 +1,115 @@
+/*
+ * Element defaults and small project utilities.
+ * Values come from tokens.css; must load after bootstrap.min.css.
+ */
+
+:root {
+  scroll-behavior: auto;
+}
+
+body {
+  background-color: var(--sp-page-bg);
+}
+
+/* Fixed heading sizes (Bootstrap 5 scales them with the viewport) */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-weight: var(--sp-fw-heading);
+  line-height: var(--sp-lh-heading);
+}
+
+h1, .h1 { font-size: var(--sp-fs-h1); }
+h2, .h2 { font-size: var(--sp-fs-h2); }
+h3, .h3 { font-size: var(--sp-fs-h3); }
+h4, .h4 { font-size: var(--sp-fs-h4); }
+h5, .h5 { font-size: var(--sp-fs-h5); }
+h6, .h6 { font-size: var(--sp-fs-h6); }
+
+.display-4 {
+  font-size: var(--sp-fs-display-4);
+}
+
+.lead {
+  font-size: var(--sp-fs-lead);
+}
+
+small,
+.small {
+  font-size: var(--sp-fs-small);
+}
+
+label {
+  display: inline-block;
+  margin-bottom: var(--sp-space-2);
+}
+
+label:not(.form-check-label) {
+  font-weight: var(--sp-fw-label);
+}
+
+.form-check-label {
+  margin-bottom: 0;
+}
+
+hr {
+  opacity: 1;
+  border-top-color: var(--sp-hr-color);
+}
+
+a {
+  text-decoration: none;
+}
+
+/* Gray links turn brand red on hover (the utility reads --bs-secondary-color) */
+a.text-muted:hover {
+  --bs-secondary-color: var(--sp-brand-hover);
+}
+
+/* ------------------------------------------------------------------ */
+/* Project utilities                                                   */
+/* ------------------------------------------------------------------ */
+
+/* Strong (near-black / light gray in dark mode) text, e.g. table links */
+.text-strong {
+  color: var(--sp-text-strong);
+}
+
+a.text-strong:hover {
+  color: var(--sp-text-strong-hover);
+}
+
+.text-brand {
+  color: var(--sp-brand);
+}
+
+/* Slightly smaller than the surrounding text */
+.text-smaller {
+  font-size: var(--sp-fs-count);
+}
+
+/* Larger inline icon (e.g. platform icons in tables) */
+.icon-lg {
+  font-size: var(--sp-fs-icon-lg);
+}
+
+.text-difficulty-easy { color: var(--sp-difficulty-easy); }
+.text-difficulty-medium { color: var(--sp-difficulty-medium); }
+.text-difficulty-advanced { color: var(--sp-difficulty-advanced); }
+.text-difficulty-expert { color: var(--sp-difficulty-expert-text); }
+
+/* Show content only in one theme (e.g. the theme toggle icons) */
+.theme-when-light { display: var(--sp-when-light-display); }
+.theme-when-dark { display: var(--sp-when-dark-display); }
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
+.static-stat {
+  cursor: default;
+  pointer-events: none;
+}

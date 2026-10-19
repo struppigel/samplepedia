@@ -3,6 +3,8 @@ from django import template
 
 from django.db.models import Q
 
+from samples.design_tokens import difficulty_css_class
+
 register = template.Library()
 
 @register.inclusion_tag('samples/_user_groups.html')
@@ -94,34 +96,27 @@ def is_in(value, container):
 @register.filter
 def difficulty_badge_class(difficulty):
     """
-    Return the Bootstrap badge class for a difficulty level.
-    This is the single source of truth for difficulty badge colors.
-    
-    Returns a string like "badge-info" ready to use in badge class attribute.
+    Return the badge class for a difficulty level, e.g. "badge-difficulty-easy".
+    The colors live in static/css/tokens.css (--sp-difficulty-*).
     """
-    badge_classes = {
-        'easy': 'badge-info',
-        'medium': 'badge-warning',
-        'advanced': 'badge-danger',
-        'expert': 'badge-dark',
-    }
-    return badge_classes.get(difficulty, 'badge-secondary')
+    return difficulty_css_class(difficulty)
 
 @register.filter
 def solution_icon(solution_type):
     """
     Return the Font Awesome icon and color classes for a solution type.
-    Returns a string like "fa-book text-info" ready to use in class attribute.
-    
+    Returns a string like "fa-book solution-icon-blog" ready to use in class attribute.
+    The colors live in static/css/tokens.css (--sp-solution-icon-*).
+
     For unknown solution types, returns a generic link icon as fallback.
     """
     icons = {
-        'blog': 'fa-book text-info',
-        'paper': 'fa-file-alt text-secondary',
-        'video': 'fa-video text-danger',
-        'onsite': 'fa-file-alt text-success',
+        'blog': 'fa-book solution-icon-blog',
+        'paper': 'fa-file-alt solution-icon-paper',
+        'video': 'fa-video solution-icon-video',
+        'onsite': 'fa-file-alt solution-icon-onsite',
     }
-    return icons.get(solution_type, 'fa-link text-primary')
+    return icons.get(solution_type, 'fa-link solution-icon-link')
 
 @register.filter
 def platform_icon(platform):

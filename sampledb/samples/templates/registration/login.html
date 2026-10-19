@@ -2,14 +2,11 @@
 
 {% block title %}Login{% endblock %}
 
-{% block content %}
-<section class="content-header">
-  <div class="container-fluid">
-    <h1>Login</h1>
-  </div>
-</section>
+{% block page_title %}Login{% endblock %}
 
-<section class="content">
+{% block content %}
+
+<section class="page-content">
   <div class="container-fluid">
     <div class="row justify-content-center">
       <div class="col-md-6">
@@ -41,7 +38,7 @@
                 </div>
               {% endif %}
               
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.username.id_for_label }}">Username:</label>
                 {{ form.username }}
                 {% if form.username.errors %}
@@ -49,18 +46,18 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.password.id_for_label }}">Password:</label>
                 {{ form.password }}
                 {% if form.password.errors %}
                   <div class="text-danger">{{ form.password.errors }}</div>
                 {% endif %}
-                <small class="form-text text-muted text-right">
+                <small class="form-text text-muted text-end">
                   <a href="{% url 'password_reset' %}">Forgot password?</a>
                 </small>
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 {{ form.turnstile }}
                 {% if form.turnstile.errors %}
                   <div class="text-danger">{{ form.turnstile.errors }}</div>

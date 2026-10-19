@@ -1,0 +1,87 @@
+/*
+ * Latest solutions showcase (samples/solutions_showcase.html).
+ * Scoped to body.page-solutions-showcase.
+ */
+
+.page-solutions-showcase .showcase-width {
+  max-width: var(--sp-showcase-max);
+  padding: 0 var(--sp-gutter-x);
+  margin: 0 auto;
+}
+
+.solution-card {
+  transition: transform var(--sp-dur) ease-in-out;
+  will-change: transform;
+}
+
+.solution-card:hover {
+  transform: translate3d(0, -3px, 0);
+}
+
+.solution-card > .row {
+  height: 100%;
+}
+
+/* Image column: a third of the card at every width */
+.solution-card .solution-card-media {
+  display: flex;
+  flex: 0 0 33.333333%;
+  flex-direction: column;
+  width: 33.333333%;
+  max-width: 33.333333%;
+}
+
+.card-image-container {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-right: var(--sp-border-comment-width) solid var(--sp-showcase-accent);
+}
+
+.card-image-placeholder {
+  color: var(--sp-placeholder-fg);
+  background: var(--sp-placeholder-bg) var(--sp-placeholder-gradient) repeat-x;
+}
+
+.card-image {
+  width: auto;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.solution-card .card-body {
+  padding-bottom: 0.55rem;
+}
+
+.solution-card .card-title {
+  display: -webkit-box;
+  min-height: 2.5em;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  line-height: 1.25em;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+}
+
+.solution-card .card-title a {
+  color: var(--sp-showcase-title);
+}
+
+.solution-card .card-title a:hover {
+  color: var(--sp-brand);
+}
+
+.solution-card-sha {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.solution-card-sha span {
+  word-break: break-all;
+}

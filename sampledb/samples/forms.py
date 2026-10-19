@@ -62,7 +62,7 @@ class SolutionForm(forms.ModelForm):
         fields = ['title', 'solution_type', 'url', 'content']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Solution title'}),
-            'solution_type': forms.Select(attrs={'class': 'form-control'}),
+            'solution_type': forms.Select(attrs={'class': 'form-select'}),
             'url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 15, 'id': 'id_content'}),
         }
@@ -122,7 +122,7 @@ class AnalysisTaskForm(forms.ModelForm):
     # Image upload field (optional alternative to gallery selection)
     image_upload = forms.ImageField(
         required=False,
-        widget=forms.FileInput(attrs={'class': 'form-control-file', 'accept': 'image/*'}),
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         label='Upload Image',
         help_text='Image must be 125x125 to 1024x1024 pixels with 1:1 aspect ratio (square). Non-square images will be center-cropped.'
     )
@@ -136,7 +136,7 @@ class AnalysisTaskForm(forms.ModelForm):
     )
     reference_solution_type = forms.ChoiceField(
         required=False,
-        widget=forms.Select(attrs={'class': 'form-control'}),
+        widget=forms.Select(attrs={'class': 'form-select'}),
         label='Reference Solution Type'
     )
     reference_solution_url = forms.URLField(
@@ -177,8 +177,8 @@ class AnalysisTaskForm(forms.ModelForm):
             'download_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://bazaar.abuse.ch/... or https://malshare.com/...', 'id': 'id_download_link'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Detailed description of the sample, will be in spoiler tags'}),
             'goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Analysis goal(s)'}),
-            'difficulty': forms.Select(attrs={'class': 'form-control'}),
-            'platform': forms.Select(attrs={'class': 'form-control'}),
+            'difficulty': forms.Select(attrs={'class': 'form-select'}),
+            'platform': forms.Select(attrs={'class': 'form-select'}),
             'tags': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'comma-separated tags'}),
             'tools': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'comma-separated tools'}),
         }

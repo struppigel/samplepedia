@@ -5,6 +5,8 @@ import requests
 import logging
 from django.conf import settings
 
+from .design_tokens import DANGER_COLOR, SUCCESS_COLOR, difficulty_embed_color, hex_to_int
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,21 +35,13 @@ def send_sample_notification(sample):
     # Build the absolute URL for the sample detail page
     base_url = settings.BASE_URL
     sample_url = f"{base_url}/sample/{sample.sha256}/{sample.id}/"
-    
-    # Map difficulty to colors
-    difficulty_colors = {
-        'easy': 0x28a745,      # Green
-        'medium': 0xffc107,    # Yellow
-        'advanced': 0xdc3545,  # Red
-        'expert': 0x343a40,    # Dark
-    }
-    
+
     # Build Discord embed
     embed = {
         "title": sample.sha256,
         "url": sample_url,
         "description": "A new malware training sample has been added to Samplepedia.",
-        "color": difficulty_colors.get(sample.difficulty, 0x007bff),
+        "color": difficulty_embed_color(sample.difficulty),
         "fields": [
             {
                 "name": "Description",
@@ -163,14 +157,6 @@ def send_solution_notification(solution):
     if solution.solution_type == 'onsite':
         solution_url = f"{base_url}/sample/{task.sha256}/{task.id}/solution/{solution.id}/view/"
     
-    # Map difficulty to colors
-    difficulty_colors = {
-        'easy': 0x28a745,      # Green
-        'medium': 0xffc107,    # Yellow
-        'advanced': 0xdc3545,  # Red
-        'expert': 0x343a40,    # Dark
-    }
-    
     # Get solution type display
     solution_type_display = solution.get_solution_type_display()
     
@@ -179,7 +165,7 @@ def send_solution_notification(solution):
         "title": solution.title,
         "url": solution_url,
         "description": f"A new {solution_type_display.lower()} solution has been added to a malware sample.",
-        "color": difficulty_colors.get(task.difficulty, 0x007bff),
+        "color": difficulty_embed_color(task.difficulty),
         "fields": [
             {
                 "name": "Author",
@@ -258,7 +244,7 @@ def send_user_registration_notification(username):
     embed = {
         "title": "🎉 New User Registration",
         "description": f"A new user has joined Samplepedia!",
-        "color": 0x28a745,  # Green
+        "color": hex_to_int(SUCCESS_COLOR),
         "fields": [
             {
                 "name": "Username",
@@ -311,7 +297,7 @@ def send_account_deletion_notification(username, task_count, solution_count):
     embed = {
         "title": "👋 User Account Deleted",
         "description": f"A user has deleted their account.",
-        "color": 0xdc3545,  # Red
+        "color": hex_to_int(DANGER_COLOR),
         "fields": [
             {
                 "name": "Username",

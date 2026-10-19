@@ -116,7 +116,7 @@ function initializeMentionAutocomplete() {
       }
       
       div.innerHTML = users.map((user, index) => 
-        `<div class="mention-item" data-index="${index}">@${user}</div>`
+        `<div class="mention-item" data-index="${index}">@${window.sp.escapeHtml(user)}</div>`
       ).join('');
       
       positionAutocomplete();

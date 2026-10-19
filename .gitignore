@@ -22,6 +22,7 @@ ENV/
 db.sqlite3*
 /media
 /staticfiles
+sampledb/staticfiles/
 sampledb/media/
 **/media/
 

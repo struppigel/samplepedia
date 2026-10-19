@@ -1,117 +1,100 @@
-# CSS Architecture - Samplepedia
+# CSS architecture
 
-This directory contains modular CSS files for better maintainability. Files are loaded in a specific order to ensure proper cascading.
+Samplepedia is styled with **Bootstrap 5.3** (CDN) plus a thin project layer.
+Every design decision (colors, fonts, sizes, radii, shadows, motion, dark mode) lives in
+**one file: `tokens.css`**. Everything else only references those tokens via `var(--sp-*)`.
 
-## File Structure
+To change the look of the site, change `tokens.css`.
 
-### 1. `variables.css` (67 lines)
-**Purpose:** CSS variables/custom properties for theming
-**Contains:**
-- Primary theme colors (red accent, grays, blues)
-- Context-aware variables that change in dark mode
-- Color palettes for alerts, forms, tables, etc.
+## Files and load order
 
-**When to edit:** When adding new colors or theme-wide properties
+`samples/templates/samples/base.html` loads, in this order:
 
-### 2. `dark-mode.css` (159 lines)
-**Purpose:** Dark mode variable overrides and dark-mode-specific styles
-**Contains:**
-- `.dark-mode` class variable overrides
-- Dark mode component styling (cards, tables, forms)
-- Dark mode button and interaction states
+| # | File | Contains |
+|---|------|----------|
+| 1 | Bootstrap 5.3 (CDN) | framework |
+| 2 | `tokens.css` | **all raw design values**: `:root` (light theme + shared values) and `[data-bs-theme="dark"]` (dark overrides) |
+| 3 | `bootstrap-theme.css` | maps tokens onto Bootstrap's own variables (`--bs-*`), per component (`.btn-primary`, `.card`, `.table`, …) |
+| 4 | `base.css` | element defaults (headings, links, labels, `hr`) and small utilities (`.text-strong`, `.text-difficulty-*`, `.theme-when-light/dark`, …) |
+| 5 | `layout.css` | app shell: navbar, page header, content area, footer |
+| 6 | `components.css` | project components: card headers, callouts, badges (difficulty, tags, medals), spoilers, solutions, comments, articles, markdown editor |
+| 7 | `forms.css` | project form widgets: SHA256 field, image picker, markdown write/preview tabs |
+| 8 | `prose.css` | rendered markdown (`.prose`, `.prose-article`) |
+| 9 | `pages/*.css` | page-specific styles, loaded via `{% block extra_css %}` and scoped to a `{% block body_class %}` |
+| 10 | highlight.js theme | code highlighting (light/dark stylesheet switched by `js/theme-init.js`) |
 
-**When to edit:** When adjusting dark mode appearance or adding dark-mode-specific styles
+Our files win over Bootstrap through **load order at equal specificity**, so they must load after
+`bootstrap.min.css`.
 
-### 3. `layout.css` (50 lines)
-**Purpose:** Site-wide layout and structure
-**Contains:**
-- Body typography (Inter font family)
-- Heading styles
-- Link colors and hover states
-- Navbar styling
-- Footer styling
+## Rules
 
-**When to edit:** When changing overall site layout, typography, or structural elements
+These are enforced by `samples/tests/test_design_system.py`:
 
-### 4. `components.css` (200+ lines)
-**Purpose:** Reusable UI components
-**Contains:**
-- Cards (headers, titles)
-- Badges (success, warning, danger, info)
-- Alerts (alert-info styling and links)
-- Buttons (primary, success, outline variants)
-- Spoilers (reveal animations)
-- Solution items (even/odd rows, hover states, highlight animation)
-- Favorite buttons
+1. **Raw values only in `tokens.css`.** No hex/`rgb()`/`hsl()`/named colors elsewhere. `font-family`,
+   `font-size`, `border-radius`, `box-shadow`, `z-index`, `transition`, and `animation` outside
+   `tokens.css` must use `var(--sp-*)` (or a keyword such as `0`, `none`, `inherit`).
+2. **No `!important`.** Not in CSS files and not in inline styles.
+3. **Dark mode = token overrides.** `[data-bs-theme` appears only in `tokens.css` (and in the
+   root mapping selector of `bootstrap-theme.css`). Components never have dark-mode rules.
+4. **No `<style>` blocks in templates** (standalone email templates excepted). Put page CSS in
+   `pages/<page>.css`.
+5. **Inline `style=""` only for layout or data**: widths, JS-toggled `display: none`, or
+   `--prop: {{ value }}`. Never colors or font sizes.
+6. **Modifiers re-point tokens** instead of restating values, e.g.
+   `.prose-article { font-size: var(--sp-fs-article); }`.
+7. **No AdminLTE, Bootstrap 4 classes, or jQuery.** Use `bootstrap.Modal.getOrCreateInstance(el)`
+   and plain DOM APIs.
 
-**When to edit:** When modifying component appearance or adding new UI components
+## Theme (light / dark)
 
-### 5. `forms.css` (95 lines)
-**Purpose:** Form controls and input styling
-**Contains:**
-- Form input backgrounds, borders, focus states
-- Autofill styling (WebKit and Firefox)
-- Placeholder text styling
-- SHA256 readonly field states
-- Image selection cards for task submission
+- The theme is the `data-bs-theme` attribute on `<html>` (`light` or `dark`).
+- `js/theme-init.js` runs in `<head>` before the page renders. It reads `localStorage['samplepedia-theme']`,
+  migrates the legacy `adminlte-dark` key, and sets the attribute plus the highlight.js stylesheet.
+- `js/theme-toggle.js` flips the theme via `window.spTheme.set()`. The toggle's icon and label switch
+  through `.theme-when-light` / `.theme-when-dark` (no JS needed).
+- Bootstrap 5.3 components pick up dark mode by themselves. Our tokens redefine the rest.
 
-**When to edit:** When changing form appearance or adding new form components
+## How to…
 
-### 6. `tables.css` (30 lines)
-**Purpose:** Table and pagination styling
-**Contains:**
-- Table striping (alternating row colors)
-- Table hover states
-- Table borders
-- Pagination links and active states
+**Change a color, font, or size site-wide** - edit the token in `tokens.css` (both the `:root` value
+and, if it differs, the `[data-bs-theme="dark"]` value).
 
-**When to edit:** When modifying table appearance or pagination styling
+**Restyle a Bootstrap component** - set its component variables in `bootstrap-theme.css`, e.g.
 
-## Load Order (IMPORTANT)
-
-Files **must** be loaded in this order in `base.html`:
-
-```html
-<link rel="stylesheet" href="{% static 'css/variables.css' %}">      <!-- 1. Define variables first -->
-<link rel="stylesheet" href="{% static 'css/dark-mode.css' %}">      <!-- 2. Override variables for dark mode -->
-<link rel="stylesheet" href="{% static 'css/layout.css' %}">         <!-- 3. Base layout -->
-<link rel="stylesheet" href="{% static 'css/components.css' %}">     <!-- 4. Components -->
-<link rel="stylesheet" href="{% static 'css/forms.css' %}">          <!-- 5. Forms -->
-<link rel="stylesheet" href="{% static 'css/tables.css' %}">         <!-- 6. Tables -->
+```css
+.btn-primary {
+  --bs-btn-bg: var(--sp-brand);
+  --bs-btn-hover-bg: var(--sp-brand-hover);
+}
 ```
 
-## Benefits of This Structure
+**Change a Bootstrap utility's color** (utilities use `!important`) - re-point the variable the
+utility reads instead of overriding it, e.g. `.text-muted` reads `--bs-secondary-color`:
 
-1. **Easier maintenance** - Find styles quickly by category
-2. **Reduced merge conflicts** - Team members can work on different files
-3. **Faster debugging** - Narrow down issues to specific files
-4. **Better organization** - Logical grouping by functionality
-5. **Selective loading** - Could load only needed files per page (future optimization)
+```css
+a.text-muted:hover { --bs-secondary-color: var(--sp-brand-hover); }
+```
 
-## Migration Notes
+**Add a page-specific stylesheet**
 
-The original `custom.css` (586 lines) has been split into 6 focused files totaling ~600 lines. No functionality was changed - this is a pure refactor for maintainability.
+```django
+{% block body_class %}page-my-page{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/my-page.css' %}">{% endblock %}
+```
 
-### Original file location
-- **Old:** `static/css/custom.css` (can be safely deleted after testing)
-- **New:** Six modular files in `static/css/`
+and scope its rules under `.page-my-page`.
 
-## Adding New Styles
+**Add or change a difficulty level** - add `--sp-difficulty-<level>` to `tokens.css`, a
+`.badge-difficulty-<level>` rule to `components.css`, and the same hex to
+`DIFFICULTY_COLORS` in `samples/design_tokens.py` (used for Discord embeds). The tests fail if the
+two drift apart.
 
-**For new colors/variables:**
-→ Add to `variables.css` (both `:root` and `.dark-mode`)
+**Page header** - pages fill `{% block page_title %}`, optionally `{% block page_subtitle %}` and
+`{% block page_actions %}` (buttons on the right). Override `{% block page_header %}` only for
+special layouts.
 
-**For dark mode specific styles:**
-→ Add to `dark-mode.css`
+## Static files in production
 
-**For buttons, badges, alerts, cards:**
-→ Add to `components.css`
-
-**For input fields, textareas, selects:**
-→ Add to `forms.css`
-
-**For layout changes (header, footer, nav):**
-→ Add to `layout.css`
-
-**For tables or pagination:**
-→ Add to `tables.css`
+`STORAGES` uses WhiteNoise's `CompressedManifestStaticFilesStorage`. File names get a content hash
+and are cached forever, and every deploy busts the browser cache. A `{% static %}` path that doesn't
+exist raises an error in production, and the tests check that every referenced file exists.
