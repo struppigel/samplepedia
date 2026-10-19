@@ -13,7 +13,9 @@ from django.core.paginator import Paginator
 
 from ..models import Solution, AnalysisTask, DIFFICULTY_POINTS
 from ..scoring import like_fields, rank_of, ranked_users, scored_user
-from ..discord_utils import send_user_registration_notification, send_account_deletion_notification
+from ..discord_utils import (
+    send_account_deletion_notification, send_in_background, send_user_registration_notification,
+)
 from ..utils.http import is_safe_url, safe_next_url
 from ..forms import (
     TurnstileAuthenticationForm,
@@ -56,8 +58,7 @@ def register(request):
             user.is_active = False  # Will be activated after email verification
             user.save()
             
-            # Send Discord notification for new user registration
-            send_user_registration_notification(user.username)
+            send_in_background(send_user_registration_notification, user.username)
             
             # Send verification email
             send_verification_email(request, user)
@@ -431,13 +432,8 @@ def delete_account(request):
             task_count = user.analysis_tasks.count()
             solution_count = user.solutions.count()
             
-            # Send Discord notification before deletion
-            send_account_deletion_notification(username, task_count, solution_count)
-            
-            # Clear email from all comments made by this user (GDPR compliance)
-            from django_comments.models import Comment
-            Comment.objects.filter(user=user).update(user_email='')
-            
+            send_in_background(send_account_deletion_notification, username, task_count, solution_count)
+
             # Log the user out first
             from django.contrib.auth import logout
             logout(request)

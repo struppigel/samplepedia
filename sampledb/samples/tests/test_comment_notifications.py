@@ -201,3 +201,20 @@ class CommentMentionNotificationTestCase(SampleTestCase):
         user2_notifications = Notification.objects.filter(recipient=self.user2)
         self.assertEqual(user2_notifications.count(), 1)
         self.assertEqual(user2_notifications.first().verb, MENTION_VERB)
+
+    def test_email_address_is_not_a_mention(self):
+        """'name@mentioned' in an e-mail address must not notify the user 'mentioned'"""
+        self.post_comment(self.user1, 'Write to someone@mentioned for details')
+
+        self.assertFalse(Notification.objects.filter(recipient=self.user2, verb=MENTION_VERB).exists())
+
+    def test_query_count_does_not_grow_with_participants(self):
+        """Saving the comment, finding the recipients and one bulk insert: 6 queries however many"""
+        for _ in range(2):
+            self.post_comment(make_user(), 'Earlier comment')
+        with self.assertNumQueries(6):
+            self.post_comment(self.user1, 'Hi @mentioned and @also_mentioned')
+        for _ in range(5):
+            self.post_comment(make_user(), 'Earlier comment')
+        with self.assertNumQueries(6):
+            self.post_comment(self.user1, 'Hi again @mentioned')
