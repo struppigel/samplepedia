@@ -1,6 +1,6 @@
 from django import template
-from django.utils.safestring import mark_safe
-from markdownx.utils import markdownify as markdownx_markdownify
+
+from samples.utils.markdown import render_markdown
 
 register = template.Library()
 
@@ -8,8 +8,6 @@ register = template.Library()
 @register.filter(name='markdownify')
 def markdownify(text):
     """
-    Render markdown text as HTML using django-markdownx's markdownify function.
+    Render user markdown as sanitized HTML.
     """
-    if not text:
-        return ''
-    return mark_safe(markdownx_markdownify(text))
+    return render_markdown(text)

@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils import timezone
-from markdownx.utils import markdownify
+from ..utils.markdown import render_markdown
 from django.db.models import Q, F
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
@@ -323,7 +323,7 @@ def view_onsite_solution(request, sha256, task_id, solution_id):
             })
     
     # Render markdown content (use get_content property for backward compatibility)
-    rendered_content = markdownify(solution.get_content) if solution.get_content else ''
+    rendered_content = render_markdown(solution.get_content)
     
     # Prepare URLs for template
     is_reference = solution.author == sample.author

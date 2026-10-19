@@ -15,7 +15,7 @@ from django_comments.models import Comment
 
 from ..models import AnalysisTask, Difficulty, SampleImage, Solution
 from ..forms import AnalysisTaskForm
-from markdownx.utils import markdownify
+from ..utils.markdown import render_markdown
 
 
 def sample_list(request):
@@ -455,5 +455,5 @@ def delete_task(request, sha256, task_id):
 def markdown_preview(request):
     """AJAX endpoint to render markdown preview"""
     content = request.POST.get('content', '')
-    html = markdownify(content)
+    html = render_markdown(content)
     return JsonResponse({'html': html})

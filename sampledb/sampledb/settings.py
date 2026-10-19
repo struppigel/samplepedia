@@ -380,8 +380,11 @@ MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {
     'markdown.extensions.codehilite': {
         'linenums': False,
         'guess_lang': False,
+        'use_pygments': False,  # Emit <pre class="codehilite"><code class="language-x">; highlight.js colours it
     }
 }
+# User markdown must always go through the sanitizer
+MARKDOWNX_MARKDOWNIFY_FUNCTION = 'samples.utils.markdown.render_markdown'
 
 # Cloudflare Turnstile Configuration
 TURNSTILE_SITEKEY = config('TURNSTILE_SITEKEY', default='')

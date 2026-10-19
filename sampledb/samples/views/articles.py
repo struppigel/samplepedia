@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import F, Q
 from django.http import JsonResponse
-from markdownx.utils import markdownify
+from ..utils.markdown import render_markdown
 from ..design_tokens import difficulty_css_class
 from ..models import Article, AnalysisTask, Solution
 
@@ -159,7 +159,7 @@ def article_view(request, article_id):
     edit_url = reverse('article_editor_edit', kwargs={'article_id': article_id}) if user_can_edit else None
     
     # Render markdown content
-    rendered_content = markdownify(article.content) if article.content else ''
+    rendered_content = render_markdown(article.content)
     
     return render(request, 'samples/article_view.html', {
         'article': article,
