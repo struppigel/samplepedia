@@ -1,0 +1,6 @@
+{# Link to the same legal page in the other language; expects lang ('de' or 'en') #}
+{% if lang == "de" %}
+<a class="btn btn-sm btn-outline-secondary" href="?lang=en" hreflang="en" lang="en">🇬🇧 English</a>
+{% else %}
+<a class="btn btn-sm btn-outline-secondary" href="?lang=de" hreflang="de" lang="de">🇩🇪 Deutsch</a>
+{% endif %}

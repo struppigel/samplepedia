@@ -43,11 +43,9 @@ JS_DIR = BASE_DIR / 'static' / 'js'
 TOKENS_CSS = CSS_DIR / 'tokens.css'
 BOOTSTRAP_THEME_CSS = CSS_DIR / 'bootstrap-theme.css'
 
-# Standalone HTML emails need inline/embedded styles
+# Standalone HTML emails need inline/embedded styles; the mails themselves extend this base
 EMAIL_TEMPLATES = {
-    'registration/password_reset_email.html',
-    'registration/verification_email.html',
-    'registration/email_change_verification.html',
+    'registration/_email_base.html',
 }
 
 STATIC_TAG_RE = re.compile(r"""{%\s*static\s+['"]([^'"]+)['"]\s*%}""")
