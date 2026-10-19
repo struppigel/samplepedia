@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-from csp.constants import NONE, SELF
+from csp.constants import NONE, SELF, UNSAFE_INLINE
 from decouple import config, Csv
 from django.contrib.messages import constants as message_constants
 from django.core.exceptions import ImproperlyConfigured
@@ -297,12 +297,35 @@ BASE_URL = config('BASE_URL', default='http://localhost:8000')
 # Content Security Policy (django-csp 4 format). Allow embedding only from my platform.
 # default-src is disabled on purpose: django-csp would otherwise inject
 # default-src 'self' and block the CDN scripts, fonts and images.
+FRAME_ANCESTORS = [SELF, 'https://malwareanalysis-for-hedgehogs.learnworlds.com']
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': None,
-        'frame-ancestors': [SELF, 'https://malwareanalysis-for-hedgehogs.learnworlds.com'],
+        'frame-ancestors': FRAME_ANCESTORS,
         'base-uri': [SELF],
         'object-src': [NONE],
+    },
+}
+# The full policy, reported but not enforced yet: browsers POST violations to
+# /csp-report/, which logs them. Once the logs are clean, merge it into the
+# enforced policy above.
+CONTENT_SECURITY_POLICY_REPORT_ONLY = {
+    'DIRECTIVES': {
+        'default-src': [SELF],
+        'script-src': [SELF, 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', 'https://challenges.cloudflare.com'],
+        'script-src-attr': [NONE],  # no inline on*= handlers
+        # Inline style="" attributes are allowed for layout (see static/css/README.md)
+        'style-src': [SELF, UNSAFE_INLINE, 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', 'https://fonts.googleapis.com'],
+        'font-src': [SELF, 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
+        # Markdown can embed images from anywhere; task images come from Cloudinary
+        'img-src': [SELF, 'data:', 'https:'],
+        'frame-src': ['https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://challenges.cloudflare.com'],
+        'connect-src': [SELF],
+        'form-action': [SELF],
+        'base-uri': [SELF],
+        'object-src': [NONE],
+        'frame-ancestors': FRAME_ANCESTORS,
+        'report-uri': ['/csp-report/'],
     },
 }
 

@@ -2,6 +2,7 @@
 Security regression tests: response headers, markdown sanitizing, XSS-safe
 templates, redirect validation and HTTP method restrictions.
 """
+import json
 import re
 from pathlib import Path
 from unittest import mock
@@ -277,3 +278,29 @@ class EditorImageUploadTestCase(SampleTestCase):
                 response = self.client.post(reverse('upload_editor_image'), {'image': image})
         self.assertEqual(response.status_code, 500)
         self.assertNotIn('api_secret', response.content.decode())
+
+
+class ReportOnlyPolicyTestCase(SampleTestCase):
+    """The full policy is reported, not yet enforced."""
+
+    def test_report_only_header(self):
+        policy = self.client.get('/impressum/').headers.get('Content-Security-Policy-Report-Only', '')
+        self.assertIn("default-src 'self'", policy)
+        self.assertIn("script-src-attr 'none'", policy)
+        self.assertIn('report-uri /csp-report/', policy)
+
+    def test_report_is_logged(self):
+        report = {'csp-report': {
+            'document-uri': 'https://samplepedia.example/', 'violated-directive': 'script-src-elem',
+            'blocked-uri': 'https://evil.example/x.js',
+        }}
+        with self.assertLogs('samples.views.csp', level='WARNING') as logs:
+            response = self.client.post(reverse('csp_report'), data=json.dumps(report), content_type='application/csp-report')
+        self.assertEqual(response.status_code, 204)
+        self.assertIn('https://evil.example/x.js', logs.output[0])
+
+    def test_oversized_or_invalid_reports_are_rejected(self):
+        url = reverse('csp_report')
+        self.assertEqual(self.client.post(url, data='x' * 20_000, content_type='application/csp-report').status_code, 400)
+        self.assertEqual(self.client.post(url, data='not json', content_type='application/csp-report').status_code, 400)
+        self.assertEqual(self.client.get(url).status_code, 405)

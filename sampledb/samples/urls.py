@@ -71,4 +71,5 @@ urlpatterns = [
     path("notifications/unread-count/", views.unread_count, name="unread_count"),
     # Markdown preview
     path("markdown-preview/", views.markdown_preview, name="markdown_preview"),
+    path("csp-report/", views.csp_report, name="csp_report"),
 ]

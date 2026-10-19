@@ -23,6 +23,7 @@ from .pages import impressum, privacy_policy, markdown_editor
 from .comments import (
     edit_comment, delete_comment, post_comment, comment_posted, comments_api_disabled, search_users
 )
+from .csp import csp_report
 from .notifications import (
     notification_list,
     notification_dropdown,
@@ -97,4 +98,6 @@ __all__ = [
     'mark_all_read',
     'delete_notification',
     'unread_count',
+    # Security
+    'csp_report',
 ]
