@@ -17,10 +17,10 @@ To change the look of the site, change `tokens.css`.
 | 3 | `bootstrap-theme.css` | maps tokens onto Bootstrap's own variables (`--bs-*`), per component (`.btn-primary`, `.card`, `.table`, …) |
 | 4 | `base.css` | element defaults (headings, links, labels, `hr`) and small utilities (`.text-strong`, `.text-difficulty-*`, `.theme-when-light/dark`, …) |
 | 5 | `layout.css` | app shell: navbar, page header, content area, footer |
-| 6 | `components.css` | project components: card headers, callouts, badges (difficulty, tags, medals), spoilers, solutions, comments, articles, markdown editor |
-| 7 | `forms.css` | project form widgets: SHA256 field, image picker, markdown write/preview tabs |
+| 6 | `components.css` | project components: card headers, callouts, badges (difficulty, tags, medals), spoilers, solutions, comments, articles, markdown tabs/panes and the editor page |
+| 7 | `forms.css` | project form widgets: SHA256 field, image picker, selected-draft summary |
 | 8 | `prose.css` | rendered markdown (`.prose`, `.prose-article`) |
-| 9 | `pages/*.css` | page-specific styles, loaded via `{% block extra_css %}` and scoped to a `{% block body_class %}` |
+| 9 | `pages/*.css` | page-specific styles, loaded only by their page via `{% block extra_css %}` |
 | 10 | highlight.js theme | code highlighting (light/dark stylesheet switched by `js/theme-init.js`) |
 
 Our files win over Bootstrap through **load order at equal specificity**, so they must load after
@@ -30,20 +30,40 @@ Our files win over Bootstrap through **load order at equal specificity**, so the
 
 These are enforced by `samples/tests/test_design_system.py`:
 
-1. **Raw values only in `tokens.css`.** No hex/`rgb()`/`hsl()`/named colors elsewhere. `font-family`,
-   `font-size`, `border-radius`, `box-shadow`, `z-index`, `transition`, and `animation` outside
-   `tokens.css` must use `var(--sp-*)` (or a keyword such as `0`, `none`, `inherit`).
-2. **No `!important`.** Not in CSS files and not in inline styles.
-3. **Dark mode = token overrides.** `[data-bs-theme` appears only in `tokens.css` (and in the
+1. **Raw values only in `tokens.css`.** No hex/`rgb()`/`hsl()`/named colors elsewhere, including in
+   custom properties such as `--bs-*` overrides (`rgba(var(--sp-brand-rgb), 0.1)` is fine: the color
+   comes from a token). `font`, `font-family`, `font-size`, `font-weight`, `line-height`,
+   `border-radius`, `box-shadow`, `z-index`, `transition` and `animation` outside `tokens.css` must use
+   `var(--sp-*)` (or a keyword such as `0`, `none`, `inherit`).
+2. **Every token is defined and used.** A `var(--sp-*)` that `tokens.css` doesn't define fails, and so
+   does a token nothing uses. The dark theme only overrides tokens that exist in `:root`.
+3. **No `!important`.** Not in CSS files and not in inline styles.
+4. **Dark mode = token overrides.** `[data-bs-theme` appears only in `tokens.css` (and in the
    root mapping selector of `bootstrap-theme.css`). Components never have dark-mode rules.
-4. **No `<style>` blocks in templates** (standalone email templates excepted). Put page CSS in
-   `pages/<page>.css`.
-5. **Inline `style=""` only for layout or data**: widths, JS-toggled `display: none`, or
-   `--prop: {{ value }}`. Never colors or font sizes.
-6. **Modifiers re-point tokens** instead of restating values, e.g.
+5. **No `<style>` blocks in templates** (the e-mail base template `registration/_email_base.html`
+   excepted). Put page CSS in `pages/<page>.css`.
+6. **Inline `style=""` only for layout or data**: widths or `--prop: {{ value }}`, in templates and in
+   HTML built by JavaScript. Never colors or font sizes. Hide elements with the `hidden` attribute
+   (`sp.show()` in `js/utils.js`), not `display: none`; JavaScript never sets design values through
+   `element.style`.
+7. **Modifiers re-point tokens** instead of restating values, e.g.
    `.prose-article { font-size: var(--sp-fs-article); }`.
-7. **No AdminLTE, Bootstrap 4 classes, or jQuery.** Use `bootstrap.Modal.getOrCreateInstance(el)`
+8. **No AdminLTE, Bootstrap 4 classes, or jQuery.** Use `bootstrap.Modal.getOrCreateInstance(el)`
    and plain DOM APIs.
+
+## Tokens
+
+- **Primitives** are the palette (`--sp-brand`, `--sp-white`, `--sp-secondary`, …, with `-rgb` triplets
+  where Bootstrap utilities need them) and the type, shape, spacing and motion scales.
+- **Component tokens** refer to primitives instead of repeating literals:
+  `--sp-dropdown-bg: var(--sp-surface-raised)`, `--sp-table-hover: var(--sp-brand-tint)`. A palette
+  change then reaches every component, and a component only needs a dark override when its dark
+  value differs from what its alias already gives.
+- **Naming:** `--sp-on-<color>` is text on a palette color; `--sp-<component>-fg`, `-bg`, `-border` are
+  a component's foreground, background and border; `--sp-fs-*`, `--sp-lh-*`, `--sp-fw-*` are font size,
+  line height and weight.
+- **Breakpoints** can't be tokens (custom properties don't work in media queries). Use Bootstrap's:
+  `@media (max-width: 767.98px)` for "below md".
 
 ## Theme (light / dark)
 
@@ -82,16 +102,18 @@ a.text-muted:hover { --bs-secondary-color: var(--sp-brand-hover); }
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/my-page.css' %}">{% endblock %}
 ```
 
-and scope its rules under `.page-my-page`.
+The file is only loaded by that page; scope rules under `.page-my-page` where a selector could
+also match shared markup.
 
-**Add or change a difficulty level** - add `--sp-difficulty-<level>` to `tokens.css`, a
-`.badge-difficulty-<level>` rule to `components.css`, and the same hex to
-`DIFFICULTY_COLORS` in `samples/design_tokens.py` (used for Discord embeds). The tests fail if the
-two drift apart.
+**Add or change a difficulty level** - add the level to `Difficulty` in `samples/models.py`,
+`--sp-difficulty-<level>` to `tokens.css` and a `.badge-difficulty-<level>` rule to
+`components.css`. `samples/design_tokens.py` reads the color from `tokens.css` for Discord embeds,
+and the tests fail if a level lacks a color or badge class.
 
 **Page header** - pages fill `{% block page_title %}`, optionally `{% block page_subtitle %}` and
-`{% block page_actions %}` (buttons on the right). Override `{% block page_header %}` only for
-special layouts.
+`{% block page_actions %}` (buttons on the right). A page whose content isn't full width aligns the
+title through `{% block page_header_class %}` (default `container-fluid`). Override
+`{% block page_header %}` only for special layouts.
 
 ## Static files in production
 
