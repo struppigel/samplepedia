@@ -1,6 +1,6 @@
 from .models import AnalysisTask, Difficulty, Solution, SolutionType, Article
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordResetForm
 from django.contrib.auth.models import User
 from django_comments_xtd.forms import XtdCommentForm
 from turnstile.fields import TurnstileField
@@ -504,9 +504,10 @@ class DeleteAccountForm(forms.Form):
 
 
 # Password Reset Form with Turnstile CAPTCHA
-class TurnstilePasswordResetForm(forms.Form):
+class TurnstilePasswordResetForm(PasswordResetForm):
     """
-    Custom password reset form with Turnstile CAPTCHA protection.
+    Django's password reset form (finds every active account with the address)
+    with Turnstile CAPTCHA protection.
     """
     email = forms.EmailField(
         required=True,

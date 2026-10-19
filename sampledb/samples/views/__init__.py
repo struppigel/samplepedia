@@ -6,7 +6,6 @@ from .courses import course_list, course_samples
 from .likes import toggle_like, toggle_solution_like
 from .auth import (
     register, 
-    send_verification_email, 
     verification_sent, 
     verify_email, 
     resend_verification,
@@ -63,7 +62,6 @@ __all__ = [
     'toggle_solution_like',
     # Auth
     'register',
-    'send_verification_email',
     'verification_sent',
     'verify_email',
     'resend_verification',

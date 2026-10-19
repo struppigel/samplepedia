@@ -4,10 +4,8 @@ from django.contrib.auth import login as auth_login
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.template.loader import render_to_string
-from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
 from django.conf import settings
 from django.core.paginator import Paginator
 
@@ -16,6 +14,7 @@ from ..scoring import like_fields, rank_of, ranked_users, scored_user
 from ..discord_utils import (
     send_account_deletion_notification, send_in_background, send_user_registration_notification,
 )
+from ..services.emails import send_email_change_verification, send_password_reset_email, send_verification_email
 from ..utils.http import is_safe_url, safe_next_url
 from ..forms import (
     TurnstileAuthenticationForm,
@@ -74,38 +73,6 @@ def register(request):
     return render(request, 'registration/register.html', {'form': form})
 
 
-def send_verification_email(request, user):
-    """Send email verification link to user"""
-    # Generate token
-    token = default_token_generator.make_token(user)
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
-    
-    # Build verification URL
-    verification_url = request.build_absolute_uri(
-        f'/verify-email/{uid}/{token}/'
-    )
-    
-    # Render email templates
-    context = {
-        'user': user,
-        'verification_url': verification_url,
-    }
-    
-    subject = 'Verify your Samplepedia account'
-    html_message = render_to_string('registration/verification_email.html', context)
-    plain_message = render_to_string('registration/verification_email.txt', context)
-    
-    # Send email
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        html_message=html_message,
-        fail_silently=False,
-    )
-
-
 def verification_sent(request):
     """Confirmation page after registration"""
     return render(request, 'registration/verification_sent.html')
@@ -141,42 +108,9 @@ def password_reset_request(request):
     if request.method == 'POST':
         form = TurnstilePasswordResetForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data.get('email')
-            
-            # Try to find user with this email
-            try:
-                user = User.objects.get(email=email)
-                
-                # Generate password reset token
-                token = default_token_generator.make_token(user)
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
-                
-                # Render email templates
-                context = {
-                    'user': user,
-                    'uid': uid,
-                    'token': token,
-                    'protocol': 'https' if request.is_secure() else 'http',
-                    'domain': request.get_host(),
-                }
-                
-                subject = 'Password Reset Request - Samplepedia'
-                html_message = render_to_string('registration/password_reset_email.html', context)
-                plain_message = render_to_string('registration/password_reset_email.txt', context)
-                
-                # Send email
-                send_mail(
-                    subject=subject,
-                    message=plain_message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    html_message=html_message,
-                    fail_silently=False,
-                )
-            except User.DoesNotExist:
-                pass  # Don't reveal whether email exists
-            
-            # Always show success message for security
+            send_password_reset_email(request, form)
+
+            # Same message whether or not the address has an account
             messages.success(
                 request,
                 'If an account exists with this email, you will receive password reset instructions.'
@@ -194,29 +128,15 @@ def resend_verification(request):
         form = TurnstileResendVerificationForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data.get('email', '').strip()
-            
-            try:
-                user = User.objects.get(email=email)
-                
-                # Only send if account is not yet verified
-                if not user.is_active:
-                    send_verification_email(request, user)
-                    messages.success(
-                        request,
-                        'Verification email has been resent! Please check your inbox.'
-                    )
-                else:
-                    messages.info(
-                        request,
-                        'This account is already verified. You can log in now.'
-                    )
-            except User.DoesNotExist:
-                # Don't reveal whether email exists (security best practice)
-                messages.success(
-                    request,
-                    'If an unverified account exists with this email, a verification link has been sent.'
-                )
-            
+            for user in User.objects.filter(email__iexact=email, is_active=False):
+                send_verification_email(request, user)
+
+            # Same message in every case, so the form doesn't reveal which addresses have accounts
+            messages.success(
+                request,
+                'If an unverified account exists with this email, a verification link has been sent.'
+            )
+                        
             return redirect('verification_sent')
     else:
         form = TurnstileResendVerificationForm()
@@ -305,41 +225,12 @@ def change_email(request):
         form = ChangeEmailForm(user=request.user, data=request.POST)
         if form.is_valid():
             new_email = form.cleaned_data['new_email']
-            
-            # Generate token for email verification
-            token = default_token_generator.make_token(request.user)
-            uid = urlsafe_base64_encode(force_bytes(request.user.pk))
-            
-            # Store the new email temporarily in session (or you could use a database field)
+            token = send_email_change_verification(request, request.user, new_email)
+
+            # The address only changes once the link sent to it is opened
             request.session['pending_email'] = new_email
             request.session['pending_email_token'] = token
-            
-            # Build verification URL
-            verification_url = request.build_absolute_uri(
-                f'/verify-email-change/{uid}/{token}/'
-            )
-            
-            # Render email templates
-            context = {
-                'user': request.user,
-                'new_email': new_email,
-                'verification_url': verification_url,
-            }
-            
-            subject = 'Verify your new email address - Samplepedia'
-            html_message = render_to_string('registration/email_change_verification.html', context)
-            plain_message = render_to_string('registration/email_change_verification.txt', context)
-            
-            # Send email to the NEW email address
-            send_mail(
-                subject=subject,
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[new_email],
-                html_message=html_message,
-                fail_silently=False,
-            )
-            
+                        
             messages.success(
                 request, 
                 f'A verification link has been sent to {new_email}. Please check your email to confirm the change.'
