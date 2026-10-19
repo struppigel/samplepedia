@@ -314,6 +314,11 @@ DISCORD_WEBHOOK_ADVANCED = config('DISCORD_WEBHOOK_ADVANCED', default='')
 DISCORD_WEBHOOK_EXPERT = config('DISCORD_WEBHOOK_EXPERT', default='')
 DISCORD_WEBHOOK_LOGGING = config('DISCORD_WEBHOOK_LOGGING', default='')  # For user registration/deletion events
 
+if TESTING:
+    # A local .env may hold real webhook URLs; the test suite must never post to them
+    DISCORD_WEBHOOK_URL = DISCORD_WEBHOOK_EASY = DISCORD_WEBHOOK_MEDIUM = ''
+    DISCORD_WEBHOOK_ADVANCED = DISCORD_WEBHOOK_EXPERT = DISCORD_WEBHOOK_LOGGING = ''
+
 # Base URL for Discord notifications (used for sample links)
 BASE_URL = config('BASE_URL', default='http://localhost:8000')
 
