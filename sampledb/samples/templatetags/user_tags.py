@@ -37,51 +37,32 @@ def difficulty_badge(difficulty, difficulty_display=None):
         'difficulty_display': difficulty_display
     }
 
-@register.inclusion_tag('samples/_favorite_button.html')
-def favorite_button(task, is_liked_or_set):
-    """
-    Display a favorite/like button with count for an analysis task.
-    
-    Args:
-        task: The AnalysisTask object
-        is_liked_or_set: Either a boolean indicating if liked, or a set of favorited IDs to check against
-    """
-    # Determine if the task is liked
+def _is_liked(obj, is_liked_or_set):
+    """The tags accept either a boolean or a set of the user's liked ids"""
     if isinstance(is_liked_or_set, bool):
-        is_liked = is_liked_or_set
-    else:
-        # Assume it's a set of IDs
-        is_liked = task.id in is_liked_or_set
-    
+        return is_liked_or_set
+    return obj.id in is_liked_or_set
+
+
+def _favorite_context(task, is_liked_or_set):
     return {
         'task_id': task.id,
         'sha256': task.sha256,
         'favorite_count': task.favorite_count,
-        'is_liked': is_liked
+        'is_liked': _is_liked(task, is_liked_or_set),
     }
+
+
+@register.inclusion_tag('samples/_favorite_button.html')
+def favorite_button(task, is_liked_or_set):
+    """Favorite button with count for a task in a list"""
+    return _favorite_context(task, is_liked_or_set)
+
 
 @register.inclusion_tag('samples/_favorite_button_filled.html')
 def favorite_button_filled(task, is_liked_or_set):
-    """
-    Display a favorite/like button with count for an analysis task.
-    
-    Args:
-        task: The AnalysisTask object
-        is_liked_or_set: Either a boolean indicating if liked, or a set of favorited IDs to check against
-    """
-    # Determine if the task is liked
-    if isinstance(is_liked_or_set, bool):
-        is_liked = is_liked_or_set
-    else:
-        # Assume it's a set of IDs
-        is_liked = task.id in is_liked_or_set
-    
-    return {
-        'task_id': task.id,
-        'sha256': task.sha256,
-        'favorite_count': task.favorite_count,
-        'is_liked': is_liked
-    }
+    """The detail page's large favorite button"""
+    return _favorite_context(task, is_liked_or_set)
 
 @register.filter
 def is_in(value, container):
@@ -171,15 +152,8 @@ def solution_like_button(solution, is_liked_or_set):
         solution: The Solution object
         is_liked_or_set: Either a boolean indicating if liked, or a set of liked IDs to check against
     """
-    # Determine if the solution is liked
-    if isinstance(is_liked_or_set, bool):
-        is_liked = is_liked_or_set
-    else:
-        # Assume it's a set of IDs
-        is_liked = solution.id in is_liked_or_set
-    
     return {
         'solution_id': solution.id,
         'like_count': solution.like_count,
-        'is_liked': is_liked
+        'is_liked': _is_liked(solution, is_liked_or_set),
     }

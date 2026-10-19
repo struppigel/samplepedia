@@ -54,6 +54,11 @@ __all__ = [
     'article_editor',
     'article_view',
     'article_delete',
+    'article_unpublish',
+    'search_samples_ajax',
+    'get_user_drafts_ajax',
+    'publish_article',
+    'attach_draft_to_sample',
     # Courses
     'course_list',
     'course_samples',

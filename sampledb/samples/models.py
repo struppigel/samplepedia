@@ -496,13 +496,6 @@ class Solution(models.Model):
         """The text of an on-site solution, stored in its Article"""
         return self.article.content if self.article else ""
     
-    @property
-    def get_title(self):
-        """Get title - for on-site solutions, use the article title if available"""
-        if self.solution_type == SolutionType.ONSITE and self.article:
-            return self.article.title
-        return self.title
-    
     def user_can_see_hidden_status(self, user):
         """Staff, the task author and the solution author may see a hidden solution"""
         if not user or not user.is_authenticated:
