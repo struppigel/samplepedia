@@ -115,7 +115,7 @@
                           </a>
                           {% endif %}
                           {% if solution.is_hidden %}
-                            <span class="badge badge-warning ms-2" title="Hidden until {{ solution.hidden_until|date:'M d, Y H:i' }}">
+                            <span class="badge badge-hidden ms-2" title="Hidden until {{ solution.hidden_until|date:'M d, Y H:i' }}">
                               <i class="fas fa-eye-slash"></i> Hidden
                             </span>
                           {% endif %}

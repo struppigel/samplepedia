@@ -14,7 +14,7 @@
       <div class="card-header">
         <h3 class="card-title">Solution Search</h3>
 
-        <div class="card-tools">
+        <div class="card-header-actions">
           {% url 'solution_list' as solution_list_url %}
           {% include 'samples/_filter_bar.html' with placeholder='Search title or SHA256' clear_url=solution_list_url %}
         </div>
@@ -61,7 +61,7 @@
                   </a>
                 {% endif %}
                 {% if solution.is_hidden %}
-                  <span class="badge badge-warning ms-1" title="Hidden until {{ solution.hidden_until|date:'M d, Y H:i' }}">
+                  <span class="badge badge-hidden ms-1" title="Hidden until {{ solution.hidden_until|date:'M d, Y H:i' }}">
                     <i class="fas fa-eye-slash"></i> Hidden
                   </span>
                 {% endif %}

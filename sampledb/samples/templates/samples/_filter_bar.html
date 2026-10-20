@@ -59,12 +59,12 @@
 
   {% if show_favorites and user.is_authenticated %}
     <input type="hidden" name="favorites" value="{{ favorites_only|yesno:'true,false' }}">
-    <button type="button" class="btn btn-sm me-2 {% if favorites_only %}btn-danger{% else %}btn-default{% endif %}" data-favorites-toggle>
+    <button type="button" class="btn btn-sm me-2 {% if favorites_only %}btn-danger{% else %}btn-plain{% endif %}" data-favorites-toggle>
       My <i class="fas fa-heart"></i>
     </button>
   {% endif %}
 
-  <button type="submit" class="btn btn-default btn-sm me-2">
+  <button type="submit" class="btn btn-plain btn-sm me-2">
     Filter
   </button>
   {% if is_filtered %}

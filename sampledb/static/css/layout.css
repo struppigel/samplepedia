@@ -76,7 +76,7 @@ body {
   padding: 2px 4px;
   font-size: var(--sp-fs-nav-badge);
   font-weight: var(--sp-fw-light);
-  background-color: var(--sp-badge-danger);
+  background-color: var(--sp-badge-emphasis);
 }
 
 /* Notification dropdown */

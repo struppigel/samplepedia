@@ -15,9 +15,7 @@ This test suite covers:
    and Discord embed colors use the shared design tokens
 9. Every var(--sp-*) in use is defined, and every defined token is used
 10. JavaScript doesn't set design values through element.style
-
-Checks that still have known violations compare against a baseline that may
-only shrink (see RatchetMixin): fix a violation, then delete its entry.
+11. No Bootstrap 4 / AdminLTE class names re-created as shims
 """
 
 import re
@@ -131,20 +129,6 @@ def token_block_names(selector):
     text = COMMENT_RE.sub('', TOKENS_CSS.read_text(encoding='utf-8'))
     blocks = re.findall(selector + r'\s*{(.*?)}', text, re.S)
     return {name for block in blocks for name in re.findall(r'--sp-([\w-]+)\s*:', block)}
-
-
-class RatchetMixin:
-    """
-    For checks with known violations: anything outside the baseline fails, and
-    so does a baseline entry that no longer occurs, so the list can only shrink.
-    """
-
-    def assertWithinBaseline(self, found, baseline):
-        found = set(found)
-        new = sorted(found - baseline)
-        fixed = sorted(baseline - found)
-        self.assertEqual(new, [], 'New violations:\n' + '\n'.join(new))
-        self.assertEqual(fixed, [], 'Fixed; remove these from the baseline:\n' + '\n'.join(fixed))
 
 
 class StaticReferencesTestCase(SimpleTestCase):
@@ -330,62 +314,30 @@ class LegacyFrameworkTestCase(SimpleTestCase):
         self.assertEqual(offenders, [], "\n".join(offenders))
 
 
-class Bootstrap4ShimTestCase(RatchetMixin, SimpleTestCase):
-    """Bootstrap 4 / AdminLTE class names that components.css still re-creates as shims"""
+class Bootstrap4ShimTestCase(SimpleTestCase):
+    """
+    Bootstrap 4 / AdminLTE class names must not come back as project shims. Use
+    text-bg-primary/secondary, the semantic badges (.badge-reference, .badge-hidden,
+    .badge-count, .badge-admin), .btn-plain, .btn-compact and .card-header-actions.
+    """
 
     SHIM_RE = re.compile(
         r'(?<![\w-])(badge-(?:primary|secondary|info|warning|danger|dark|success)|btn-default|btn-xs|card-tools)(?![\w-])'
     )
-    KNOWN_SHIMS = {
-        'samples/templates/samples/_article_header.html: badge-info',
-        'samples/templates/samples/_filter_bar.html: btn-default',
-        'samples/templates/samples/_onsite_editor.html: badge-info',
-        'samples/templates/samples/_onsite_editor.html: card-tools',
-        'samples/templates/samples/_user_groups.html: badge-danger',
-        'samples/templates/samples/_user_groups.html: badge-primary',
-        'samples/templates/samples/_user_groups.html: badge-secondary',
-        'samples/templates/samples/article_list.html: badge-secondary',
-        'samples/templates/samples/article_list.html: badge-warning',
-        'samples/templates/samples/course_list.html: badge-primary',
-        'samples/templates/samples/course_samples.html: badge-info',
-        'samples/templates/samples/course_samples.html: badge-secondary',
-        'samples/templates/samples/course_samples.html: btn-xs',
-        'samples/templates/samples/course_samples.html: card-tools',
-        'samples/templates/samples/detail.html: badge-info',
-        'samples/templates/samples/detail.html: badge-secondary',
-        'samples/templates/samples/detail.html: badge-warning',
-        'samples/templates/samples/detail.html: card-tools',
-        'samples/templates/samples/list.html: card-tools',
-        'samples/templates/samples/notifications.html: badge-primary',
-        'samples/templates/samples/notifications.html: card-tools',
-        'samples/templates/samples/profile.html: badge-warning',
-        'samples/templates/samples/ranking.html: badge-danger',
-        'samples/templates/samples/solutions_list.html: badge-warning',
-        'samples/templates/samples/solutions_list.html: card-tools',
-        'static/js/tag-list.js: badge-secondary',
-        'static/css/bootstrap-theme.css: card-tools',
-        'static/css/components.css: badge-danger',
-        'static/css/components.css: badge-dark',
-        'static/css/components.css: badge-info',
-        'static/css/components.css: badge-primary',
-        'static/css/components.css: badge-secondary',
-        'static/css/components.css: badge-warning',
-        'static/css/components.css: btn-default',
-        'static/css/components.css: btn-xs',
-        'static/css/components.css: card-tools',
-    }
 
-    def test_no_new_shim_classes(self):
-        found = set()
+    def test_no_shim_classes(self):
+        found = []
         files = [p for p in template_files() if relative(p) not in EMAIL_TEMPLATES]
         for path in [*files, *js_files(), *project_css_files()]:
-            for match in self.SHIM_RE.finditer(path.read_text(encoding='utf-8')):
-                found.add(f'{path.relative_to(BASE_DIR).as_posix()}: {match.group(0)}')
-        self.assertWithinBaseline(found, self.KNOWN_SHIMS)
+            text = path.read_text(encoding='utf-8')
+            for match in self.SHIM_RE.finditer(text):
+                line = text.count('\n', 0, match.start()) + 1
+                found.append(f'{path.relative_to(BASE_DIR).as_posix()}:{line} {match.group(0)}')
+        self.assertEqual(found, [], '\n'.join(found))
 
 
 class DesignTokensSyncTestCase(SimpleTestCase):
-    """samples/design_tokens.py mirrors the matching tokens in tokens.css"""
+    """samples/design_tokens.py reads the matching tokens from tokens.css"""
 
     def root_tokens(self):
         text = COMMENT_RE.sub('', TOKENS_CSS.read_text(encoding='utf-8'))

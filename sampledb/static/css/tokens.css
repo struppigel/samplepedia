@@ -137,8 +137,8 @@
   --sp-container-max-xxl: 1140px;
   --sp-select-sm-pe: 1.25rem;
   --sp-select-sm-arrow: 12px 9px;
-  --sp-btn-xs-py: 0.125rem;
-  --sp-btn-xs-px: 0.25rem;
+  --sp-btn-compact-py: 0.125rem;
+  --sp-btn-compact-px: 0.25rem;
 
   /* ------------------------------------------------------------------ */
   /* Motion, elevation, layering                                         */
@@ -225,12 +225,11 @@
 
   /* Badge tones */
   --sp-badge-fg: var(--sp-white);
-  --sp-badge-primary: var(--sp-accent);
-  --sp-badge-secondary: var(--sp-secondary);
-  --sp-badge-info: var(--sp-info);
-  --sp-badge-warning: var(--sp-difficulty-medium);
-  --sp-badge-danger: var(--sp-difficulty-advanced);
-  --sp-badge-dark: var(--sp-difficulty-expert);
+  --sp-badge-reference: var(--sp-info);
+  --sp-badge-count: var(--sp-info);
+  /* Hidden and emphasis badges reuse the difficulty palette */
+  --sp-badge-hidden: var(--sp-difficulty-medium);
+  --sp-badge-emphasis: var(--sp-difficulty-advanced);
   --sp-badge-brand: var(--sp-brand);
   --sp-badge-hover-overlay: rgba(255, 255, 255, 0.25);
 
@@ -381,11 +380,11 @@
   --sp-callout-link: #495057;
 
   /* Buttons (theme-dependent) */
-  --sp-btn-default-bg: var(--sp-light);
-  --sp-btn-default-border: #ddd;
-  --sp-btn-default-fg: #444;
-  --sp-btn-default-hover-bg: #e9ecef;
-  --sp-btn-default-hover-fg: #2b2b2b;
+  --sp-btn-plain-bg: var(--sp-light);
+  --sp-btn-plain-border: #ddd;
+  --sp-btn-plain-fg: #444;
+  --sp-btn-plain-hover-bg: #e9ecef;
+  --sp-btn-plain-hover-fg: #2b2b2b;
 
   /* Prose (rendered markdown) */
   --sp-prose-code-bg: #f5f5f5;
@@ -555,11 +554,11 @@
   --sp-btn-warning-hover: #d4860b;
   --sp-btn-warning-hover-border: #c87f0a;
   --sp-btn-outline-accent: #4a9eff;
-  --sp-btn-default-bg: #3a4047;
-  --sp-btn-default-border: var(--sp-secondary);
-  --sp-btn-default-fg: var(--sp-text);
-  --sp-btn-default-hover-bg: #3f474e;
-  --sp-btn-default-hover-fg: #dee2e6;
+  --sp-btn-plain-bg: #3a4047;
+  --sp-btn-plain-border: var(--sp-secondary);
+  --sp-btn-plain-fg: var(--sp-text);
+  --sp-btn-plain-hover-bg: #3f474e;
+  --sp-btn-plain-hover-fg: #dee2e6;
 
   --sp-prose-code-bg: #000;
   --sp-prose-code-fg: #ffd700;

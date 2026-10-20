@@ -14,7 +14,8 @@
   font-weight: var(--sp-fw-normal);
 }
 
-.card-tools {
+/* Buttons and counts on the right of a card header */
+.card-header-actions {
   float: right;
   margin-right: calc(-1 * var(--sp-space-2));
 }
@@ -70,22 +71,24 @@
 /* ------------------------------------------------------------------ */
 /* Buttons                                                             */
 /* ------------------------------------------------------------------ */
-.btn-default {
-  --bs-btn-color: var(--sp-btn-default-fg);
-  --bs-btn-bg: var(--sp-btn-default-bg);
-  --bs-btn-border-color: var(--sp-btn-default-border);
-  --bs-btn-hover-color: var(--sp-btn-default-hover-fg);
-  --bs-btn-hover-bg: var(--sp-btn-default-hover-bg);
-  --bs-btn-hover-border-color: var(--sp-btn-default-border);
-  --bs-btn-active-color: var(--sp-btn-default-hover-fg);
-  --bs-btn-active-bg: var(--sp-btn-default-hover-bg);
-  --bs-btn-active-border-color: var(--sp-btn-default-border);
+/* Low-emphasis button on a light surface (filter bars) */
+.btn-plain {
+  --bs-btn-color: var(--sp-btn-plain-fg);
+  --bs-btn-bg: var(--sp-btn-plain-bg);
+  --bs-btn-border-color: var(--sp-btn-plain-border);
+  --bs-btn-hover-color: var(--sp-btn-plain-hover-fg);
+  --bs-btn-hover-bg: var(--sp-btn-plain-hover-bg);
+  --bs-btn-hover-border-color: var(--sp-btn-plain-border);
+  --bs-btn-active-color: var(--sp-btn-plain-hover-fg);
+  --bs-btn-active-bg: var(--sp-btn-plain-hover-bg);
+  --bs-btn-active-border-color: var(--sp-btn-plain-border);
   --bs-btn-focus-shadow-rgb: var(--sp-secondary-rgb);
 }
 
-.btn-xs {
-  --bs-btn-padding-y: var(--sp-btn-xs-py);
-  --bs-btn-padding-x: var(--sp-btn-xs-px);
+/* Smaller than .btn-sm, for buttons inside table rows */
+.btn-compact {
+  --bs-btn-padding-y: var(--sp-btn-compact-py);
+  --bs-btn-padding-x: var(--sp-btn-compact-px);
   --bs-btn-font-size: var(--sp-fs-xs);
   --bs-btn-border-radius: var(--sp-radius-xs);
 }
@@ -113,19 +116,20 @@
 /* ------------------------------------------------------------------ */
 /* Badges                                                              */
 /* ------------------------------------------------------------------ */
-.badge-primary { background-color: var(--sp-badge-primary); }
-.badge-secondary { background-color: var(--sp-badge-secondary); }
-.badge-info { background-color: var(--sp-badge-info); }
-.badge-danger { background-color: var(--sp-badge-danger); }
-.badge-dark { background-color: var(--sp-badge-dark); }
+/* Neutral and primary badges use Bootstrap's text-bg-secondary / text-bg-primary */
 .badge-brand { background-color: var(--sp-badge-brand); }
+.badge-reference { background-color: var(--sp-badge-reference); }  /* written by the task author */
+.badge-count { background-color: var(--sp-badge-count); }
+.badge-admin,
+.score-badge { background-color: var(--sp-badge-emphasis); }
 
-.badge-warning {
+/* A solution that is still hidden from other users */
+.badge-hidden {
   --bs-badge-color: var(--sp-on-warning);
-  background-color: var(--sp-badge-warning);
+  background-color: var(--sp-badge-hidden);
 }
 
-/* Difficulty (colors mirrored in samples/design_tokens.py) */
+/* Difficulty (samples/design_tokens.py reads the colors for Discord) */
 .badge-difficulty-easy,
 .badge-difficulty-medium,
 .badge-difficulty-advanced,

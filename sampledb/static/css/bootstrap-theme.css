@@ -272,7 +272,7 @@
   border-top: 0;
 }
 
-/* AdminLTE-style card headers: floated title, floated .card-tools */
+/* Card headers float the title left and .card-header-actions right */
 .card-header::after,
 .card-body::after,
 .card-footer::after {

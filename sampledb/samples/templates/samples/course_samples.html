@@ -14,8 +14,8 @@
     <div class="card">
       <div class="card-header">
         <h3 class="card-title">Samples by Section</h3>
-        <div class="card-tools">
-          <span class="badge badge-info me-2">{{ distinct_sample_count }} sample{{ distinct_sample_count|pluralize }}</span>
+        <div class="card-header-actions">
+          <span class="badge badge-count me-2">{{ distinct_sample_count }} sample{{ distinct_sample_count|pluralize }}</span>
         </div>
       </div>
 
@@ -37,7 +37,7 @@
               <tr>
                 <!-- Section number -->
                 <td>
-                  <span class="badge badge-secondary">{{ item.section }}</span>
+                  <span class="badge text-bg-secondary">{{ item.section }}</span>
                 </td>
                 
                 <!-- Lecture Title -->
@@ -69,7 +69,7 @@
                   <!-- Download -->
                 <td class="text-center">
                   {% if item.sample.download_link %}
-                    <a href="{{ item.sample.download_link }}" target="_blank" class="btn btn-xs btn-primary" title="Download sample">
+                    <a href="{{ item.sample.download_link }}" target="_blank" class="btn btn-compact btn-primary" title="Download sample">
                       <i class="fas fa-download"></i>
                     </a>
                   {% else %}

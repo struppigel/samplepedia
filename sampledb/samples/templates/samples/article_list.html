@@ -52,10 +52,10 @@
                         {% if article.is_visible %}
                           <span class="badge badge-brand">Published</span>
                         {% else %}
-                          <span class="badge badge-warning">Hidden</span>
+                          <span class="badge badge-hidden">Hidden</span>
                         {% endif %}
                       {% else %}
-                        <span class="badge badge-secondary">Draft</span>
+                        <span class="badge text-bg-secondary">Draft</span>
                       {% endif %}
                     </td>
                     {% if article.is_published %}
