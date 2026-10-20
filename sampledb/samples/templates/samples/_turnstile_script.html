@@ -1,36 +1,7 @@
+{% load static %}
 {% comment %}
-Enables a form's submit button once its Turnstile challenge is solved. Included by _turnstile.html:
-the widget names this callback (data-callback) and the button to enable (data-submit-button).
-No template variables, so this can move to a static file as is.
+Enables a form's submit button once its Turnstile challenge is solved (js/turnstile.js). Included by
+_turnstile.html before the widget, which names the callback spTurnstileSolved (data-callback) and
+the button to enable (data-submit-button).
 {% endcomment %}
-<script>
-  function spTurnstileSolved() {
-    document.querySelectorAll('.cf-turnstile[data-submit-button]').forEach(function (widget) {
-      const button = document.getElementById(widget.dataset.submitButton);
-      if (button) {
-        button.disabled = false;
-      }
-    });
-  }
-
-  // Fallback in case the challenge was solved without the callback firing
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.cf-turnstile[data-submit-button]').forEach(function (widget) {
-      function solved() {
-        const response = widget.querySelector('input[name="cf-turnstile-response"]');
-        return Boolean(response && response.value);
-      }
-      if (solved()) {
-        spTurnstileSolved();
-        return;
-      }
-      const observer = new MutationObserver(function () {
-        if (solved()) {
-          spTurnstileSolved();
-          observer.disconnect();
-        }
-      });
-      observer.observe(widget, { childList: true, subtree: true });
-    });
-  });
-</script>
+<script src="{% static 'js/turnstile.js' %}"></script>

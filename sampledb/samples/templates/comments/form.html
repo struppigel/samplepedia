@@ -10,7 +10,8 @@
   {% endfor %}
   
   <div class="mb-3">
-    <textarea name="comment" id="id_comment" class="form-control" rows="4" placeholder="Write your comment here..." required>{{ form.comment.value|default:"" }}</textarea>
+    <textarea name="comment" id="id_comment" class="form-control" rows="4" placeholder="Write your comment here..." required
+              data-mention-search-url="{% url 'search_users' %}">{{ form.comment.value|default:"" }}</textarea>
   </div>
   
   {% if form.errors %}

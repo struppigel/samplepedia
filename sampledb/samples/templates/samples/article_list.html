@@ -1,4 +1,5 @@
 {% extends "samples/base.html" %}
+{% load static %}
 {% load user_tags %}
 {% block title %}My Articles - Samplepedia{% endblock %}
 {% block page_title %}My Articles{% endblock %}
@@ -93,13 +94,17 @@
                         </a>
                         {% comment %}Unpublish and Delete buttons - disable if it's the last reference solution{% endcomment %}
                         {% if not article.solution.is_last_reference %}
-                          <button class="btn btn-sm btn-link text-warning p-0 me-2" 
-                                  onclick="confirmUnpublishArticle('{{ article.id }}', '{{ article.title|escapejs }}')"
+                          <button type="button" class="btn btn-sm btn-link text-warning p-0 me-2"
+                                  data-post-url="{% url 'article_unpublish' article.id %}"
+                                  data-post-next="{{ request.get_full_path }}"
+                                  data-confirm="Are you sure you want to unpublish &quot;{{ article.title }}&quot;? It will be converted to a draft."
                                   title="Unpublish (convert to draft)">
                             <i class="fas fa-undo"></i>
                           </button>
-                          <button class="btn btn-sm btn-link text-danger p-0" 
-                                  onclick="confirmDeleteArticle('{{ article.id }}', '{{ article.title|escapejs }}')"
+                          <button type="button" class="btn btn-sm btn-link text-danger p-0"
+                                  data-post-url="{% url 'article_delete' article.id %}"
+                                  data-post-next="{{ request.get_full_path }}"
+                                  data-confirm="Are you sure you want to delete &quot;{{ article.title }}&quot; entirely? This action cannot be undone."
                                   title="Delete entirely">
                             <i class="fas fa-trash"></i>
                           </button>
@@ -118,13 +123,16 @@
                         <a href="{% url 'article_editor_edit' article.id %}" class="btn btn-sm btn-link text-primary p-0 me-2" title="Edit">
                           <i class="fas fa-edit"></i>
                         </a>
-                        <button class="btn btn-sm btn-link text-success p-0 me-2" 
-                                onclick="openPublishModal('{{ article.id }}', '{{ article.title|escapejs }}')"
+                        <button type="button" class="btn btn-sm btn-link text-success p-0 me-2"
+                                data-publish-article="{{ article.id }}"
+                                data-article-title="{{ article.title }}"
                                 title="Publish to analysis task">
                           <i class="fas fa-upload"></i>
                         </button>
-                        <button class="btn btn-sm btn-link text-danger p-0" 
-                                onclick="confirmDeleteArticle('{{ article.id }}', '{{ article.title|escapejs }}')"
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0"
+                                data-post-url="{% url 'article_delete' article.id %}"
+                                data-post-next="{{ request.get_full_path }}"
+                                data-confirm="Are you sure you want to delete &quot;{{ article.title }}&quot; entirely? This action cannot be undone."
                                 title="Delete">
                           <i class="fas fa-trash"></i>
                         </button>
@@ -154,84 +162,8 @@
 <!-- Publish Article Modal -->
 {% include 'samples/_publish_modal.html' %}
 
-<script>
-function confirmDeleteArticle(articleId, articleTitle) {
-  if (confirm('Are you sure you want to delete "' + articleTitle + '" entirely? This action cannot be undone.')) {
-    // Create and submit a form for POST request
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/articles/${articleId}/delete/`;
-    
-    // Add CSRF token
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-    if (csrfToken) {
-      const csrfInput = document.createElement('input');
-      csrfInput.type = 'hidden';
-      csrfInput.name = 'csrfmiddlewaretoken';
-      csrfInput.value = csrfToken.value;
-      form.appendChild(csrfInput);
-    } else {
-      // Get CSRF from cookie if not in form
-      const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
-      if (csrfCookie) {
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = csrfCookie.split('=')[1];
-        form.appendChild(csrfInput);
-      }
-    }
-    
-    // Add redirect URL to return to this page after deletion
-    const nextInput = document.createElement('input');
-    nextInput.type = 'hidden';
-    nextInput.name = 'next';
-    nextInput.value = window.location.href;
-    form.appendChild(nextInput);
-    
-    document.body.appendChild(form);
-    form.submit();
-  }
-}
+{% endblock %}
 
-function confirmUnpublishArticle(articleId, articleTitle) {
-  if (confirm('Are you sure you want to unpublish "' + articleTitle + '"? It will be converted to a draft.')) {
-    // Create and submit a form for POST request
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/articles/${articleId}/unpublish/`;
-    
-    // Add CSRF token
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-    if (csrfToken) {
-      const csrfInput = document.createElement('input');
-      csrfInput.type = 'hidden';
-      csrfInput.name = 'csrfmiddlewaretoken';
-      csrfInput.value = csrfToken.value;
-      form.appendChild(csrfInput);
-    } else {
-      // Get CSRF from cookie if not in form
-      const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
-      if (csrfCookie) {
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = csrfCookie.split('=')[1];
-        form.appendChild(csrfInput);
-      }
-    }
-    
-    // Add redirect URL to return to this page after unpublishing
-    const nextInput = document.createElement('input');
-    nextInput.type = 'hidden';
-    nextInput.name = 'next';
-    nextInput.value = window.location.href;
-    form.appendChild(nextInput);
-    
-    document.body.appendChild(form);
-    form.submit();
-  }
-}
-</script>
-
+{% block extra_js %}
+<script src="{% static 'js/pages/articles.js' %}"></script>
 {% endblock %}

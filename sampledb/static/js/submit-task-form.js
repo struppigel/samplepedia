@@ -1,585 +1,285 @@
 /**
- * Submit Task Form - Image and Draft Management
- * Handles image selection, upload, preview, and localStorage draft persistence
+ * Submit/edit task form (samples/submit_task.html)
+ * - sample image: upload one (size checked here) or pick one from the gallery modal
+ * - the SHA256 is filled in from the download link
+ * - reference solution: a URL or on-site content depending on its type, or an
+ *   existing draft article (picker from js/draft-selection.js)
+ * - the "task-form" draft (js/drafts.js) of a new task: saved when opening the
+ *   markdown editor, on image upload and on submit, restored into a fresh form
+ *   (#form-data-attrs data-restore-draft); the server has it cleared once the
+ *   task is saved
+ * The description's Write/Preview tabs are js/md-editor.js; the Delete Task
+ * button submits #deleteForm, which asks first (data-confirm, js/utils.js).
  */
-
-/**
- * Form Draft Manager - Centralized localStorage handling
- */
-const FormDraftManager = {
-  keys: {
-    title: 'draft_reference_solution_title',
-    content: 'draft_reference_solution',
-    solutionType: 'draft_form_solution_type',
-    sha256: 'draft_form_sha256',
-    goal: 'draft_form_goal',
-    description: 'draft_form_description',
-    downloadLink: 'draft_form_download_link',
-    imageId: 'draft_form_image_id',
-    imageUrl: 'draft_form_image_url',
-    uploadedImage: 'draft_form_uploaded_image',
-    tags: 'draft_form_tags',
-    tools: 'draft_form_tools',
-    difficulty: 'draft_form_difficulty'
-  },
-
-  getField(key) {
-    return localStorage.getItem(this.keys[key]);
-  },
-
-  setField(key, value) {
-    if (value) {
-      localStorage.setItem(this.keys[key], value);
-    }
-  },
-
-  removeField(key) {
-    localStorage.removeItem(this.keys[key]);
-  },
-
-  save(data) {
-    Object.keys(data).forEach(key => {
-      if (data[key] && this.keys[key]) {
-        this.setField(key, data[key]);
-      }
-    });
-  },
-
-  restore() {
-    const restored = {};
-    Object.keys(this.keys).forEach(key => {
-      const value = this.getField(key);
-      if (value) {
-        restored[key] = value;
-      }
-    });
-    return restored;
-  },
-
-  clear() {
-    Object.values(this.keys).forEach(key => {
-      localStorage.removeItem(key);
-    });
-  }
-};
-
-// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-  initializeEditModeImages();
-  initializeGallerySelection();
-  initializeImageUpload();
-  initializeSHA256AutoFill();
-  initializeMarkdownEditorIntegration();
-  initializeMarkdownPreviewTabs();
-  initializeFormSubmission();
-});
+  'use strict';
 
-/**
- * Show existing images when editing a task
- */
-function initializeEditModeImages() {
-  const dataAttrs = document.getElementById('form-data-attrs');
-  if (!dataAttrs) return;
-  
-  // Gallery image in edit mode
-  const currentImageId = dataAttrs.dataset.currentImageId;
-  if (currentImageId) {
-    document.getElementById('selected_image').value = currentImageId;
-    
-    const imageCard = document.querySelector(`[data-image-id="${currentImageId}"]`);
-    if (imageCard) {
-      const imgSrc = imageCard.getAttribute('data-image-url');
-      document.getElementById('preview_img').src = imgSrc;
-      document.getElementById('selected_image_preview').style.display = 'block';
-      document.getElementById('image_preview_area').style.display = 'block';
-      imageCard.classList.add('selected');
-    }
-    
-    hideImageSelectionSections();
-  }
-  
-  // Uploaded image in edit mode (non-gallery)
-  const currentImageUrl = dataAttrs.dataset.currentImageUrl;
-  if (currentImageUrl && !currentImageId) {
-    const previewImg = document.getElementById('preview_img');
-    const previewDiv = document.getElementById('selected_image_preview');
-    if (previewImg && previewDiv) {
-      previewImg.src = currentImageUrl;
-      previewDiv.style.display = 'block';
-      document.getElementById('image_preview_area').style.display = 'block';
-    }
-    
-    hideImageSelectionSections();
-  }
-}
+  const attrs = document.getElementById('form-data-attrs');
+  if (!attrs) return;
 
-/**
- * Handle gallery image card clicks
- */
-function initializeGallerySelection() {
-  document.querySelectorAll('.image-select-card').forEach(card => {
-    const imageUrl = card.getAttribute('data-image-url');
-    const imageId = card.getAttribute('data-image-id');
-    
-    card.addEventListener('click', function() {
-      selectImage(imageUrl, imageId);
+  const byId = id => document.getElementById(id);
+  const show = (id, visible) => window.sp.show(byId(id), visible);
+  const drafts = window.sp.drafts;
+  const keys = drafts.taskForm;
+  const isNewTask = attrs.dataset.isEdit !== 'true';
+
+  // Draft field (js/drafts.js taskForm) -> id of the form element it keeps
+  const DRAFT_FIELDS = {
+    title: 'id_reference_solution_title',
+    content: 'reference_solution_content',
+    solutionType: 'id_reference_solution_type',
+    sha256: 'id_sha256',
+    goal: 'id_goal',
+    description: 'id_description',
+    downloadLink: 'id_download_link',
+    tags: 'id_tags',
+    tools: 'id_tools',
+    difficulty: 'id_difficulty'
+  };
+
+  // ------------------------------------------------------------------
+  // Sample image
+  // ------------------------------------------------------------------
+  function showImageChoices(visible) {
+    show('upload-section', visible);
+    show('gallery-section', visible);
+  }
+
+  function markGalleryCard(imageId) {
+    document.querySelectorAll('.image-select-card').forEach(card => {
+      card.classList.toggle('selected', card.dataset.imageId === imageId);
     });
-  });
-}
+  }
 
-/**
- * Select image from gallery
- */
-function selectImage(imageUrl, imageId) {
-  document.getElementById('selected_image').value = imageId;
-  
-  const previewDiv = document.getElementById('selected_image_preview');
-  const previewImg = document.getElementById('preview_img');
-  previewImg.src = imageUrl;
-  previewDiv.style.display = 'block';
-  document.getElementById('image_preview_area').style.display = 'block';
-  
-  // Highlight selected card
-  document.querySelectorAll('.image-select-card').forEach(card => {
-    if (card.getAttribute('data-image-id') === imageId) {
-      card.classList.add('selected');
+  function showGalleryImage(url) {
+    byId('preview_img').src = url;
+    show('selected_image_preview', true);
+    show('image_preview_area', true);
+    showImageChoices(false);
+  }
+
+  function showUploadedImage(dataUrl) {
+    byId('upload_preview_img').src = dataUrl;
+    show('upload_image_preview', true);
+    show('image_preview_area', true);
+    showImageChoices(false);
+  }
+
+  function selectGalleryImage(card) {
+    byId('selected_image').value = card.dataset.imageId;
+    markGalleryCard(card.dataset.imageId);
+    showGalleryImage(card.dataset.imageUrl);
+    bootstrap.Modal.getOrCreateInstance(byId('imageGalleryModal')).hide();
+  }
+
+  function removeImage(kind) {
+    if (kind === 'upload') {
+      byId('id_image_upload').value = '';
+      show('upload_image_preview', false);
+      if (isNewTask) drafts.set(keys.uploadedImage, null);
     } else {
-      card.classList.remove('selected');
+      byId('selected_image').value = '';
+      show('selected_image_preview', false);
+      markGalleryCard(null);
     }
-  });
-  
-  hideImageSelectionSections();
-  
-  // Close modal
-  const galleryModal = document.getElementById('imageGalleryModal');
-  if (galleryModal) {
-    bootstrap.Modal.getOrCreateInstance(galleryModal).hide();
+    show('image_preview_area', false);
+    byId('clear_image_flag').value = 'true';
+    showImageChoices(true);
   }
-}
 
-/**
- * Clear common preview elements
- */
-function clearAllPreviews() {
-  document.getElementById('image_preview_area').style.display = 'none';
-  document.getElementById('clear_image_flag').value = 'true';
-  showImageSelectionSections();
-}
-
-/**
- * Clear gallery image selection
- */
-function clearImageSelection() {
-  document.getElementById('selected_image').value = '';
-  document.getElementById('selected_image_preview').style.display = 'none';
-  
-  document.querySelectorAll('.image-select-card').forEach(card => {
-    card.classList.remove('selected');
-  });
-  
-  clearAllPreviews();
-}
-
-/**
- * Handle image upload with validation
- */
-function initializeImageUpload() {
-  const uploadInput = document.getElementById('id_image_upload');
-  if (uploadInput) {
-    uploadInput.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = new Image();
-          img.onload = function() {
-            const width = this.width;
-            const height = this.height;
-            
-            // Validate dimensions
-            if (width < 125 || height < 125) {
-              alert(`Image is too small (${width}x${height}px). Minimum size is 125x125 pixels.`);
-              uploadInput.value = '';
-              return;
-            }
-            
-            if (width > 1024 || height > 1024) {
-              alert(`Image is too large (${width}x${height}px). Maximum size is 1024x1024 pixels.`);
-              uploadInput.value = '';
-              return;
-            }
-            
-            // Show preview
-            const previewImg = document.getElementById('upload_preview_img');
-            const previewDiv = document.getElementById('upload_image_preview');
-            if (previewImg && previewDiv) {
-              previewImg.src = e.target.result;
-              previewDiv.style.display = 'block';
-              document.getElementById('image_preview_area').style.display = 'block';
-              
-              hideImageSelectionSections();
-              
-              // Clear gallery selection and save upload
-              FormDraftManager.removeField('imageId');
-              FormDraftManager.removeField('imageUrl');
-              document.getElementById('selected_image').value = '';
-              FormDraftManager.setField('uploadedImage', e.target.result);
-              
-              // Warn if non-square
-              if (width !== height) {
-                const cropSize = Math.min(width, height);
-                alert(`Image will be center-cropped to ${cropSize}x${cropSize}px to maintain 1:1 aspect ratio.`);
-              }
-            }
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  }
-}
-
-/**
- * Clear uploaded image preview
- */
-function clearUploadPreview() {
-  const uploadInput = document.getElementById('id_image_upload');
-  const previewDiv = document.getElementById('upload_image_preview');
-  
-  if (uploadInput) {
-    uploadInput.value = '';
-  }
-  if (previewDiv) {
-    previewDiv.style.display = 'none';
-  }
-  
-  FormDraftManager.removeField('uploadedImage');
-  clearAllPreviews();
-}
-
-/**
- * Hide image selection sections
- */
-function hideImageSelectionSections() {
-  document.getElementById('upload-section').style.display = 'none';
-  document.getElementById('gallery-section').style.display = 'none';
-}
-
-/**
- * Show image selection sections
- */
-function showImageSelectionSections() {
-  document.getElementById('upload-section').style.display = 'block';
-  document.getElementById('gallery-section').style.display = 'block';
-}
-
-/**
- * Auto-fill SHA256 from download link
- */
-function initializeSHA256AutoFill() {
-  const downloadLinkInput = document.getElementById('id_download_link');
-  const sha256Input = document.getElementById('id_sha256');
-  
-  if (downloadLinkInput && sha256Input) {
-    downloadLinkInput.addEventListener('input', function() {
-      const url = this.value.trim();
-      let sha256 = '';
-      
-      // Extract SHA256 from MalShare URL
-      const malshareMatch = url.match(/[?&]hash=([a-fA-F0-9]{64})/);
-      if (malshareMatch) {
-        sha256 = malshareMatch[1].toLowerCase();
-      }
-      
-      // Extract SHA256 from MalwareBazaar URL (both /sample/ and /download/ paths)
-      const bazaarMatch = url.match(/\/(sample|download)\/([a-fA-F0-9]{64})/);
-      if (bazaarMatch) {
-        sha256 = bazaarMatch[2].toLowerCase();
-      }
-      
-      // Update SHA256 field
-      if (sha256) {
-        sha256Input.value = sha256;
-        sha256Input.classList.remove('is-invalid');
-        sha256Input.classList.add('is-valid');
-      } else if (url) {
-        sha256Input.value = '';
-        sha256Input.classList.remove('is-valid');
-      }
-    });
-    
-    // Trigger extraction on page load if value exists (edit mode)
-    if (downloadLinkInput.value) {
-      downloadLinkInput.dispatchEvent(new Event('input'));
-    }
-  }
-}
-
-/**
- * Markdown editor integration with localStorage
- */
-function initializeMarkdownEditorIntegration() {
-  const elements = {
-    titleInput: document.getElementById('id_reference_solution_title'),
-    contentTextarea: document.getElementById('reference_solution_content'),
-    solutionTypeSelect: document.getElementById('id_reference_solution_type'),
-    markdownEditorLink: document.getElementById('openMarkdownEditorLink'),
-    sha256Input: document.getElementById('id_sha256'),
-    goalInput: document.getElementById('id_goal'),
-    descriptionTextarea: document.getElementById('id_description'),
-    downloadLinkInput: document.getElementById('id_download_link'),
-    selectedImageInput: document.getElementById('selected_image'),
-    tagsInput: document.getElementById('id_tags'),
-    toolsInput: document.getElementById('id_tools'),
-    difficultySelect: document.getElementById('id_difficulty')
-  };
-  
-  const dataAttrs = document.getElementById('form-data-attrs');
-  const isEditMode = dataAttrs && dataAttrs.dataset.isEdit === 'true';
-  
-  // Restore form data from localStorage
-  restoreFormData(elements, isEditMode);
-  
-  // Save data when navigating to markdown editor
-  if (elements.markdownEditorLink) {
-    elements.markdownEditorLink.addEventListener('click', function() {
-      saveFormDataToLocalStorage(elements);
-    });
-  }
-}
-
-/**
- * Restore form data from localStorage
- */
-function restoreFormData(elements, isEditMode) {
-  const saved = FormDraftManager.restore();
-  
-  // Restore text fields
-  if (saved.title && elements.titleInput && !elements.titleInput.value) {
-    elements.titleInput.value = saved.title;
-  }
-  
-  // Restore solution type and content
-  if (saved.content && elements.contentTextarea && !elements.contentTextarea.value) {
-    if (elements.solutionTypeSelect) {
-      elements.solutionTypeSelect.value = 'onsite';
-      elements.solutionTypeSelect.dispatchEvent(new Event('change'));
-    }
-    elements.contentTextarea.value = saved.content;
-  } else if (saved.solutionType && elements.solutionTypeSelect && !elements.solutionTypeSelect.value) {
-    elements.solutionTypeSelect.value = saved.solutionType;
-    elements.solutionTypeSelect.dispatchEvent(new Event('change'));
-  }
-  
-  // Restore other fields
-  if (saved.sha256 && elements.sha256Input && !elements.sha256Input.value) {
-    elements.sha256Input.value = saved.sha256;
-  }
-  if (saved.goal && elements.goalInput && !elements.goalInput.value) {
-    elements.goalInput.value = saved.goal;
-  }
-  if (saved.description && elements.descriptionTextarea && !elements.descriptionTextarea.value) {
-    elements.descriptionTextarea.value = saved.description;
-  }
-  if (saved.downloadLink && elements.downloadLinkInput && !elements.downloadLinkInput.value) {
-    elements.downloadLinkInput.value = saved.downloadLink;
-  }
-  if (saved.tags && elements.tagsInput && !elements.tagsInput.value) {
-    elements.tagsInput.value = saved.tags;
-  }
-  if (saved.tools && elements.toolsInput && !elements.toolsInput.value) {
-    elements.toolsInput.value = saved.tools;
-  }
-  if (saved.difficulty && elements.difficultySelect) {
-    elements.difficultySelect.value = saved.difficulty;
-  }
-  
-  // Restore images only if NOT in edit mode
-  if (!isEditMode) {
-    restoreImageFromLocalStorage(saved, elements);
-  }
-}
-
-/**
- * Restore image from localStorage
- */
-function restoreImageFromLocalStorage(saved, elements) {
-  if (saved.imageId && elements.selectedImageInput && !elements.selectedImageInput.value) {
-    elements.selectedImageInput.value = saved.imageId;
-    if (saved.imageUrl) {
-      const previewImg = document.getElementById('preview_img');
-      const previewDiv = document.getElementById('selected_image_preview');
-      if (previewImg && previewDiv) {
-        previewImg.src = saved.imageUrl;
-        previewDiv.style.display = 'block';
-        document.getElementById('image_preview_area').style.display = 'block';
-        hideImageSelectionSections();
-      }
-    }
-  } else if (saved.uploadedImage) {
-    const previewImg = document.getElementById('upload_preview_img');
-    const previewDiv = document.getElementById('upload_image_preview');
-    const uploadInput = document.getElementById('id_image_upload');
-    if (previewImg && previewDiv) {
-      previewImg.src = saved.uploadedImage;
-      previewDiv.style.display = 'block';
-      document.getElementById('image_preview_area').style.display = 'block';
-      hideImageSelectionSections();
-      
-      // Restore file to input
-      if (uploadInput) {
-        fetch(saved.uploadedImage)
-          .then(res => res.blob())
-          .then(blob => {
-            const file = new File([blob], "restored_image.png", { type: blob.type });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            uploadInput.files = dataTransfer.files;
-          })
-          .catch(err => console.error('Error restoring file:', err));
-      }
-    }
-  }
-}
-
-/**
- * Save form data to localStorage
- */
-function saveFormDataToLocalStorage(elements) {
-  const data = {
-    title: elements.titleInput?.value,
-    content: elements.contentTextarea?.value,
-    solutionType: elements.solutionTypeSelect?.value,
-    sha256: elements.sha256Input?.value,
-    goal: elements.goalInput?.value,
-    description: elements.descriptionTextarea?.value,
-    downloadLink: elements.downloadLinkInput?.value,
-    tags: elements.tagsInput?.value,
-    tools: elements.toolsInput?.value,
-    difficulty: elements.difficultySelect?.value
-  };
-  
-  if (elements.selectedImageInput?.value) {
-    data.imageId = elements.selectedImageInput.value;
-    const previewImg = document.getElementById('preview_img');
-    if (previewImg?.src) {
-      data.imageUrl = previewImg.src;
-    }
-  }
-  
-  FormDraftManager.save(data);
-}
-
-/**
- * Initialize markdown preview tabs
- */
-function initializeMarkdownPreviewTabs() {
-  const tabs = document.querySelectorAll('.markdown-tab');
-  const panes = document.querySelectorAll('.markdown-pane');
-  const textarea = document.getElementById('id_description');
-  const previewContent = document.querySelector('[data-md-preview]');
-  let previewCache = '';
-  
-  // Toggle reference solution fields
-  const refSolutionTypeSelect = document.getElementById('id_reference_solution_type');
-  const refUrlField = document.getElementById('reference-url-field');
-  const refContentField = document.getElementById('reference-content-field');
-  
-  if (refSolutionTypeSelect && refUrlField && refContentField) {
-    function toggleRefFields() {
-      const selectedType = refSolutionTypeSelect.value;
-      if (selectedType === 'onsite') {
-        refUrlField.style.display = 'none';
-        refContentField.style.display = 'block';
-      } else {
-        refUrlField.style.display = 'block';
-        refContentField.style.display = 'none';
-      }
-    }
-    
-    toggleRefFields();
-    refSolutionTypeSelect.addEventListener('change', toggleRefFields);
-  }
-  
-  // Handle tab clicks
-  tabs.forEach(tab => {
-    tab.addEventListener('click', function() {
-      const targetTab = this.getAttribute('data-tab');
-      
-      tabs.forEach(t => t.classList.remove('active'));
-      this.classList.add('active');
-      
-      panes.forEach(p => {
-        if (p.getAttribute('data-pane') === targetTab) {
-          p.classList.add('active');
-        } else {
-          p.classList.remove('active');
+  function checkUploadedImage(input) {
+    const file = input.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      const img = new Image();
+      img.addEventListener('load', () => {
+        const { width, height } = img;
+        if (width < 125 || height < 125) {
+          alert(`Image is too small (${width}x${height}px). Minimum size is 125x125 pixels.`);
+          input.value = '';
+          return;
+        }
+        if (width > 1024 || height > 1024) {
+          alert(`Image is too large (${width}x${height}px). Maximum size is 1024x1024 pixels.`);
+          input.value = '';
+          return;
+        }
+        showUploadedImage(reader.result);
+        // An upload replaces a gallery choice
+        byId('selected_image').value = '';
+        if (isNewTask) {
+          drafts.set(keys.imageId, null);
+          drafts.set(keys.imageUrl, null);
+          drafts.set(keys.uploadedImage, reader.result);
+        }
+        if (width !== height) {
+          const cropSize = Math.min(width, height);
+          alert(`Image will be center-cropped to ${cropSize}x${cropSize}px to maintain 1:1 aspect ratio.`);
         }
       });
-      
-      // Render markdown preview
-      if (targetTab === 'preview') {
-        const content = textarea.value;
-        
-        if (content !== previewCache) {
-          previewCache = content;
-          
-          if (!content.trim()) {
-            previewContent.innerHTML = '<p class="text-muted">Nothing to preview</p>';
-            return;
-          }
-          
-          previewContent.innerHTML = '<p class="text-muted"><i class="fas fa-spinner fa-spin"></i> Loading preview...</p>';
-          
-          const dataAttrs = document.getElementById('form-data-attrs');
-          const markdownPreviewUrl = dataAttrs ? dataAttrs.dataset.markdownPreviewUrl : '/markdown-preview/';
-          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-          
-          fetch(markdownPreviewUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'X-CSRFToken': csrfToken
-            },
-            body: 'content=' + encodeURIComponent(content)
-          })
-          .then(response => response.json())
-          .then(data => {
-            previewContent.innerHTML = data.html;
-          })
-          .catch(error => {
-            console.error('Preview error:', error);
-            previewContent.innerHTML = '<p class="text-danger">Error loading preview</p>';
-          });
-        }
-      }
+      img.src = reader.result;
     });
+    reader.readAsDataURL(file);
+  }
+
+  function showCurrentImage() {
+    const { currentImageId, currentImageUrl } = attrs.dataset;
+    if (currentImageId) {
+      byId('selected_image').value = currentImageId;
+      const card = document.querySelector(`.image-select-card[data-image-id="${CSS.escape(currentImageId)}"]`);
+      if (card) {
+        markGalleryCard(currentImageId);
+        showGalleryImage(card.dataset.imageUrl);
+      }
+      showImageChoices(false);
+    } else if (currentImageUrl) {
+      showGalleryImage(currentImageUrl);
+    }
+  }
+
+  // A data: URL back into a File, for the file input (fetch() would need connect-src data:)
+  function dataUrlToFile(dataUrl, name) {
+    const [header, base64] = dataUrl.split(',');
+    const type = (header.match(/^data:([^;,]+)/) || [])[1] || 'image/png';
+    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    return new File([bytes], name, { type });
+  }
+
+  // ------------------------------------------------------------------
+  // SHA256 from the download link
+  // ------------------------------------------------------------------
+  function fillSha256() {
+    const url = byId('id_download_link').value.trim();
+    const sha256Input = byId('id_sha256');
+    // MalShare: ?hash=<sha256>; MalwareBazaar: /sample/<sha256> or /download/<sha256>
+    const match = url.match(/[?&]hash=([a-fA-F0-9]{64})/) || url.match(/\/(?:sample|download)\/([a-fA-F0-9]{64})/);
+    if (match) {
+      sha256Input.value = match[1].toLowerCase();
+      sha256Input.classList.remove('is-invalid');
+      sha256Input.classList.add('is-valid');
+    } else if (url) {
+      sha256Input.value = '';
+      sha256Input.classList.remove('is-valid');
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Reference solution (new tasks only)
+  // ------------------------------------------------------------------
+  let draftPicked = false;
+
+  function updateReferenceFields() {
+    const typeSelect = byId('id_reference_solution_type');
+    if (!typeSelect) return;
+    const onsite = typeSelect.value === 'onsite';
+    show('ref-title-group', !draftPicked);
+    show('ref-type-group', !draftPicked);
+    show('reference-url-field', !draftPicked && !onsite);
+    show('reference-content-field', !draftPicked && onsite);
+  }
+
+  // ------------------------------------------------------------------
+  // The task-form draft
+  // ------------------------------------------------------------------
+  function saveDraft() {
+    Object.entries(DRAFT_FIELDS).forEach(([field, id]) => {
+      const element = byId(id);
+      if (element) drafts.set(keys[field], element.value);
+    });
+    const imageId = byId('selected_image').value;
+    drafts.set(keys.imageId, imageId);
+    drafts.set(keys.imageUrl, imageId ? byId('preview_img').src : null);
+  }
+
+  function restoreDraft() {
+    const saved = {};
+    Object.entries(keys).forEach(([field, key]) => {
+      const value = drafts.get(key);
+      if (value) saved[field] = value;
+    });
+    const typeSelect = byId('id_reference_solution_type');
+    const content = byId('reference_solution_content');
+
+    // Content from the markdown editor makes the reference solution an on-site one
+    if (saved.content && content && !content.value) {
+      if (typeSelect) typeSelect.value = 'onsite';
+      content.value = saved.content;
+    } else if (saved.solutionType && typeSelect && !typeSelect.value) {
+      typeSelect.value = saved.solutionType;
+    }
+    ['title', 'sha256', 'goal', 'description', 'downloadLink', 'tags', 'tools'].forEach(field => {
+      const element = byId(DRAFT_FIELDS[field]);
+      if (saved[field] && element && !element.value) element.value = saved[field];
+    });
+    if (saved.difficulty && byId('id_difficulty')) {
+      byId('id_difficulty').value = saved.difficulty;
+    }
+
+    if (saved.imageId && !byId('selected_image').value) {
+      byId('selected_image').value = saved.imageId;
+      markGalleryCard(saved.imageId);
+      if (saved.imageUrl) showGalleryImage(saved.imageUrl);
+    } else if (saved.uploadedImage) {
+      showUploadedImage(saved.uploadedImage);
+      try {
+        const transfer = new DataTransfer();
+        transfer.items.add(dataUrlToFile(saved.uploadedImage, 'restored_image.png'));
+        byId('id_image_upload').files = transfer.files;
+      } catch (error) {
+        console.error('Error restoring file:', error);
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Wiring
+  // ------------------------------------------------------------------
+  if (attrs.dataset.restoreDraft === 'true') {
+    restoreDraft();
+  }
+  showCurrentImage();
+  updateReferenceFields();
+
+  document.querySelectorAll('.image-select-card').forEach(card => {
+    card.addEventListener('click', () => selectGalleryImage(card));
   });
-}
+  document.querySelectorAll('[data-image-remove]').forEach(button => {
+    button.addEventListener('click', () => removeImage(button.dataset.imageRemove));
+  });
 
-/**
- * Clear localStorage on form submission
- */
-function initializeFormSubmission() {
-  const form = document.getElementById('submit-task-form');
-  if (form) {
-    form.addEventListener('submit', function() {
-      // Use external clearFormDrafts if available, otherwise use FormDraftManager
-      if (typeof clearFormDrafts === 'function') {
-        clearFormDrafts();
-      } else {
-        FormDraftManager.clear();
+  const uploadInput = byId('id_image_upload');
+  if (uploadInput) {
+    uploadInput.addEventListener('change', () => checkUploadedImage(uploadInput));
+  }
+
+  const downloadLink = byId('id_download_link');
+  if (downloadLink && byId('id_sha256')) {
+    downloadLink.addEventListener('input', fillSha256);
+    if (downloadLink.value) fillSha256();
+  }
+
+  const typeSelect = byId('id_reference_solution_type');
+  if (typeSelect) {
+    typeSelect.addEventListener('change', updateReferenceFields);
+  }
+
+  const picker = byId('reference-draft-picker');
+  if (picker) {
+    picker.addEventListener('draft-picker:change', e => {
+      draftPicked = Boolean(e.detail.draft);
+      updateReferenceFields();
+      if (draftPicked) {
+        const info = byId('selected-draft-info');
+        window.scrollTo({ top: info.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
       }
     });
   }
-}
 
-/**
- * Confirm task deletion
- */
-function confirmDelete() {
-  if (confirm('Are you sure you want to delete this analysis task? This action cannot be undone.')) {
-    document.getElementById('deleteForm').submit();
+  if (isNewTask) {
+    const editorLink = byId('openMarkdownEditorLink');
+    if (editorLink) editorLink.addEventListener('click', saveDraft);
+    // Kept until the server has accepted the task (views/samples.py submit_task)
+    byId('submit-task-form').addEventListener('submit', saveDraft);
   }
-}
+});

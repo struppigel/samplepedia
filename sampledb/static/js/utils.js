@@ -6,7 +6,8 @@
  * - sp.getCookie(name):          read a cookie
  * - sp.csrfToken():              the CSRF token (from <meta name="csrf-token"> in base.html)
  * - sp.postForm(url, fields):    submit a POST form, as a link can't (CSRF token included)
- * - sp.fetchJSON(url, options):  fetch() JSON with the CSRF header; options: method, data (object)
+ * - sp.fetchJSON(url, options):  fetch() JSON with the CSRF header; options: method, data (object,
+ *                                or FormData to send files)
  * - sp.show(element, visible):   show or hide an element through the hidden attribute
  *
  * Behaviours (no inline handlers needed):
@@ -15,6 +16,10 @@
  * - <select data-autosubmit>, <input ...>   submit the surrounding form when changed
  * - <button data-post-url="..." [data-confirm="..."] [data-post-next="..."]>
  *                                           POST to the URL (optionally after a confirm)
+ * - <button data-back-url="/list/" [data-back-skip="/edit/ /submit/"]>
+ *                                           go back in history; open data-back-url instead when
+ *                                           there is no history or the referrer contains one of
+ *                                           the data-back-skip fragments (a form, say)
  */
 window.sp = (function() {
   'use strict';
@@ -70,7 +75,7 @@ window.sp = (function() {
       credentials: 'same-origin'
     };
     if (data !== undefined) {
-      options.body = new URLSearchParams(data);
+      options.body = data instanceof FormData ? data : new URLSearchParams(data);
     }
     const response = await fetch(url, options);
     return response.json();
@@ -114,5 +119,19 @@ document.addEventListener('submit', function(e) {
 document.addEventListener('change', function(e) {
   if (e.target.matches('[data-autosubmit]') && e.target.form) {
     e.target.form.requestSubmit();
+  }
+});
+
+// Back buttons: <button data-back-url="/list/" data-back-skip="/edit/ /submit/">
+document.addEventListener('click', function(e) {
+  const button = e.target.closest('[data-back-url]');
+  if (!button) return;
+  e.preventDefault();
+  const skip = (button.dataset.backSkip || '').split(/\s+/).filter(Boolean);
+  const referrer = document.referrer;
+  if (history.length <= 1 || skip.some(fragment => referrer.includes(fragment))) {
+    window.location.href = button.dataset.backUrl;
+  } else {
+    history.back();
   }
 });

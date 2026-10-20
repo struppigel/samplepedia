@@ -16,6 +16,7 @@ from ..forms import ArticleForm, SolutionForm
 from ..constants import SHOWCASE_PER_PAGE, SOLUTIONS_PER_PAGE
 from ..querysets import difficulty_order
 from ..services.solutions import create_solution as add_solution, update_onsite_solution
+from ..utils.drafts import clear_drafts
 from ..utils.http import safe_next_url
 from ..utils.markdown import render_markdown
 from .lookups import get_task_or_404
@@ -142,6 +143,7 @@ def create_solution(request, sha256, task_id):
                 form.add_error(None, error)
             else:
                 if draft:
+                    clear_drafts(request, f'article:{draft.id}')
                     messages.success(request, f'Draft article "{draft.title}" has been published as a solution!')
                 else:
                     messages.success(request, 'Solution added successfully!')
@@ -270,7 +272,10 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
         if not solution.user_can_edit(request.user):
             messages.error(request, 'You do not have permission to edit this solution.')
             return redirect('sample_detail', sha256=sha256, task_id=task_id)
-    
+
+    # The browser draft of this editor (static/js/drafts.js)
+    draft_name = f'onsite-solution:{sample.id}' + (f':{solution.id}' if solution else '')
+
     if request.method == 'POST':
         form = ArticleForm(request.POST)
         title = request.POST.get('title', '').strip()
@@ -300,8 +305,10 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
                 'solution': solution,
                 'initial_title': title,
                 'initial_content': content,
+                'draft_name': draft_name,
             })
-        
+
+        clear_drafts(request, draft_name)
         # Redirect to view the published solution
         return redirect('view_onsite_solution', sha256=sha256, task_id=task_id, solution_id=solution.id)
     
@@ -314,6 +321,7 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
         'solution': solution,
         'initial_title': initial_title,
         'initial_content': initial_content,
+        'draft_name': draft_name,
     })
 
 

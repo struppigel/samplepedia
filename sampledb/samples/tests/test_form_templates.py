@@ -229,6 +229,8 @@ class TurnstileTestCase(FormPageTestCase):
                 self.assertIn('data-callback="spTurnstileSolved"', widget.group(0))
                 self.assertIn(f'data-submit-button="{button_id}"', widget.group(0))
                 self.assertRegex(html, rf'<button type="submit" id="{button_id}"[^>]*\bdisabled\b')
-                # The callback is defined before the widget loads Turnstile
-                self.assertLess(html.index('function spTurnstileSolved'), widget.start())
-                self.assertEqual(html.count('function spTurnstileSolved'), 1)
+                # The callback (js/turnstile.js) is defined before the widget loads Turnstile
+                script = re.search(r'<script src="[^"]*js/turnstile\.js"></script>', html)
+                self.assertIsNotNone(script)
+                self.assertLess(script.start(), widget.start())
+                self.assertEqual(html.count('js/turnstile.js'), 1)

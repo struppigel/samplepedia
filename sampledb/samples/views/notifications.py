@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.urls import reverse
 
 from ..constants import NOTIFICATIONS_PER_PAGE
 from ..models import Notification, NotificationVerb
@@ -44,6 +45,7 @@ def notification_dropdown(request):
             'description': description,
             'timestamp': n.timestamp.isoformat(),
             'url': url,
+            'read_url': reverse('mark_notification_read', args=[n.id]),
             'sha256': n.data.get('sha256', '') if n.data else '',
         })
 

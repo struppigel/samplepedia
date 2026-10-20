@@ -337,7 +337,8 @@ class ImagePreviewJavaScriptTestCase(SampleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'id="form-data-attrs"')
         self.assertContains(response, 'data-is-edit="false"')
-        self.assertContains(response, 'data-markdown-preview-url')
+        self.assertContains(response, 'data-restore-draft="true"')
+        self.assertContains(response, f'data-md-editor data-preview-url="{reverse("markdown_preview")}"')
 
     def test_edit_form_has_edit_mode_data_attribute(self):
         """Edit form should have is-edit set to true"""
@@ -359,13 +360,13 @@ class ImagePreviewJavaScriptTestCase(SampleTestCase):
         self.assertContains(response, 'data-image-id')
         self.assertContains(response, 'data-image-url')
 
-    def test_form_has_clear_functions_available(self):
-        """Form should have onclick handlers for clear functions"""
+    def test_form_has_image_remove_buttons(self):
+        """The image previews have Remove buttons for js/submit-task-form.js"""
         response = self.client.get(reverse('submit_task'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'onclick="clearUploadPreview()"')
-        self.assertContains(response, 'onclick="clearImageSelection()"')
+        self.assertContains(response, 'data-image-remove="upload"')
+        self.assertContains(response, 'data-image-remove="gallery"')
 
     def test_form_has_delete_confirmation(self):
         """Edit form should have delete confirmation function"""
@@ -374,4 +375,6 @@ class ImagePreviewJavaScriptTestCase(SampleTestCase):
         response = self.client.get(edit_url(task))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'onclick="confirmDelete()"')
+        self.assertContains(response, 'type="submit" form="deleteForm"')
+        self.assertContains(response, f'action="{reverse("delete_task", args=[task.sha256, task.id])}"')
+        self.assertContains(response, 'data-confirm="Are you sure you want to delete this analysis task?')

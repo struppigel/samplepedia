@@ -1,5 +1,6 @@
 <button class="btn btn-link p-0 solution-like-btn"
         data-solution-id="{{ solution_id }}"
+        data-like-url="{% url 'toggle_solution_like' solution_id %}"
         data-liked="{% if is_liked %}true{% else %}false{% endif %}">
   <span class="like-state{% if is_liked %} is-liked{% endif %}" title="{{ like_count }} like{{ like_count|pluralize }}">
     <i class="{% if is_liked %}fas{% else %}far{% endif %} fa-heart"></i> <span class="like-count">{{ like_count }}</span>

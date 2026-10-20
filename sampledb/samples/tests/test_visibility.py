@@ -147,8 +147,11 @@ class DeletePermissionTestCase(SampleTestCase):
     def test_staff_sees_delete_button(self):
         self.login_as(self.staff)
         response = self.client.get(self.task.get_absolute_url())
-        self.assertContains(response, f"confirmDelete('{self.community.id}'")
-        self.assertNotContains(response, f"confirmDelete('{self.reference.id}'")
+        delete_url = 'data-post-url="{}"'
+        self.assertContains(response, delete_url.format(
+            reverse('delete_solution', args=[self.task.sha256, self.task.id, self.community.id])))
+        self.assertNotContains(response, delete_url.format(
+            reverse('delete_solution', args=[self.task.sha256, self.task.id, self.reference.id])))
         self.assertContains(response, 'Cannot delete the last reference solution')
 
     def test_staff_can_delete_community_solution(self):

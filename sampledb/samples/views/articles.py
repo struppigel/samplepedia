@@ -10,6 +10,7 @@ from ..constants import ARTICLES_PER_PAGE
 from ..forms import ArticleForm
 from ..models import Article, AnalysisTask, Solution
 from ..services.solutions import publish_draft
+from ..utils.drafts import clear_drafts
 from ..utils.http import safe_next_url
 from ..utils.markdown import render_markdown
 from .lookups import get_task_or_404
@@ -61,7 +62,10 @@ def article_editor(request, article_id=None):
         if article.is_published():
             messages.error(request, 'This article is already published as a solution. You cannot edit it directly.')
             return redirect('article_list')
-    
+
+    # The browser draft of this editor (static/js/drafts.js)
+    draft_name = f'article:{article.id if article else "new"}'
+
     if request.method == 'POST':
         form = ArticleForm(request.POST)
         if not form.is_valid():
@@ -71,6 +75,7 @@ def article_editor(request, article_id=None):
                 'article': article,
                 'initial_title': request.POST.get('title', ''),
                 'initial_content': request.POST.get('content', ''),
+                'draft_name': draft_name,
             })
         title, content = form.cleaned_data['title'], form.cleaned_data['content']
         
@@ -89,7 +94,8 @@ def article_editor(request, article_id=None):
                 content=content,
             )
             messages.success(request, 'Article draft created successfully!')
-        
+
+        clear_drafts(request, draft_name)
         # Redirect to view the article
         return redirect('article_view', article_id=article.id)
     
@@ -101,6 +107,7 @@ def article_editor(request, article_id=None):
         'article': article,
         'initial_title': initial_title,
         'initial_content': initial_content,
+        'draft_name': draft_name,
     })
 
 
@@ -270,6 +277,8 @@ def publish_article(request, article_id):
     except ValidationError as error:
         return JsonResponse({'error': ' '.join(error.messages)}, status=400)
 
+    # A published article can't be edited any more: forget unsaved editor changes
+    clear_drafts(request, f'article:{article.id}')
     messages.success(request, f'Article "{article.title}" has been published to sample {sample.sha256[:12]}.')
     return JsonResponse({
         'success': True,
@@ -300,6 +309,7 @@ def attach_draft_to_sample(request, sha256, task_id):
     except ValidationError as error:
         return JsonResponse({'error': ' '.join(error.messages)}, status=400)
 
+    clear_drafts(request, f'article:{article.id}')
     messages.success(request, f'Article "{article.title}" has been published to this sample.')
     return JsonResponse({
         'success': True,

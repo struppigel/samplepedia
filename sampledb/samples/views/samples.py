@@ -16,6 +16,7 @@ from ..forms import AnalysisTaskForm
 from ..constants import TASKS_PER_PAGE
 from ..querysets import difficulty_order
 from ..services.solutions import create_solution, hidden_until_from_weeks
+from ..utils.drafts import clear_drafts
 from ..utils.markdown import render_markdown
 from .lookups import get_task_or_404
 
@@ -219,6 +220,10 @@ def submit_task(request):
             except ValidationError as error:
                 form.add_error(None, error)
             else:
+                # Forget the browser drafts the task was made from (static/js/drafts.js)
+                clear_drafts(request, 'task-form')
+                if form.cleaned_data.get('reference_draft_article_id'):
+                    clear_drafts(request, f"article:{form.cleaned_data['reference_draft_article_id']}")
                 messages.success(request, f'AnalysisTask {sample.sha256[:12]}... submitted successfully!')
                 return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
     else:

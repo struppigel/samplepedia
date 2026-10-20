@@ -19,89 +19,69 @@ document.querySelectorAll('.badge-tag').forEach(badge => {
   badge.style.setProperty('--tag-hue', hashString(tagName) % 360);
 });
 
-// Kept as a global for page scripts that still call getCookie()
-function getCookie(name) {
-  return window.sp.getCookie(name);
+// POST to a like button's data-like-url; sends anonymous visitors to the login page.
+// Resolves with the server's {liked, like_count}, or null when there is nothing to update.
+function toggleLike(button) {
+  return window.sp.fetchJSON(button.dataset.likeUrl, { method: 'POST' })
+    .then(data => {
+      if (data.error && data.redirect) {
+        window.location.href = data.redirect;
+        return null;
+      }
+      return data;
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      return null;
+    });
 }
 
-// Favorite button filled functionality
+function updateDetailFavoriteCount(count) {
+  const detailCount = document.getElementById('detail-favorite-count');
+  if (detailCount) {
+    detailCount.textContent = count;
+  }
+}
+
+// The detail page's large favorite button (samples/_favorite_button_filled.html)
 document.querySelectorAll('.favorite-btn-filled').forEach(button => {
   button.addEventListener('click', function(e) {
     e.preventDefault();
 
-    const url = `/sample/${this.dataset.sha256}/${this.dataset.taskId}/like/`;
+    toggleLike(this).then(data => {
+      if (!data) return;
 
-    // Send AJAX request to toggle favorite
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-        'Content-Type': 'application/json'
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      // Check if login is required
-      if (data.error && data.redirect) {
-        window.location.href = data.redirect;
-        return;
-      }
-
-      // Update button appearance
       const icon = this.querySelector('i');
       const countSpan = this.querySelector('.favorite-count');
 
       icon.classList.toggle('fas', data.liked);
       icon.classList.toggle('far', !data.liked);
 
-      // Update counts
       this.dataset.liked = data.liked;
       this.title = `${data.like_count} favorite${data.like_count !== 1 ? 's' : ''}`;
 
       if (countSpan) {
         countSpan.textContent = data.like_count;
       }
-
-      // Update the detail page count
-      const detailCount = document.getElementById('detail-favorite-count');
-      if (detailCount) {
-        detailCount.textContent = data.like_count;
-      }
-    })
-    .catch(error => console.error('Error:', error));
+      updateDetailFavoriteCount(data.like_count);
+    });
   });
 });
 
-// Consolidated like/favorite button functionality
+// Task favorite and solution like buttons with a count
+// (samples/_favorite_button.html, samples/_solution_like_button.html)
 document.querySelectorAll('.favorite-btn, .solution-like-btn').forEach(button => {
   button.addEventListener('click', function(e) {
     e.preventDefault();
 
-    // Determine button type and construct URL
     const isSolution = this.classList.contains('solution-like-btn');
-    const url = isSolution
-      ? `/solution/${this.dataset.solutionId}/like/`
-      : `/sample/${this.dataset.sha256}/${this.dataset.taskId}/like/`;
     const countClass = isSolution ? '.like-count' : '.favorite-count';
     const labelText = isSolution ? 'like' : 'favorite';
 
-    // Send AJAX request to toggle like/favorite
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-        'Content-Type': 'application/json'
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      // Check if login is required
-      if (data.error && data.redirect) {
-        window.location.href = data.redirect;
-        return;
-      }
+    toggleLike(this).then(data => {
+      if (!data) return;
 
-      // Update button appearance (.like-state colors live in css/components.css)
+      // .like-state colors live in css/components.css
       const state = this.querySelector('.like-state');
       const icon = this.querySelector('i');
       const countSpan = this.querySelector(countClass);
@@ -110,17 +90,24 @@ document.querySelectorAll('.favorite-btn, .solution-like-btn').forEach(button =>
       icon.classList.toggle('fas', data.liked);
       icon.classList.toggle('far', !data.liked);
 
-      // Update count and dataset
       countSpan.textContent = data.like_count;
       this.dataset.liked = data.liked;
       state.title = `${data.like_count} ${labelText}${data.like_count !== 1 ? 's' : ''}`;
 
-      // Update the detail page count (task favorites only)
-      const detailCount = document.getElementById('detail-favorite-count');
-      if (detailCount && !isSolution) {
-        detailCount.textContent = data.like_count;
+      // The detail page shows the task's count (task favorites only)
+      if (!isSolution) {
+        updateDetailFavoriteCount(data.like_count);
       }
-    })
-    .catch(error => console.error('Error:', error));
+    });
   });
+});
+
+// "My ♥" toggle of the filter bar (samples/_filter_bar.html): flip the hidden
+// favorites field and apply the filter
+document.addEventListener('click', function(e) {
+  const button = e.target.closest('[data-favorites-toggle]');
+  if (!button || !button.form) return;
+  const input = button.form.querySelector('input[name="favorites"]');
+  input.value = input.value === 'true' ? 'false' : 'true';
+  button.form.submit();
 });

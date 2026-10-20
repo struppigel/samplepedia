@@ -46,7 +46,7 @@
               </a>
             {% endif %}
             <!-- Comments button -->
-            <a href="#commentFormSection" class="btn btn-danger btn-sm me-2" title="Comments" onclick="scrollToComments(event)">
+            <a href="#commentFormSection" class="btn btn-danger btn-sm me-2" title="Comments" data-scroll-to="comments-section">
             <i class="fas fa-comment"></i>
             </a>
             <!-- Edit button -->
@@ -145,8 +145,10 @@
             <h3 class="card-title">Solutions</h3>
             <div class="card-tools" style="margin-right: 0.1rem;">
               {% if user.is_authenticated %}
-              <button onclick="openDetailPageDraftModal()"
+              <button type="button"
                       class="btn btn-danger btn-sm me-1"
+                      data-attach-draft-url="{% url 'attach_draft_to_sample' sample.sha256 sample.id %}"
+                      data-draft-modal="draftSelectionModal"
                       title="Publish draft">
                 <i class="fas fa-upload"></i>
               </button>
@@ -200,8 +202,10 @@
                           <i class="fas fa-lock"></i>
                         </span>
                       {% else %}
-                        <button class="btn btn-link btn-sm text-danger p-0 ms-2"
-                                onclick="confirmDelete('{{ solution.id }}', '{{ solution.title|escapejs }}', '{{ sample.sha256|escapejs }}', '{{ sample.id }}')"
+                        <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-2"
+                                data-post-url="{% url 'delete_solution' sample.sha256 sample.id solution.id %}"
+                                data-post-next="{{ request.path }}"
+                                data-confirm="Are you sure you want to delete &quot;{{ solution.title }}&quot;? This action cannot be undone."
                                 title="Delete this solution">
                           <i class="fas fa-trash-alt"></i>
                         </button>
@@ -260,7 +264,8 @@
     <!-- Back Button -->
     <div class="row justify-content-center mt-3">
       <div class="col-md-12" style="max-width: {{ page_max_width }};">
-        <button onclick="smartBack()" class="btn-back">
+        {# Back in history, but not to the form (or other sample page) that led here: js/utils.js #}
+        <button type="button" class="btn-back" data-back-url="{% url 'sample_list' %}" data-back-skip="/submit/ /edit/ /sample/">
           ← Back to list
         </button>
       </div>
@@ -300,161 +305,9 @@
 
 {% endwith %}
 
+{% endblock %}
+
+{% block extra_js %}
 <script src="{% static 'js/draft-selection.js' %}"></script>
-<script>
-// Smart back navigation - avoid going back to submission form
-function smartBack() {
-  const referrer = document.referrer;
-  // If coming from submit analysis task, submit solution or analysis task edit page, go directly to list
-  if (referrer && (referrer.includes('/submit/') || referrer.includes('/edit/') || referrer.includes('/sample/'))) {
-    window.location.href = '/';
-  } else {
-    history.back();
-  }
-}
-
-// Scroll to comments section
-function scrollToComments(event) {
-  event.preventDefault();
-  
-  const commentsSection = document.getElementById('comments-section');
-  if (commentsSection) {
-    commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-}
-
-// Copy SHA256 functionality
-document.getElementById('copySha256').addEventListener('click', function() {
-  const sha256Text = document.getElementById('sha256Text').textContent;
-  navigator.clipboard.writeText(sha256Text).then(() => {
-    const icon = this.querySelector('i');
-    icon.classList.remove('fa-copy');
-    icon.classList.add('fa-check');
-    this.blur(); // Remove focus to prevent outline
-    
-    setTimeout(() => {
-      icon.classList.remove('fa-check');
-      icon.classList.add('fa-copy');
-    }, 2000);
-  });
-});
-
-// Delete solution with confirmation
-function confirmDelete(solutionId, solutionTitle, sha256, taskId) {
-  if (confirm('Are you sure you want to delete "' + solutionTitle + '"? This action cannot be undone.')) {
-    // Create and submit a form for POST request
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/sample/${sha256}/${taskId}/solution/${solutionId}/delete/`;
-    
-    // Add CSRF token
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-    if (csrfToken) {
-      const csrfInput = document.createElement('input');
-      csrfInput.type = 'hidden';
-      csrfInput.name = 'csrfmiddlewaretoken';
-      csrfInput.value = csrfToken.value;
-      form.appendChild(csrfInput);
-    } else {
-      // Get CSRF from cookie if not in form
-      const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
-      if (csrfCookie) {
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = csrfCookie.split('=')[1];
-        form.appendChild(csrfInput);
-      }
-    }
-    
-    // Add redirect URL to return to this page after deletion
-    const nextInput = document.createElement('input');
-    nextInput.type = 'hidden';
-    nextInput.name = 'next';
-    nextInput.value = window.location.href;
-    form.appendChild(nextInput);
-    
-    document.body.appendChild(form);
-    form.submit();
-  }
-}
-
-// Highlight solution from notification
-document.addEventListener('DOMContentLoaded', function() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const highlightSolutionId = urlParams.get('highlight_solution');
-  
-  if (highlightSolutionId) {
-    const solutionElement = document.querySelector(`[data-solution-id="${highlightSolutionId}"]`);
-    if (solutionElement) {
-      // Scroll to the solution with a slight delay to ensure page is fully loaded
-      setTimeout(() => {
-        solutionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Add highlight class
-        solutionElement.classList.add('solution-highlight');
-        
-        // Remove highlight class after animation completes
-        setTimeout(() => {
-          solutionElement.classList.remove('solution-highlight');
-        }, 3000);
-      }, 100);
-      
-      // Clean up URL without reloading page
-      const cleanUrl = window.location.pathname + window.location.hash;
-      window.history.replaceState({}, document.title, cleanUrl);
-    }
-  }
-});
-
-// Attach draft modal functionality
-// Detail page specific: Open draft modal with attach-to-task callback
-function openDetailPageDraftModal() {
-  openDraftSelectionModal('draftSelectionModal', function(draft) {
-    // Get CSRF token
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                      document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
-    
-    if (!csrfToken) {
-      alert('Error: CSRF token not found');
-      return;
-    }
-    
-    // Get current sample info from URL
-    const pathParts = window.location.pathname.split('/');
-    const sha256 = pathParts[2];
-    const taskId = pathParts[3];
-    
-    // Create form data
-    const formData = new FormData();
-    formData.append('article_id', draft.id);
-    formData.append('csrfmiddlewaretoken', csrfToken);
-    
-    // Submit
-    fetch(`/sample/${sha256}/${taskId}/attach-draft/`, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'X-CSRFToken': csrfToken
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // Reload the page to show the new solution
-        if (data.reload) {
-          window.location.reload();
-        }
-      } else {
-        alert('Error: ' + (data.error || 'Failed to publish draft'));
-      }
-    })
-    .catch(error => {
-      console.error('Attach error:', error);
-      alert('Error publishing draft. Please try again.');
-    });
-  });
-}
-</script>
-
+<script src="{% static 'js/pages/sample-detail.js' %}"></script>
 {% endblock %}

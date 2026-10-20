@@ -47,7 +47,7 @@
                         {% if notification.unread %}
                           <span class="badge badge-primary">New</span>
                         {% endif %}
-                        <form method="post" action="{% url 'delete_notification' notification.id %}" class="d-inline" onsubmit="return confirm('Delete this notification?');">
+                        <form method="post" action="{% url 'delete_notification' notification.id %}" class="d-inline" data-confirm="Delete this notification?">
                           {% csrf_token %}
                           <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-2" title="Delete">
                             <i class="fas fa-trash"></i>
