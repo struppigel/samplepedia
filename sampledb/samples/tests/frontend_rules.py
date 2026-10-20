@@ -19,6 +19,7 @@ EMAIL_TEMPLATES = {'registration/_email_base.html'}
 
 INLINE_SCRIPT_RE = re.compile(r'<script\b(?![^>]*\bsrc=)(?![^>]*type="application/(?:ld\+)?json")[^>]*>', re.I)
 EVENT_ATTR_RE = re.compile(r'\son[a-z]+\s*=\s*["\']', re.I)
+JAVASCRIPT_URL_RE = re.compile(r'(?:href|src|action)\s*=\s*["\']\s*javascript:', re.I)
 # Absolute app paths written into JS instead of coming from {% url %} via data-* attributes
 HARDCODED_URL_RE = re.compile(r"""[`'"]/(sample|solution|comments|notifications|ajax|articles|markdown-preview|upload-editor-image|profile|login)\b""")
 COOKIE_RE = re.compile(r'document\.cookie')
@@ -53,6 +54,12 @@ def inline_event_handlers():
             yield name, line_of(text, match.start()), f'inline handler {match.group(0).strip()} (use addEventListener)'
 
 
+def javascript_urls():
+    for name, text in [*templates(), *scripts()]:
+        for match in JAVASCRIPT_URL_RE.finditer(text):
+            yield name, line_of(text, match.start()), 'javascript: URL (use a data-* behaviour or a listener)'
+
+
 def hardcoded_urls():
     for name, text in scripts():
         for match in HARDCODED_URL_RE.finditer(text):
@@ -73,7 +80,7 @@ def display_toggling():
             yield name, line_of(text, match.start()), '.style.display (use sp.show() / the hidden attribute)'
 
 
-CHECKS = [inline_scripts, inline_event_handlers, hardcoded_urls, cookie_parsing, display_toggling]
+CHECKS = [inline_scripts, inline_event_handlers, javascript_urls, hardcoded_urls, cookie_parsing, display_toggling]
 
 
 if __name__ == '__main__':
