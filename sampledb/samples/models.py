@@ -290,7 +290,6 @@ class AnalysisTask(models.Model):
     tools = TaggableManager(blank=True, verbose_name="Tools", related_name='tool_samples', through=TaggedTools)
     youtube_id = models.CharField(max_length=32, blank=True, verbose_name="YouTube ID")
     image = CloudinaryField('image', blank=True, null=True)
-    like_count = models.IntegerField(default=0, verbose_name="Like count")
     view_count = models.IntegerField(default=0, verbose_name="View count")
     favorited_by = models.ManyToManyField(User, related_name='favorite_samples', blank=True)
     course_references = models.ManyToManyField(CourseReference, related_name='samples', blank=True, verbose_name="Course references")
@@ -450,13 +449,6 @@ class Solution(models.Model):
         null=True,
         blank=True,
         help_text="Article content for on-site solutions"
-    )
-    
-    # Deprecated: kept for backward compatibility with existing solutions
-    content = models.TextField(
-        verbose_name="Content",
-        blank=True,
-        help_text="Markdown content for on-site solutions (deprecated, use article field)"
     )
     
     author = models.ForeignKey(

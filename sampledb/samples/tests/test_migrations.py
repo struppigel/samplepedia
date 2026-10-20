@@ -1,91 +1,89 @@
 """
-Tests for data migrations. The migration functions are called directly with the
-current app registry, which still has the fields they touch.
+Tests for data migrations, run with the real migration machinery: migrate back
+to the state before the migration, create rows with the historical models,
+migrate forward and check the result.
 """
 import importlib
 
-from django.apps import apps
-
-from samples.models import Article, Solution, SolutionType
-from samples.tests.base import SampleTestCase
-from samples.tests.factories import make_onsite_solution, make_solution, make_task
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
+from django.test import SimpleTestCase, TransactionTestCase
 
 move_content = importlib.import_module('samples.migrations.0019_move_legacy_solution_content')
 
-
-def legacy_onsite(task, content, title='Legacy'):
-    """An on-site solution as the app stored them before Articles existed"""
-    return Solution.objects.create(
-        analysis_task=task, author=task.author, title=title,
-        solution_type=SolutionType.ONSITE, content=content,
-    )
+BEFORE = [('samples', '0018_remove_solution_idx_solution_view_count_and_more')]
+AFTER = [('samples', '0019_move_legacy_solution_content')]
 
 
-class MoveLegacyContentTestCase(SampleTestCase):
-    def run_migration(self):
-        move_content.move_legacy_content_to_articles(apps, None)
+def migrate(targets):
+    """Migrate to `targets` and return the historical apps at that state."""
+    executor = MigrationExecutor(connection)
+    executor.loader.build_graph()
+    executor.migrate(targets)
+    return executor.loader.project_state(targets).apps
 
-    def test_onsite_without_article_gets_one(self):
-        solution = legacy_onsite(make_task(), '# Old text')
 
-        self.run_migration()
+class MoveLegacyContentMigrationTestCase(TransactionTestCase):
+    """0019 moves Solution.content into Articles before 0021 drops the column."""
 
-        solution.refresh_from_db()
-        self.assertEqual(solution.article.content, '# Old text')
-        self.assertEqual(solution.article.title, 'Legacy')
-        self.assertEqual(solution.article.author, solution.author)
-        self.assertEqual(solution.content, '')
+    def setUp(self):
+        self.latest = MigrationExecutor(connection).loader.graph.leaf_nodes('samples')
+        self.addCleanup(migrate, self.latest)
+        apps = migrate(BEFORE)
+        User = apps.get_model('auth', 'User')
+        Task = apps.get_model('samples', 'AnalysisTask')
+        Solution = apps.get_model('samples', 'Solution')
+        Article = apps.get_model('samples', 'Article')
 
-    def test_onsite_without_article_or_text_gets_an_empty_article(self):
-        solution = legacy_onsite(make_task(), '')
+        self.author = User.objects.create(username='author')
+        task = Task.objects.create(sha256='a' * 64, goal='g', author=self.author)
 
-        self.run_migration()
+        def solution(title, solution_type='onsite', content='', article=None):
+            return Solution.objects.create(
+                analysis_task=task, title=title, solution_type=solution_type,
+                content=content, article=article, author=self.author,
+            ).pk
 
-        solution.refresh_from_db()
-        self.assertIsNotNone(solution.article)
+        def article(title, content):
+            return Article.objects.create(title=title, content=content, author=self.author)
 
-    def test_duplicate_of_article_text_is_dropped(self):
-        solution = make_onsite_solution(content='Same text')
-        Solution.objects.filter(pk=solution.pk).update(content='Same text\n')
+        self.ids = {
+            'legacy': solution('Legacy', content='# Old text'),
+            'empty': solution('Empty'),
+            'duplicate': solution('Same', content='Same text\n', article=article('Same', 'Same text')),
+            'differs': solution('Writeup', content='Older text', article=article('Writeup', 'Current text')),
+            'external': solution('Blog post', solution_type='blog', content='Notes'),
+        }
 
-        self.run_migration()
+    def test_legacy_content_moves_into_articles(self):
+        apps = migrate(AFTER)
+        Solution = apps.get_model('samples', 'Solution')
+        Article = apps.get_model('samples', 'Article')
+        solution = {name: Solution.objects.select_related('article').get(pk=pk) for name, pk in self.ids.items()}
 
-        solution.refresh_from_db()
-        self.assertEqual(solution.content, '')
-        self.assertEqual(Article.objects.count(), 1)
-
-    def test_differing_text_is_recovered_as_a_draft(self):
-        solution = make_onsite_solution(title='Writeup', content='Current text')
-        Solution.objects.filter(pk=solution.pk).update(content='Older text')
-
-        self.run_migration()
-
-        draft = Article.objects.get(title='Writeup (recovered)')
-        self.assertEqual(draft.content, 'Older text')
-        self.assertEqual(draft.author, solution.author)
-        self.assertFalse(draft.is_published())
-        solution.refresh_from_db()
-        self.assertEqual(solution.article.content, 'Current text')
-
-    def test_text_on_external_solution_is_recovered(self):
-        solution = make_solution(title='Blog post')
-        Solution.objects.filter(pk=solution.pk).update(content='Notes')
-
-        self.run_migration()
-
+        self.assertFalse(Solution.objects.exclude(content='').exists())
+        # An on-site solution without an Article gets one holding its text, owned by its author
+        self.assertEqual(solution['legacy'].article.content, '# Old text')
+        self.assertEqual(solution['legacy'].article.title, 'Legacy')
+        self.assertEqual(solution['legacy'].article.author_id, self.author.pk)
+        # ... even when there was no text
+        self.assertIsNotNone(solution['empty'].article)
+        # Text that only repeats the Article is dropped
+        self.assertFalse(Article.objects.filter(title='Same (recovered)').exists())
+        # Text that differs, or sits on an external solution, is kept as an unpublished draft
+        recovered = Article.objects.get(title='Writeup (recovered)')
+        self.assertEqual(recovered.content, 'Older text')
+        self.assertFalse(Solution.objects.filter(article=recovered).exists())
+        self.assertEqual(solution['differs'].article.content, 'Current text')
         self.assertTrue(Article.objects.filter(title='Blog post (recovered)', content='Notes').exists())
 
-    def test_recovered_title_fits_the_column(self):
+        # Running it again changes nothing
+        count = Article.objects.count()
+        move_content.move_legacy_content_to_articles(apps, None)
+        self.assertEqual(Article.objects.count(), count)
+
+
+class RecoveredTitleTestCase(SimpleTestCase):
+    def test_fits_the_article_title_column(self):
         self.assertEqual(len(move_content.recovered_title('x' * 200)), 200)
-
-    def test_running_twice_changes_nothing(self):
-        legacy_onsite(make_task(), 'Text')
-        solution = make_onsite_solution(content='A')
-        Solution.objects.filter(pk=solution.pk).update(content='B')
-
-        self.run_migration()
-        articles = Article.objects.count()
-        self.run_migration()
-
-        self.assertEqual(Article.objects.count(), articles)
-        self.assertFalse(Solution.objects.exclude(content='').exists())
+        self.assertEqual(move_content.recovered_title('Short'), 'Short (recovered)')
