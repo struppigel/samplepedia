@@ -1,0 +1,46 @@
+{% extends "samples/base.html" %}
+{% load static %}
+{% comment %}
+Page with the full-page markdown editor (on-site solution, article draft, the
+stand-alone markdown editor): a header with the page's buttons and the malware
+warning; the page puts samples/_onsite_editor.html into the editor block.
+
+Blocks: title, editor_title, editor_subtitle, editor_actions, editor, extra_js
+(keep {{ block.super }}: it loads js/md-editor.js).
+{% endcomment %}
+
+{% block page_header %}
+<header class="page-header">
+  <div class="container-fluid">
+    <div class="page-header-inner mb-2">
+      <div>
+        <h1 class="page-title">{% block editor_title %}{% endblock %}</h1>
+        {% block editor_subtitle %}{% endblock %}
+      </div>
+      <div>
+        {% block editor_actions %}{% endblock %}
+      </div>
+    </div>
+    <div class="alert alert-warning mt-3" role="alert">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      Please do not post any malware code directly or this site will be detected by antivirus software, use screenshots of malicious code instead.
+    </div>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<section class="page-content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        {% block editor %}{% endblock %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/md-editor.js' %}"></script>
+{% endblock %}

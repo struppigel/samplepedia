@@ -1,0 +1,176 @@
+/*
+ * Rendered markdown ("prose"): task goals and descriptions, articles,
+ * on-site solutions and every markdown preview use the same styles.
+ *
+ *   .prose          base typography for rendered markdown
+ *   .prose-article  long-form article (larger text, roomier headings)
+ *
+ * Colors come from the --sp-prose-* tokens in tokens.css.
+ */
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose > :last-child {
+  margin-bottom: 0;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  margin-top: var(--sp-space-3);
+  margin-bottom: var(--sp-space-2);
+}
+
+.prose h1:first-child,
+.prose h2:first-child,
+.prose h3:first-child,
+.prose h4:first-child,
+.prose h5:first-child,
+.prose h6:first-child {
+  margin-top: 0;
+}
+
+.prose p {
+  margin-bottom: var(--sp-space-block);
+}
+
+.prose ul,
+.prose ol {
+  padding-left: var(--sp-space-4);
+  margin-bottom: var(--sp-space-block);
+}
+
+.prose li {
+  margin-bottom: var(--sp-space-1);
+}
+
+.prose code {
+  padding: 0.2em 0.4em;
+  font-size: var(--sp-fs-code);
+  color: var(--sp-prose-code-fg);
+  background-color: var(--sp-prose-code-bg);
+  border-radius: var(--sp-radius-code);
+}
+
+.prose pre {
+  padding: var(--sp-space-block);
+  margin: var(--sp-space-block) 0;
+  overflow-x: auto;
+  background-color: var(--sp-prose-pre-bg);
+  border-radius: var(--sp-radius-content);
+}
+
+/* Code blocks: the pre carries the background (also under highlight.js,
+   whose stylesheet loads last and adds its own padding) */
+.prose pre code {
+  padding: 0;
+  color: var(--sp-prose-pre-fg);
+  background-color: transparent;
+}
+
+.prose del {
+  text-decoration: line-through;
+  opacity: var(--sp-prose-del-opacity);
+}
+
+.prose blockquote {
+  padding: 0.5em 0.7rem 0.5em var(--sp-space-3);
+  margin: var(--sp-space-block) 0;
+  color: var(--sp-prose-blockquote-fg);
+  background-color: var(--sp-prose-blockquote-bg);
+  border-left: var(--sp-border-accent-width) solid var(--sp-prose-blockquote-border);
+}
+
+.prose blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: var(--sp-space-3) 0;
+  border-radius: var(--sp-radius-content);
+}
+
+.prose a {
+  color: var(--sp-link);
+  text-decoration: underline;
+  text-decoration-color: var(--sp-prose-link-underline);
+  text-underline-offset: 2px;
+  transition: text-decoration-color var(--sp-dur) var(--sp-ease);
+}
+
+.prose a:hover {
+  text-decoration-color: var(--sp-prose-link-underline-hover);
+}
+
+.prose hr {
+  margin: var(--sp-space-3) 0;
+  border: 0;
+  border-top: var(--sp-border-width) solid var(--sp-border-color);
+}
+
+.prose table {
+  width: 100%;
+  margin: var(--sp-space-block) 0;
+  border-collapse: collapse;
+  border: var(--sp-border-width) solid var(--sp-prose-table-border);
+}
+
+.prose th,
+.prose td {
+  padding: var(--sp-space-2) var(--sp-space-block);
+  text-align: left;
+  border: var(--sp-border-width) solid var(--sp-prose-table-border);
+}
+
+.prose th {
+  font-weight: var(--sp-fw-semibold);
+  background-color: var(--sp-prose-th-bg);
+}
+
+.prose tr:nth-child(even) {
+  background-color: var(--sp-prose-stripe);
+}
+
+/* ------------------------------------------------------------------ */
+/* Long-form articles                                                  */
+/* ------------------------------------------------------------------ */
+.prose-article {
+  font-size: var(--sp-fs-article);
+  line-height: var(--sp-lh-article);
+}
+
+.prose-article h1,
+.prose-article h2,
+.prose-article h3,
+.prose-article h4,
+.prose-article h5,
+.prose-article h6 {
+  font-weight: var(--sp-fw-semibold);
+  line-height: var(--sp-lh-article-heading);
+}
+
+.prose-article h1 { font-size: var(--sp-fs-article-h1); }
+.prose-article h2 { font-size: var(--sp-fs-article-h2); }
+.prose-article h3 { font-size: var(--sp-fs-article-h3); }
+
+.prose-article p {
+  margin-bottom: 1.25rem;
+}
+
+.prose-article blockquote {
+  font-style: italic;
+}
+
+@media (max-width: 767.98px) {
+  .prose-article {
+    font-size: var(--sp-fs-article-mobile);
+  }
+}

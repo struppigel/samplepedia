@@ -4,22 +4,17 @@
 {% load user_tags %}
 
 {% block title %}{% if is_edit %}Edit{% else %}Submit{% endif %} Sample{% endblock %}
+{% block page_title %}{% if is_edit %}Edit{% else %}Submit{% endif %} Sample{% endblock %}
 
 {% block content %}
-<div id="form-data-attrs" style="display: none;"
+<div id="form-data-attrs" hidden
      data-is-edit="{% if is_edit %}true{% else %}false{% endif %}"
      {% if is_edit and current_image_id %}data-current-image-id="{{ current_image_id }}"{% endif %}
      {% if is_edit and task.image and not current_image_id %}data-current-image-url="{% cloudinary_url task.image width=150 height=150 crop='fill' %}"{% endif %}
-     data-markdown-preview-url="{% url 'markdown_preview' %}">
+     data-restore-draft="{% if is_edit or form.is_bound %}false{% else %}true{% endif %}">
 </div>
 
-<section class="content-header">
-  <div class="container-fluid">
-    <h1>{% if is_edit %}Edit{% else %}Submit{% endif %} Sample</h1>
-  </div>
-</section>
-
-<section class="content">
+<section class="page-content">
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-8">
@@ -29,7 +24,7 @@
             <h3 class="card-title">Task Details</h3>
           </div>
           <div class="card-body">
-            <form method="post" enctype="multipart/form-data" novalidate>
+            <form method="post" enctype="multipart/form-data" novalidate id="submit-task-form">
               {% csrf_token %}
               
               {% if form.errors %}
@@ -50,9 +45,7 @@
                     {% endif %}
                   {% endfor %}
                 </ul>
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>
               {% endif %}
               
@@ -62,7 +55,7 @@
               </div>
               {% endif %}
               
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.sha256.id_for_label }}">SHA256 Hash</label>
                 {{ form.sha256 }}
                 {% if form.sha256.errors %}
@@ -74,7 +67,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.download_link.id_for_label }}">Download Link</label>
                 {{ form.download_link }}
                 {% if form.download_link.errors %}
@@ -86,7 +79,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.goal.id_for_label }}">Analysis Goal</label>
                 {{ form.goal }}
                 {% if form.goal.errors %}
@@ -97,19 +90,21 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.description.id_for_label }}">Description</label>
-                <div class="markdown-tabs">
-                  <button type="button" class="markdown-tab active" data-tab="write">Write</button>
-                  <button type="button" class="markdown-tab" data-tab="preview">Preview</button>
-                </div>
-                <div class="markdown-tab-content">
-                  <div class="markdown-pane active" data-pane="write">
-                    {{ form.description }}
+                <div data-md-editor data-preview-url="{% url 'markdown_preview' %}">
+                  <div class="markdown-tabs">
+                    <button type="button" class="markdown-tab active" data-tab="write">Write</button>
+                    <button type="button" class="markdown-tab" data-tab="preview">Preview</button>
                   </div>
-                  <div class="markdown-pane" data-pane="preview">
-                    <div class="markdown-preview-content">
-                      <p class="text-muted">Nothing to preview</p>
+                  <div class="markdown-tab-content">
+                    <div class="markdown-pane active" data-pane="write">
+                      {{ form.description }}
+                    </div>
+                    <div class="markdown-pane" data-pane="preview">
+                      <div class="prose" data-md-preview>
+                        <p class="text-muted">Nothing to preview</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -122,7 +117,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.difficulty.id_for_label }}">Difficulty Level</label>
                 {{ form.difficulty }}
                 {% if form.difficulty.errors %}
@@ -132,7 +127,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.platform.id_for_label }}">Platform</label>
                 {{ form.platform }}
                 {% if form.platform.errors %}
@@ -142,7 +137,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.tags.id_for_label }}">Tags</label>
                 {{ form.tags }}
                 {% if form.tags.errors %}
@@ -154,7 +149,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.tools.id_for_label }}">Tools</label>
                 {{ form.tools }}
                 {% if form.tools.errors %}
@@ -166,20 +161,20 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3">
                 <label>Sample Image (Optional)</label>
                 
                 <!-- Image Preview Area (stays visible) -->
-                <div id="image_preview_area" style="display: none;">
-                  <div id="upload_image_preview" class="mt-2" style="display: none;">
+                <div id="image_preview_area" hidden>
+                  <div id="upload_image_preview" class="mt-2" hidden>
                     <img id="upload_preview_img" src="" alt="Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
-                    <button type="button" class="btn btn-sm btn-link text-danger" onclick="clearUploadPreview()">
+                    <button type="button" class="btn btn-sm btn-link text-danger" data-image-remove="upload">
                       <i class="fas fa-times"></i> Remove
                     </button>
                   </div>
-                  <div id="selected_image_preview" class="mt-2" style="display: none;">
+                  <div id="selected_image_preview" class="mt-2" hidden>
                     <img id="preview_img" src="" alt="Selected" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
-                    <button type="button" class="btn btn-sm btn-link text-danger" onclick="clearImageSelection()">
+                    <button type="button" class="btn btn-sm btn-link text-danger" data-image-remove="gallery">
                       <i class="fas fa-times"></i> Remove
                     </button>
                   </div>
@@ -201,11 +196,11 @@
                 </div>
                 
                 <!-- Gallery option -->
-                <div class="image-gallery-section mt-3 pt-3" id="gallery-section" style="border-top: 1px dashed var(--form-border);">
+                <div class="image-gallery-section dashed-divider mt-3 pt-3" id="gallery-section">
                   <label class="d-block mb-2"><i class="fas fa-images"></i> <strong>Or Choose from Gallery</strong></label>
                   <input type="hidden" id="selected_image" name="image_id" value="">
                   <input type="hidden" id="clear_image_flag" name="clear_image" value="">
-                  <button type="button" class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#imageGalleryModal">
+                  <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#imageGalleryModal">
                     <i class="fas fa-image"></i> Browse Gallery
                   </button>
                 </div>
@@ -215,7 +210,7 @@
               <hr class="my-4">
               <h5 class="mb-3">Reference Solution{% if not user.is_staff %} <span class="text-danger">*</span>{% else %} (Optional){% endif %}</h5>
               
-              <div class="form-group">
+              <div class="mb-3" id="ref-title-group">
                 <label for="{{ form.reference_solution_title.id_for_label }}">Solution Title{% if not user.is_staff %} <span class="text-danger">*</span>{% endif %}</label>
                 {{ form.reference_solution_title }}
                 {% if form.reference_solution_title.errors %}
@@ -225,7 +220,7 @@
                 {% endif %}
               </div>
 
-              <div class="form-group">
+              <div class="mb-3" id="ref-type-group">
                 <label for="{{ form.reference_solution_type.id_for_label }}">Solution Type{% if not user.is_staff %} <span class="text-danger">*</span>{% endif %}</label>
                 {{ form.reference_solution_type }}
                 {% if form.reference_solution_type.errors %}
@@ -239,28 +234,29 @@
               {{ form.reference_draft_article_id }}
               
               <!-- Draft article selection option -->
-              <div class="form-group">
-                <div class="bg-light p-3 rounded" style="border: 1px dashed var(--form-border);">
+              <div class="mb-3">
+                <div class="bg-body-tertiary p-3 rounded dropzone-box" id="reference-draft-picker"
+                     data-draft-picker="draftSelectionModal" data-draft-input="id_reference_draft_article_id">
                   <div class="d-flex justify-content-between align-items-center">
                     <div>
                       <i class="fas fa-file-alt text-primary"></i>
                       <strong>Or Use Existing Draft</strong>
                       <p class="mb-0 small text-muted">Select a draft article you've already written</p>
                     </div>
-                    <button type="button" class="btn btn-sm btn-primary" onclick="openSubmitPageDraftModal()">
+                    <button type="button" class="btn btn-sm btn-primary" data-draft-picker-open>
                       <i class="fas fa-search"></i> Select Draft
                     </button>
                   </div>
                   
                   <!-- Selected draft info (hidden by default) -->
-                  <div id="selected-draft-info" class="mt-3 pt-3" style="display: none; border-top: 1px solid var(--form-border);">
+                  <div id="selected-draft-info" class="selected-draft-info mt-3 pt-3" data-draft-picker-selected hidden>
                     <div class="d-flex justify-content-between align-items-start">
                       <div>
                         <strong>Selected Draft:</strong>
-                        <p class="mb-0" id="selected-draft-title"></p>
-                        <small class="text-muted" id="selected-draft-preview"></small>
+                        <p class="mb-0" id="selected-draft-title" data-draft-picker-title></p>
+                        <small class="text-muted" id="selected-draft-preview" data-draft-picker-preview></small>
                       </div>
-                      <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearDraftSelection()">
+                      <button type="button" class="btn btn-sm btn-outline-danger" data-draft-picker-clear>
                         <i class="fas fa-times"></i> Clear
                       </button>
                     </div>
@@ -268,7 +264,7 @@
                 </div>
               </div>
 
-              <div class="form-group" id="reference-url-field">
+              <div class="mb-3" id="reference-url-field">
                 <label for="{{ form.reference_solution_url.id_for_label }}">Solution URL{% if not user.is_staff %} <span class="text-danger">*</span>{% endif %}</label>
                 {{ form.reference_solution_url }}
                 {% if form.reference_solution_url.errors %}
@@ -280,18 +276,18 @@
                 {% endif %}
               </div>
 
-              <div class="form-group" id="reference-content-field" style="display: none;">
+              <div class="mb-3" id="reference-content-field" hidden>
                 <label for="reference_solution_content">Solution Content</label>
                 <div class="alert alert-info">
                   <i class="fas fa-external-link-alt"></i>
                   <strong>Use Full Editor:</strong> 
                   <a href="{% url 'markdown_editor' %}" target="_blank" class="alert-link" id="openMarkdownEditorLink">Open Markdown Editor</a> to write your on-site solution, you can either copy and paste it back or press "Use in Submit Form".
                 </div>
-                <textarea id="reference_solution_content" name="reference_solution_content" class="form-control" rows="10" placeholder="Paste your markdown content here..."></textarea>
+                <textarea id="reference_solution_content" name="reference_solution_content" class="form-control" rows="10" placeholder="Paste your markdown content here...">{{ form.reference_solution_content.value|default_if_none:'' }}</textarea>
                 <small class="form-text text-muted">Markdown content for on-site solutions.</small>
               </div>
               
-              <div class="form-group">
+              <div class="mb-3">
                 <label for="{{ form.hide_weeks.id_for_label }}">{{ form.hide_weeks.label }}</label>
                 {{ form.hide_weeks }}
                 {% if form.hide_weeks.errors %}
@@ -310,7 +306,7 @@
                 </div>
               {% endif %}
 
-              <div class="form-group mb-0">
+              <div class="mb-0">
                 <button type="submit" class="btn btn-danger">
                   <i class="fas fa-save"></i> {% if is_edit %}Update{% else %}Submit{% endif %}
                 </button>
@@ -318,7 +314,7 @@
                   <i class="fas fa-times"></i> Cancel
                 </a>
                 {% if is_edit %}
-                  <button type="button" class="btn btn-outline-danger float-right" onclick="confirmDelete()">
+                  <button type="submit" form="deleteForm" class="btn btn-outline-danger float-end">
                     <i class="fas fa-trash-alt"></i> Delete Task
                   </button>
                 {% endif %}
@@ -326,8 +322,9 @@
             </form>
             
             {% if is_edit %}
-            <!-- Hidden delete form -->
-            <form id="deleteForm" method="post" action="{% url 'delete_task' sha256=task.sha256 task_id=task.id %}" style="display: none;">
+            <!-- Delete form (the Delete Task button submits it; js/utils.js asks first) -->
+            <form id="deleteForm" method="post" action="{% url 'delete_task' sha256=task.sha256 task_id=task.id %}" class="d-none"
+                  data-confirm="Are you sure you want to delete this analysis task? This action cannot be undone.">
               {% csrf_token %}
             </form>
             {% endif %}
@@ -355,7 +352,7 @@
           <div class="card-body">
             <div class="d-flex align-items-center gap-2 mb-0">
             
-            <h6 class="text-info">Easy</h6>
+            <h6 class="text-difficulty-easy">Easy</h6>
             </div>
             <p class="small mb-3">
               Easy samples are not packed or obfuscated or have trivial obfuscation like base64. They should only use favorable execution environments (no Rust or Go). Samples must not be self-modifying. Samples can be inside of installers (NSIS) or basic wrappers (Batch2Exe) which drop the non-packed payload to disk.
@@ -363,7 +360,7 @@
             
             <div class="d-flex align-items-center gap-2 mb-0">
             
-            <h6 class="text-warning">Medium</h6>
+            <h6 class="text-difficulty-medium">Medium</h6>
             </div>
             <p class="small mb-3">
               Medium samples are easy to unpack (if packed) and can have some obfuscation or simple anti-reversing techniques. Deobfuscation should not require to change the control flow. But deobfuscation may require to decrypt strings, data or resolve dynamically loaded imports. Execution environment can be somewhat unfavorable for current tooling. Custom scripts for decryption or deobfuscation (if needed) are basic.
@@ -371,14 +368,14 @@
             
             <div class="d-flex align-items-center gap-2 mb-0">
             
-            <h6 class="text-danger">Advanced</h6>
+            <h6 class="text-difficulty-advanced">Advanced</h6>
             </div>
             <p class="small mb-3">
               Advanced samples may require to write more complex custom tooling for unpacking or deobfuscation. They may employ several anti-reversing mechanisms or self-modifying code. They may use control flow obfuscation. They may use unusual execution environments without good RE tooling or use packers which require more work for unpacking than just setting a few breakpoints.
             </p>
             
             <div class="d-flex align-items-center gap-2 mb-0">
-            <h6 class="text-black">Expert</h6>
+            <h6 class="text-difficulty-expert">Expert</h6>
             </div>
             <p class="small mb-0">
               Expert samples require a significant time investment from experienced reversers, e.g., two weeks or more. Examples are heavily obfuscated samples like Scatterbrain, or virtualized code like that of FinFisher.
@@ -395,9 +392,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="imageGalleryModalLabel">Select Sample Image</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           {% if available_images %}
@@ -405,8 +400,8 @@
               {% for img in available_images %}
                 {% cloudinary_url img.image width=300 height=300 crop='fit' as image_url %}
                 <div class="col-md-3 col-sm-4 col-6 mb-3">
-                  <div class="card image-select-card" data-image-id="{{ img.id }}" data-image-url="{{ image_url }}" style="cursor: pointer;">
-                    <img src="{{ image_url }}" class="card-img-top" alt="Sample image" style="width: 100%; height: auto; object-fit: contain; background-color: #f8f9fa;">
+                  <div class="card image-select-card cursor-pointer" data-image-id="{{ img.id }}" data-image-url="{{ image_url }}">
+                    <img src="{{ image_url }}" class="card-img-top w-100 h-auto object-fit-contain" alt="Sample image">
                   </div>
                 </div>
               {% endfor %}
@@ -416,7 +411,7 @@
           {% endif %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
@@ -425,56 +420,12 @@
   <!-- Draft Selection Modal -->
   {% include 'samples/_draft_selection_modal.html' with modal_id='draftSelectionModal' modal_title='Select Draft Article' %}
 
-  <script src="{% static 'js/submit-task-form.js' %}"></script>
-  <script src="{% static 'js/draft-selection.js' %}"></script>
-  <script>
-  // Submit page specific: Open draft modal with form-fill callback
-  function openSubmitPageDraftModal() {
-    openDraftSelectionModal('draftSelectionModal', function(draft) {
-      // Set the hidden field value
-      $('#id_reference_draft_article_id').val(draft.id);
-      
-      // Show selected draft info
-      $('#selected-draft-title').text(draft.title);
-      $('#selected-draft-preview').text(draft.preview);
-      $('#selected-draft-info').show();
-      
-      // Hide manual input fields when draft is selected (don't disable, just hide)
-      $('#reference-url-field').hide();
-      $('#reference-content-field').hide();
-      $('#id_reference_solution_title').closest('.form-group').hide();
-      $('#id_reference_solution_type').closest('.form-group').hide();
-      
-      // Scroll to show selection
-      $('html, body').animate({
-        scrollTop: $('#selected-draft-info').offset().top - 100
-      }, 500);
-    });
-  }
-  
-  // Clear draft selection and restore manual input fields
-  function clearDraftSelection() {
-    // Clear the hidden field
-    $('#id_reference_draft_article_id').val('');
-    
-    // Hide selected draft info
-    $('#selected-draft-info').hide();
-    
-    // Show manual input fields
-    $('#id_reference_solution_title').closest('.form-group').show();
-    $('#id_reference_solution_type').closest('.form-group').show();
-    
-    // Show appropriate field based on solution type
-    const solutionType = $('#id_reference_solution_type').val();
-    if (solutionType === 'onsite') {
-      $('#reference-url-field').hide();
-      $('#reference-content-field').show();
-    } else {
-      $('#reference-url-field').show();
-      $('#reference-content-field').hide();
-    }
-  }
-  </script>
 </section>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/md-editor.js' %}"></script>
+<script src="{% static 'js/draft-selection.js' %}"></script>
+<script src="{% static 'js/submit-task-form.js' %}"></script>
 {% endblock %}

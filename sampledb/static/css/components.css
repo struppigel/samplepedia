@@ -1,146 +1,257 @@
-/* Component Styles - Cards, Badges, Alerts, Buttons */
+/*
+ * Project components (cards, badges, buttons, spoilers, solutions, comments,
+ * articles, markdown editor). Values come from tokens.css.
+ * Dark mode needs no rules here: the tokens switch under [data-bs-theme].
+ */
 
-/* Cards */
-.card {
-  border-radius: 8px;
-}
-
-.card-header {
-  padding: 0.5rem 0.75rem !important;
-}
-
+/* ------------------------------------------------------------------ */
+/* Cards (AdminLTE-style headers)                                      */
+/* ------------------------------------------------------------------ */
 .card-title {
-  margin-bottom: 0 !important;
+  float: left;
+  margin: 0;
+  font-size: var(--sp-fs-card-title);
+  font-weight: var(--sp-fw-normal);
 }
 
-/* Badges */
-.badge-success {
-  background-color: var(--primary-red) !important;
+/* Buttons and counts on the right of a card header */
+.card-header-actions {
+  float: right;
+  margin-right: calc(-1 * var(--sp-space-2));
 }
 
-.badge-warning {
-  background-color: var(--orange-warning) !important;
+.card-success > .card-header,
+.card-danger > .card-header {
+  color: var(--sp-card-status-fg);
 }
 
-.badge-danger {
-  background-color: var(--red-danger) !important;
+.card-success > .card-header { background-color: var(--sp-card-success-bg); }
+.card-danger > .card-header { background-color: var(--sp-card-danger-bg); }
+
+/* ------------------------------------------------------------------ */
+/* Callouts                                                            */
+/* ------------------------------------------------------------------ */
+.callout {
+  padding: var(--sp-space-3);
+  margin-bottom: var(--sp-space-3);
+  background-color: var(--sp-callout-bg);
+  border-left: var(--sp-border-callout-width) solid var(--sp-border-color);
+  border-radius: var(--sp-radius);
+  box-shadow: var(--sp-shadow-callout);
 }
 
-.badge-dark {
-  background-color: var(--gray-900) !important;
+.callout a {
+  color: var(--sp-callout-link);
+  text-decoration: underline;
 }
 
-.badge-info {
-  background-color: var(--cyan-info) !important;
+.callout p:last-child {
+  margin-bottom: 0;
 }
 
-/* Badge hover effects */
-a.badge {
+.callout-info { border-left-color: var(--sp-callout-info); }
+.callout-warning { border-left-color: var(--sp-callout-warning); }
+
+/* Leading icon in alerts and callouts */
+.alert .icon,
+.callout .icon {
+  margin-right: var(--sp-space-2);
+}
+
+/* Fixed-position toast for transient messages (e.g. image upload) */
+.upload-toast {
+  position: fixed;
+  top: var(--sp-space-4);
+  right: var(--sp-space-4);
+  z-index: var(--sp-z-toast);
+  min-width: 300px;
+  box-shadow: var(--sp-shadow-toast);
+}
+
+/* ------------------------------------------------------------------ */
+/* Buttons                                                             */
+/* ------------------------------------------------------------------ */
+/* Low-emphasis button on a light surface (filter bars) */
+.btn-plain {
+  --bs-btn-color: var(--sp-btn-plain-fg);
+  --bs-btn-bg: var(--sp-btn-plain-bg);
+  --bs-btn-border-color: var(--sp-btn-plain-border);
+  --bs-btn-hover-color: var(--sp-btn-plain-hover-fg);
+  --bs-btn-hover-bg: var(--sp-btn-plain-hover-bg);
+  --bs-btn-hover-border-color: var(--sp-btn-plain-border);
+  --bs-btn-active-color: var(--sp-btn-plain-hover-fg);
+  --bs-btn-active-bg: var(--sp-btn-plain-hover-bg);
+  --bs-btn-active-border-color: var(--sp-btn-plain-border);
+  --bs-btn-focus-shadow-rgb: var(--sp-secondary-rgb);
+}
+
+/* Smaller than .btn-sm, for buttons inside table rows */
+.btn-compact {
+  --bs-btn-padding-y: var(--sp-btn-compact-py);
+  --bs-btn-padding-x: var(--sp-btn-compact-px);
+  --bs-btn-font-size: var(--sp-fs-xs);
+  --bs-btn-border-radius: var(--sp-radius-xs);
+}
+
+/* Text-only "back" link button */
+.btn-back {
+  padding: var(--sp-space-3);
+  color: var(--sp-brand);
   text-decoration: none;
   cursor: pointer;
-  position: relative;
-}
-
-a.badge:hover::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-color: rgba(255, 255, 255, 0.25);
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-/* Tag colors - generates consistent color per tag */
-.badge-tag {
-  color: white !important;
-  text-decoration: none;
-}
-
-/* Alert info styling - uses context-aware variables */
-.alert-info {
-  background-color: var(--alert-info-bg) !important;
-  border-color: var(--alert-info-border) !important;
-  color: var(--alert-info-text) !important;
-}
-
-/* Alert link styling - uses context-aware variables */
-.alert-info .alert-link {
-  color: var(--alert-link-color) !important;
-  text-decoration: underline;
-  font-weight: 600;
-}
-
-.alert-info .alert-link:hover {
-  color: var(--alert-link-hover) !important;
-  text-decoration: underline;
-}
-
-/* Buttons */
-.btn-primary {
-  background-color: var(--primary-red) !important;
-  border-color: var(--primary-red) !important;
-}
-
-.btn-primary:hover {
-  background-color: var(--accent-red) !important;
-  border-color: var(--accent-red) !important;
-}
-
-.btn-back {
-  color: var(--primary-red);
   background: none;
   border: none;
-  padding: 1rem 1rem;
-  cursor: pointer;
-  text-decoration: none;
 }
 
 .btn-back:hover {
-  color: var(--blue-primary);
+  color: var(--sp-accent);
 }
 
-/* Button overrides - consolidated for efficiency */
-/* Success button (gray) */
-body .btn.btn-success,
-body a.btn.btn-success,
-body button.btn.btn-success {
-  background-color: var(--gray-600) !important;
-  border-color: var(--gray-600) !important;
-  color: white !important;
+/* Icon buttons without focus ring (e.g. copy to clipboard) */
+.btn-icon-plain {
+  --bs-btn-focus-box-shadow: none;
+  outline: none;
 }
 
-body .btn.btn-success:hover,
-body .btn.btn-success:focus,
-body .btn.btn-success:active {
-  background-color: #5a6268 !important;
-  border-color: var(--gray-700) !important;
-  color: white !important;
-  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25) !important;
+/* ------------------------------------------------------------------ */
+/* Badges                                                              */
+/* ------------------------------------------------------------------ */
+/* Neutral and primary badges use Bootstrap's text-bg-secondary / text-bg-primary */
+.badge-brand { background-color: var(--sp-badge-brand); }
+.badge-reference { background-color: var(--sp-badge-reference); }  /* written by the task author */
+.badge-count { background-color: var(--sp-badge-count); }
+.badge-admin,
+.score-badge { background-color: var(--sp-badge-emphasis); }
+
+/* A solution that is still hidden from other users */
+.badge-hidden {
+  --bs-badge-color: var(--sp-on-warning);
+  background-color: var(--sp-badge-hidden);
 }
 
-/* Outline primary button (blue) */
-body .btn.btn-outline-primary,
-body a.btn.btn-outline-primary,
-body button.btn.btn-outline-primary {
-  background-color: transparent !important;
-  border-color: var(--blue-primary) !important;
-  color: var(--blue-primary) !important;
+/* Difficulty (samples/design_tokens.py reads the colors for Discord) */
+.badge-difficulty-easy,
+.badge-difficulty-medium,
+.badge-difficulty-advanced,
+.badge-difficulty-expert,
+.badge-difficulty-unknown {
+  --bs-badge-color: var(--sp-difficulty-fg);
 }
 
-body .btn.btn-outline-primary:hover,
-body .btn.btn-outline-primary:focus,
-body .btn.btn-outline-primary:active {
-  background-color: var(--blue-primary) !important;
-  border-color: var(--blue-primary) !important;
-  color: white !important;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+.badge-difficulty-easy { background-color: var(--sp-difficulty-easy); }
+.badge-difficulty-medium { background-color: var(--sp-difficulty-medium); }
+.badge-difficulty-advanced { background-color: var(--sp-difficulty-advanced); }
+.badge-difficulty-expert { background-color: var(--sp-difficulty-expert); }
+.badge-difficulty-unknown { background-color: var(--sp-difficulty-unknown); }
+
+/* Linked badges lighten on hover */
+a.badge {
+  position: relative;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-/* Favorite buttons */
+a.badge:hover::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: '';
+  background-color: var(--sp-badge-hover-overlay);
+  border-radius: inherit;
+}
+
+/* Tag badges: app.js sets --tag-hue from the tag name */
+.badge-tag {
+  --bs-badge-color: var(--sp-tag-fg);
+  background-color: hsl(var(--tag-hue, 0) var(--sp-tag-saturation) var(--sp-tag-lightness));
+}
+
+/* Ranking medals */
+.rank-medal {
+  --bs-badge-font-size: var(--sp-fs-medal);
+}
+
+.rank-medal-gold {
+  --bs-badge-color: var(--sp-medal-gold-fg);
+  background-color: var(--sp-medal-gold);
+}
+
+.rank-medal-silver {
+  --bs-badge-color: var(--sp-medal-silver-fg);
+  background-color: var(--sp-medal-silver);
+}
+
+.rank-medal-bronze {
+  --bs-badge-color: var(--sp-medal-bronze-fg);
+  background-color: var(--sp-medal-bronze);
+}
+
+.rank-number {
+  font-size: var(--sp-fs-score);
+}
+
+.rank-medal.rank-sm { --bs-badge-font-size: var(--sp-fs-medal-sm); }
+.rank-number.rank-sm { font-size: var(--sp-fs-medal-sm); }
+
+/* Ranking score badge */
+.score-badge {
+  --bs-badge-font-size: var(--sp-fs-score);
+}
+
+/* ------------------------------------------------------------------ */
+/* Expandable tag lists (js/tag-list.js)                               */
+/* ------------------------------------------------------------------ */
+.tag-list-wrapper {
+  position: relative;
+  display: inline-block;
+  max-height: var(--sp-lh-tag-row);
+  overflow: hidden;
+  line-height: var(--sp-lh-tag-row);
+  white-space: normal;
+  transition: max-height var(--sp-dur-slow) var(--sp-ease);
+}
+
+.tag-list-wrapper.expanded {
+  z-index: var(--sp-z-tag-expanded);
+  max-height: 20em;
+  overflow: visible;
+}
+
+.tag-list-wrapper .tag-list-content {
+  display: block;
+}
+
+.tag-list-wrapper .badge {
+  display: inline-block;
+  margin-right: 2px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.tag-list-wrapper .badge-tag.is-overflow {
+  display: none;
+}
+
+.tag-list-wrapper.expanded .badge-tag.is-overflow {
+  display: inline-block;
+}
+
+.tag-more-badge {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.tag-list-wrapper.expanded .tag-more-badge {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Likes / favorites                                                   */
+/* ------------------------------------------------------------------ */
 .favorite-btn {
   display: inline-flex;
+  gap: var(--sp-space-1);
   align-items: center;
-  gap: 0.25rem;
 }
 
 .favorite-count {
@@ -149,19 +260,44 @@ body .btn.btn-outline-primary:active {
   text-align: left;
 }
 
-/* Spoiler styling (both themes) */
+/* Heart + count; app.js toggles .is-liked */
+.like-state {
+  color: var(--sp-text-muted);
+}
+
+.like-state.is-liked {
+  color: var(--sp-like-active);
+}
+
+/* Solution type icons (user_tags.solution_icon) */
+.solution-icon-blog { color: var(--sp-solution-icon-blog); }
+.solution-icon-paper { color: var(--sp-solution-icon-paper); }
+.solution-icon-video { color: var(--sp-solution-icon-video); }
+.solution-icon-onsite { color: var(--sp-solution-icon-onsite); }
+.solution-icon-link { color: var(--sp-solution-icon-link); }
+
+.solution-count {
+  font-size: var(--sp-fs-count);
+}
+
+/* ------------------------------------------------------------------ */
+/* Spoilers (js/spoiler.js adds .revealed)                             */
+/* ------------------------------------------------------------------ */
 .spoiler {
-  display: block;
   position: relative;
-  border-radius: 4px;
-  padding: 2px 6px;
-  background: var(--primary-red-alpha-10);
-  cursor: pointer;
-  border: 1px solid var(--primary-red-alpha-30);
+  display: block;
+  width: 100%;
   min-height: 2rem;
+  padding: 2px 6px;
+  cursor: pointer;
+  background: var(--sp-spoiler-bg);
+  border: var(--sp-border-width) solid var(--sp-spoiler-border);
+  border-radius: var(--sp-radius-content);
 }
 
 .spoiler > .spoiler-text {
+  width: 100%;
+  margin: 0;
   visibility: hidden;
   user-select: none;
 }
@@ -171,441 +307,289 @@ body .btn.btn-outline-primary:active {
 }
 
 .spoiler::after {
-  content: "Spoiler, click to reveal";
   position: absolute;
   inset: 0;
-  padding: 2px 6px;
-  color: var(--primary-red);
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 4px;
+  z-index: var(--sp-z-spoiler);
   display: flex;
   align-items: center;
-  font-weight: 500;
-  z-index: 1;
+  padding: 2px 6px;
+  font-weight: var(--sp-fw-medium);
+  color: var(--sp-spoiler-overlay-fg);
+  content: "Spoiler, click to reveal";
+  background: var(--sp-spoiler-overlay-bg);
+  border-radius: var(--sp-radius-content);
+}
+
+.spoiler.revealed > .spoiler-text,
+.spoiler.revealed > .spoiler-text * {
+  visibility: visible;
 }
 
 .spoiler.revealed > .spoiler-text {
-  visibility: visible;
   user-select: text;
-}
-
-.spoiler.revealed > .spoiler-text * {
-  visibility: visible;
 }
 
 .spoiler.revealed::after {
   display: none;
 }
 
-/* Solution item styling for detail page - uses context-aware variables */
+/* ------------------------------------------------------------------ */
+/* Solution list on the task detail page                               */
+/* ------------------------------------------------------------------ */
+.solution-item {
+  padding: var(--sp-space-2);
+  margin-right: calc(-1 * var(--sp-space-2));
+  margin-left: calc(-1 * var(--sp-space-2));
+  border-radius: var(--sp-radius-content);
+}
+
 .solution-item:nth-child(even) {
-  background-color: var(--solution-even-bg);
+  background-color: var(--sp-solution-row-even);
 }
 
 .solution-item:hover {
-  background-color: var(--solution-hover-bg) !important;
-  transition: background-color 0.2s ease;
+  background-color: var(--sp-solution-row-hover);
+  transition: background-color var(--sp-dur) var(--sp-ease);
 }
 
-/* Highlight animation for solution from notification */
+/* Solution / comment highlighted from a notification link */
 .solution-highlight {
-  background-color: rgba(230, 57, 70, 0.3) !important;
-  animation: highlightFade 3s ease-out;
-  transition: none !important;
+  background-color: var(--sp-solution-highlight-bg);
+  animation: sp-highlight-fade var(--sp-dur-highlight) var(--sp-ease-out);
 }
 
-@keyframes highlightFade {
+@keyframes sp-highlight-fade {
   0% {
-    background-color: rgba(230, 57, 70, 0.5);
+    background-color: var(--sp-highlight-start);
+    box-shadow: var(--sp-highlight-glow);
+  }
+  50% {
+    background-color: var(--sp-highlight-mid);
   }
   100% {
-    background-color: transparent;
+    background-color: var(--sp-highlight-end);
+    box-shadow: none;
   }
 }
 
-/* Markdown content styling */
-/* General markdown elements */
-
-.spoiler-text h1,
-.spoiler-text h2,
-.spoiler-text h3,
-.spoiler-text h4,
-.spoiler-text h5,
-.spoiler-text h6,
-.markdown-content h1,
-.markdown-content h2,
-.markdown-content h3,
-.markdown-content h4,
-.markdown-content h5,
-.markdown-content h6 {
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+/* ------------------------------------------------------------------ */
+/* Comments and @mentions (js/comments.js)                             */
+/* ------------------------------------------------------------------ */
+.comment {
+  padding-left: var(--sp-space-3);
+  border-left: var(--sp-border-comment-width) solid var(--sp-comment-border);
 }
 
-.spoiler-text h1:first-child,
-.spoiler-text h2:first-child,
-.spoiler-text h3:first-child,
-.spoiler-text h4:first-child,
-.spoiler-text h5:first-child,
-.spoiler-text h6:first-child,
-.markdown-content h1:first-child,
-.markdown-content h2:first-child,
-.markdown-content h3:first-child,
-.markdown-content h4:first-child,
-.markdown-content h5:first-child,
-.markdown-content h6:first-child {
-  margin-top: 0;
+.comment-highlighted {
+  background-color: var(--sp-comment-highlight-bg);
+  border-left-color: var(--sp-comment-highlight-border);
+  border-radius: var(--sp-radius-content);
+  transition: all var(--sp-dur-slow) var(--sp-ease);
+  animation: sp-highlight-fade var(--sp-dur-highlight) var(--sp-ease-in-out);
 }
 
-.spoiler-text > *:first-child,
-.markdown-content > *:first-child {
-  margin-top: 0;
+.comment-preview {
+  background-color: var(--sp-comment-preview-bg);
+  border-left: var(--sp-border-comment-width) solid var(--sp-danger);
 }
 
-.spoiler-text > *:last-child,
-.markdown-content > *:last-child {
-  margin-bottom: 0;
+.mention-autocomplete {
+  position: absolute;
+  z-index: var(--sp-z-autocomplete);
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: var(--sp-autocomplete-bg);
+  border: var(--sp-border-width) solid var(--sp-autocomplete-border);
+  border-radius: var(--sp-radius-content);
+  box-shadow: var(--sp-shadow-popover);
 }
 
-.spoiler-text p,
-.markdown-content p {
-  margin-bottom: 0.75rem;
+.mention-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color var(--sp-dur);
 }
 
-.spoiler-text ul,
-.markdown-content ul,
-.spoiler-text ol,
-.markdown-content ol {
-  margin-bottom: 0.75rem;
-  padding-left: 1.5rem;
+.mention-item:hover,
+.mention-item.selected {
+  background-color: var(--sp-autocomplete-hover);
 }
 
-.spoiler-text li,
-.markdown-content li {
-  margin-bottom: 0.25rem;
+.mention-link {
+  font-weight: var(--sp-fw-semibold);
+  color: var(--sp-mention-link);
+  text-decoration: none;
+  transition: color var(--sp-dur);
 }
 
-.spoiler-text code,
-.markdown-content code {
-  background-color: var(--code-bg);
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-size: 0.9em;
-}
-
-.spoiler-text del,
-.markdown-content del {
-  text-decoration: line-through;
-  opacity: 0.7;
-}
-
-.spoiler-text pre,
-.markdown-content pre {
-  background-color: var(--code-pre-bg);
-  padding: 0.75rem;
-  border-radius: 4px;
-  overflow-x: auto;
-  margin: 0.75rem 0;
-}
-
-.spoiler-text pre code,
-.markdown-content pre code {
-  background-color: transparent;
-  padding: 0;
-}
-
-.spoiler-text blockquote,
-.markdown-content blockquote {
-  border-left: 4px solid var(--primary-red);
-  padding-left: 1rem;
-  margin: 0.75rem 0;
-  color: var(--text-muted);
-}
-
-.spoiler-text img,
-.markdown-content img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 1rem 0;
-  border-radius: 4px;
-}
-
-
-/* Markdown content links - both in spoilers and regular content */
-.spoiler-text a,
-.markdown-content a {
-  color: var(--link-color);
+.mention-link:hover {
+  color: var(--sp-mention-link-hover);
   text-decoration: underline;
-  text-decoration-color: rgba(230, 57, 70, 0.3);
-  text-underline-offset: 2px;
-  transition: text-decoration-color 0.2s ease;
 }
 
-.spoiler-text a:hover,
-.markdown-content a:hover {
-  text-decoration-color: var(--blue-primary);
-}
-
-.spoiler-text hr,
-.markdown-content hr {
-  border: 0;
-  border-top: 1px solid var(--border-color);
-  margin: 1rem 0;
-}
-
-.spoiler-text table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 0.75rem 0;
-  border: 1px solid var(--form-border);
-}
-
-.spoiler-text table th,
-.spoiler-text table td {
-  border: 1px solid var(--form-border);
-  padding: 0.5rem 0.75rem;
-  text-align: left;
-}
-
-.spoiler-text table th {
-  background-color: rgba(0, 0, 0, 0.05);
-  font-weight: 600;
-}
-
-.spoiler-text table tr:nth-child(even) {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-/* Dark mode adjustments for markdown */
-.dark-mode .spoiler-text code {
-  background-color: #000000;
-  color: #ffd700;
-}
-
-.dark-mode .spoiler-text pre {
-  background-color: #000000;
-}
-
-.dark-mode .spoiler-text pre code {
-  color: #ffd700;
-}
-
-.dark-mode .spoiler-text blockquote {
-  background-color: rgba(0, 123, 255, 0.15);
-  padding: 0.75rem;
-  padding-left: 1rem;
-  border-radius: 4px;
-}
-
-.dark-mode .spoiler-text table th {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.dark-mode .spoiler-text table tr:nth-child(even) {
-  background-color: rgba(255, 255, 255, 0.02);
-}
-
-/* Blog Article Styles */
+/* ------------------------------------------------------------------ */
+/* Articles (blog-style solution view and editor preview)              */
+/* ------------------------------------------------------------------ */
 .blog-article {
   max-width: 100%;
   padding: 2rem 0;
 }
 
 .article-header {
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: var(--sp-border-width) solid var(--sp-border-color);
 }
 
 .article-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--text-color);
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--sp-space-4);
+  font-size: var(--sp-fs-article-title);
+  font-weight: var(--sp-fw-bold);
+  line-height: var(--sp-lh-heading);
 }
 
 .article-meta {
-  font-size: 0.95rem;
-  line-height: 1.5;
+  font-size: var(--sp-fs-article-meta);
+  line-height: var(--sp-lh-base);
 }
 
-.article-meta a {
-  font-weight: 500;
-}
-
+.article-meta a,
 .article-meta .author-info {
-  font-weight: 500;
+  font-weight: var(--sp-fw-medium);
 }
 
 .task-reference {
-  background-color: #f0f0f0;
-  border-left: 4px solid #dc3545;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
+  background-color: var(--sp-task-ref-bg);
+  border-left: var(--sp-border-accent-width) solid var(--sp-task-ref-border);
+  border-radius: var(--sp-radius-article);
+  transition: background-color var(--sp-dur) var(--sp-ease);
 }
 
-.article-content {
-  font-size: 1.05rem;
-  line-height: 1.8;
-  color: var(--text-color);
-}
-
-.article-content h1,
-.article-content h2,
-.article-content h3,
-.article-content h4,
-.article-content h5,
-.article-content h6 {
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.article-content h1 {
-  font-size: 2rem;
-}
-
-.article-content h2 {
-  font-size: 1.75rem;
-}
-
-.article-content h3 {
-  font-size: 1.5rem;
-}
-
-.article-content p {
-  margin-bottom: 1.25rem;
-}
-
-.article-content img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  margin: 1.5rem 0;
-}
-
-.article-content pre {
-  background-color: rgba(0, 0, 0, 0);
-  border-radius: 6px;
-  padding: 1rem;
-  overflow-x: auto;
-  margin: 1.5rem 0;
-}
-
-.article-content blockquote {
-  border-left: 4px solid var(--primary);
-  padding-left: 1.5rem;
-  margin: 1.5rem 0;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-/* Dark mode adjustments for blog article */
-.dark-mode .article-title {
-  color: var(--text-color);
-}
-
-.dark-mode .article-content {
-  color: var(--text-color);
-}
-
-.dark-mode .task-reference {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border-left-color: var(--cyan-info) !important;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .article-title {
-    font-size: 2rem;
+    font-size: var(--sp-fs-article-title-mobile);
   }
-  
-  .article-content {
-    font-size: 1rem;
-  }
-  
+
   .blog-article {
     padding: 1rem 0;
   }
 }
-/* Comment Highlighting */
-.comment-highlighted {
-  animation: highlightFade 3s ease-in-out;
-  border-left-color: #dc3545 !important;
-  background-color: rgba(220, 53, 69, 0.1);
-  border-radius: 4px;
-  transition: all 0.3s ease;
+
+/* ------------------------------------------------------------------ */
+/* Markdown tabs and panes (solution and task forms, editors)          */
+/* ------------------------------------------------------------------ */
+.markdown-tabs {
+  display: flex;
+  gap: var(--sp-space-2);
+  margin-bottom: -1px;
+  border-bottom: var(--sp-border-width) solid var(--sp-input-border);
 }
 
-@keyframes highlightFade {
-  0% {
-    background-color: rgba(220, 53, 69, 0.3);
-    box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
-  }
-  50% {
-    background-color: rgba(220, 53, 69, 0.2);
-  }
-  100% {
-    background-color: rgba(220, 53, 69, 0);
-    box-shadow: none;
-  }
-}
-
-.dark-mode .comment-highlighted {
-  background-color: rgba(220, 53, 69, 0.15);
-}
-
-/* @ Mention Autocomplete */
-.mention-autocomplete {
-  position: absolute;
-  background-color: #fff;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 1000;
-}
-
-.mention-item {
-  padding: 8px 12px;
+.markdown-tab {
+  padding: var(--sp-space-2) var(--sp-space-3);
+  font-weight: var(--sp-fw-medium);
+  color: var(--sp-text-muted);
   cursor: pointer;
-  transition: background-color 0.2s;
+  background: none;
+  border: none;
+  border-bottom: var(--sp-border-width-thick) solid transparent;
+  transition: all var(--sp-dur-fast) var(--sp-ease);
 }
 
-.mention-item:hover,
-.mention-item.selected {
-  background-color: #f8f9fa;
+.markdown-tab:hover {
+  color: var(--sp-text);
+  border-bottom-color: var(--sp-input-border);
 }
 
-.dark-mode .mention-autocomplete {
-  background-color: #343a40;
-  border-color: #495057;
+.markdown-tab.active {
+  color: var(--sp-brand);
+  border-bottom-color: var(--sp-brand);
 }
 
-.dark-mode .mention-item:hover,
-.dark-mode .mention-item.selected {
-  background-color: #495057;
+.markdown-tab-content {
+  position: relative;
 }
 
-/* @ Mention Links in Comments */
-.mention-link {
-  color: #007bff;
-  font-weight: 600;
-  text-decoration: none;
-  transition: color 0.2s;
+.markdown-pane {
+  display: none;
 }
 
-.mention-link:hover {
-  color: #0056b3;
-  text-decoration: underline;
+.markdown-pane.active {
+  display: block;
 }
 
-.dark-mode .mention-link {
-  color: #4dabf7;
+.markdown-pane[data-pane="preview"] {
+  min-height: 200px;
+  padding: var(--sp-space-block);
+  background-color: var(--sp-input-bg);
+  border: var(--sp-border-width) solid var(--sp-input-border);
+  border-radius: var(--sp-radius);
 }
 
-.dark-mode .mention-link:hover {
-  color: #74c0fc;
+/* ------------------------------------------------------------------ */
+/* Markdown editor page (samples/_onsite_editor.html)                  */
+/* ------------------------------------------------------------------ */
+.md-editor-textarea {
+  min-height: 500px;
+  font-family: var(--sp-font-editor);
+  font-size: var(--sp-fs-editor);
+  line-height: var(--sp-lh-editor);
+  resize: vertical;
+}
+
+.md-editor-count {
+  --bs-badge-font-size: var(--sp-fs-editor-count);
+  --bs-badge-padding-y: 0.35rem;
+  --bs-badge-padding-x: 0.6rem;
+}
+
+.md-editor .markdown-pane[data-pane="preview"] {
+  min-height: 500px;
+  max-height: 800px;
+  overflow-y: auto;
+  background-color: var(--sp-editor-pane-bg);
+}
+
+.md-editor .markdown-pane[data-pane="help"] {
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.md-editor .preview-container {
+  padding: 2rem 1rem;
+}
+
+.markdown-help-content h4 {
+  margin-bottom: var(--sp-space-3);
+  color: var(--sp-brand);
+}
+
+.markdown-help-content h5 {
+  font-size: var(--sp-fs-base);
+  font-weight: var(--sp-fw-semibold);
+  color: var(--sp-text);
+}
+
+.markdown-help-content pre {
+  padding: var(--sp-space-block);
+  margin: var(--sp-space-2) 0;
+  background-color: var(--sp-editor-help-pre-bg);
+  border: var(--sp-border-width) solid var(--sp-input-border);
+  border-radius: var(--sp-radius-content);
+}
+
+.markdown-help-content code {
+  font-size: var(--sp-fs-code);
+  color: var(--sp-text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Misc                                                                */
+/* ------------------------------------------------------------------ */
+
+/* Large status icon on 404 / confirmation pages */
+.page-hero-icon {
+  font-size: var(--sp-fs-hero-icon);
+}
+
+.page-hero-icon-lg {
+  font-size: var(--sp-fs-hero-icon-lg);
 }

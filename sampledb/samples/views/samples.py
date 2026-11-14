@@ -1,21 +1,24 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db.models.functions import Lower, Cast
-from django.db.models import Count, Case, When, IntegerField, CharField, Q, OuterRef, Subquery, F
+from django.db.models.functions import Lower
+from django.db.models import Case, When, IntegerField, F
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.utils import timezone
 from taggit.models import Tag
 import re
-from django.contrib.contenttypes.models import ContentType
-from django_comments.models import Comment
 
-from ..models import AnalysisTask, Difficulty, SampleImage, Solution
+from ..models import AnalysisTask, Difficulty, SampleImage, SolutionType
 from ..forms import AnalysisTaskForm
-from markdownx.utils import markdownify
+from ..constants import TASKS_PER_PAGE
+from ..querysets import difficulty_order
+from ..services.solutions import create_solution, hidden_until_from_weeks
+from ..utils.drafts import clear_drafts
+from ..utils.markdown import render_markdown
+from .lookups import get_task_or_404
 
 
 def sample_list(request):
@@ -34,39 +37,15 @@ def sample_list(request):
     if not request.user.is_authenticated and not has_filter_params:
         return render(request, "samples/landing.html")
 
-    # Get ContentType for AnalysisTask
-    analysistask_ct = ContentType.objects.get_for_model(AnalysisTask)
-
-    # Subquery to count comments for each task
-    comment_count_subquery = Comment.objects.filter(
-        content_type=analysistask_ct,
-        object_pk=Cast(OuterRef('pk'), output_field=CharField()),
-        is_public=True,
-        is_removed=False
-    ).values('object_pk').annotate(
-        count=Count('pk')
-    ).values('count')
-
-    # Annotate with favorite count and difficulty order for sorting
-    samples = AnalysisTask.objects.select_related('author').prefetch_related(
-        'tags', 'tools'
-    ).annotate(
-        favorite_count_annotated=Count('favorited_by'),
-        solution_count_annotated=Count('solutions'),
-        comment_count_annotated=Subquery(comment_count_subquery, output_field=IntegerField()),
-        difficulty_order=Case(
-            When(difficulty='easy', then=1),
-            When(difficulty='medium', then=2),
-            When(difficulty='advanced', then=3),
-            When(difficulty='expert', then=4),
-            output_field=IntegerField(),
-        ),
+    # Counts for display and sorting come from for_listing(), so rows cost no extra queries
+    samples = AnalysisTask.objects.for_listing().prefetch_related('tags', 'tools').annotate(
+        difficulty_order=difficulty_order(),
         has_video=Case(
             When(youtube_id='', then=0),
             default=1,
             output_field=IntegerField(),
         )
-    ).all()
+    )
 
     # filter course samples, those are only displayed in course view
     # if they overlap, they need a different description anyways
@@ -114,7 +93,7 @@ def sample_list(request):
     sort_field = valid_sorts.get(sort, '-id')
     samples = samples.order_by(sort_field, '-id')  # Secondary sort by ID for consistency
 
-    paginator = Paginator(samples, 17)
+    paginator = Paginator(samples, TASKS_PER_PAGE)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
     
@@ -142,6 +121,7 @@ def sample_list(request):
         "difficulties": Difficulty.choices,
         "platforms": Platform.choices,
         "favorites_only": favorites_only,
+        "is_filtered": any([q, tag, difficulty, platform, favorites_only]),
         "user_favorited_ids": user_favorited_ids,
         "sort": sort,
     })
@@ -149,7 +129,10 @@ def sample_list(request):
 
 def sample_detail(request, sha256, task_id):
     sample = get_object_or_404(AnalysisTask, id=task_id)
-    
+    # One canonical URL per task: a wrong or outdated hash redirects instead of echoing it back
+    if sha256 != sample.sha256:
+        return redirect(sample, permanent=True)
+        
     # Increment view count using F expression for atomic update
     AnalysisTask.objects.filter(id=task_id).update(view_count=F('view_count') + 1)
     # Refresh from database to get updated view_count
@@ -160,37 +143,15 @@ def sample_detail(request, sha256, task_id):
     if request.user.is_authenticated:
         user_has_favorited = sample.favorited_by.filter(id=request.user.id).exists()
     
-    # Get solutions for this sample
-    solutions = sample.solutions.select_related('author').all()
-    
-    # Filter out hidden solutions for non-staff users (but allow seeing own solutions)
-    if not request.user.is_staff and request.user != sample.author:
-        if request.user.is_authenticated:
-            solutions = solutions.filter(
-                Q(hidden_until__isnull=True) | 
-                Q(hidden_until__lte=timezone.now()) |
-                Q(author=request.user)
-            )
-        else:
-            solutions = solutions.filter(
-                Q(hidden_until__isnull=True) | 
-                Q(hidden_until__lte=timezone.now())
-            )
-    
+    # reference_count lets the template lock the last reference solution
+    solutions = list(sample.solutions.visible_to(request.user).for_listing().with_reference_count())
+
     # Get user's liked solution IDs
     user_liked_solution_ids = set()
     if request.user.is_authenticated:
         user_liked_solution_ids = set(
             request.user.liked_solutions.values_list('id', flat=True)
         )
-    
-    # Count reference solutions (by task author) for delete permission check
-    reference_solution_count = solutions.filter(author=sample.author).count()
-    
-    # Add flag to each solution for whether user can see hidden status
-    solutions_list = list(solutions)
-    for solution in solutions_list:
-        solution.user_can_see_hidden_status = solution.user_can_see_hidden_status(request.user)
     
     # Find first YouTube solution if sample doesn't have youtube_id
     youtube_solution = None
@@ -208,11 +169,12 @@ def sample_detail(request, sha256, task_id):
     return render(request, "samples/detail.html", {
         "sample": sample,
         "user_has_liked": user_has_favorited,
-        "solutions": solutions_list,
+        "solutions": solutions,
         "youtube_solution": youtube_solution,
+        # The image and video cards go in a right-hand column, which widens the page
+        "has_sidebar": bool(sample.image or sample.youtube_id or youtube_solution),
         "user_can_edit": sample.user_can_edit(request.user),
         "user_liked_solution_ids": user_liked_solution_ids,
-        "reference_solution_count": reference_solution_count,
     })
 
 
@@ -250,103 +212,26 @@ def submit_task(request):
     if request.method == 'POST':
         form = AnalysisTaskForm(request.POST, request.FILES, user=request.user, is_edit=False)
         if form.is_valid():
-            # Use atomic transaction to ensure tags/tools are saved before Discord notification
-            with transaction.atomic():
-                sample = form.save(commit=False)
-                sample.author = request.user
-                
-                # Handle uploaded image (priority over gallery selection)
-                uploaded_image = form.cleaned_data.get('image_upload')
-                if uploaded_image:
-                    # Upload directly to AnalysisTask.image (NOT to SampleImage gallery)
-                    sample.image = uploaded_image
-                else:
-                    # Handle image selection from gallery
-                    image_id = request.POST.get('image_id')
-                    if image_id:
-                        try:
-                            sample_image = SampleImage.objects.get(id=image_id)
-                            sample.image = sample_image.image
-                        except SampleImage.DoesNotExist:
-                            pass
-                
-                sample.save()
-                
-                # Convert tags and tools to lowercase and save (must happen in same transaction for Discord)
-                if form.cleaned_data.get('tags'):
-                    tags = [tag.strip().lower() for tag in form.cleaned_data['tags'] if tag.strip()]
-                    sample.tags.set(tags)
-                
-                if form.cleaned_data.get('tools'):
-                    tools = [tool.strip().lower() for tool in form.cleaned_data['tools'] if tool.strip()]
-                    sample.tools.set(tools)
-                
-                # Create reference solution if provided (required for non-staff, optional for staff)
-                ref_title = form.cleaned_data.get('reference_solution_title')
-                ref_type = form.cleaned_data.get('reference_solution_type')
-                ref_url = form.cleaned_data.get('reference_solution_url')
-                ref_content = form.cleaned_data.get('reference_solution_content')
-                hide_weeks = form.cleaned_data.get('hide_weeks', 0)
-                draft_article_id = form.cleaned_data.get('reference_draft_article_id')
-                
-                # Check if user selected an existing draft article
-                if draft_article_id and '_draft_article' in form.cleaned_data:
-                    draft_article = form.cleaned_data['_draft_article']
-                    
-                    # Calculate hidden_until if hide_weeks > 0
-                    from datetime import timedelta
-                    hidden_until = None
-                    
-                    if hide_weeks and hide_weeks > 0:
-                        hidden_until = timezone.now() + timedelta(weeks=hide_weeks)
-                    
-                    # Create solution with draft article
-                    Solution.objects.create(
-                        analysis_task=sample,
-                        title=draft_article.title,
-                        solution_type='onsite',
-                        article=draft_article,
-                        author=request.user,
-                        hidden_until=hidden_until
-                    )
-                elif ref_title and ref_type:
-                    # Create new solution from manual input
-                    # Calculate hidden_until if hide_weeks > 0
-                    from datetime import timedelta
-                    hidden_until = None
-                    
-                    if hide_weeks and hide_weeks > 0:
-                        hidden_until = timezone.now() + timedelta(weeks=hide_weeks)
-                    
-                    # Create solution based on type
-                    if ref_type == 'onsite':
-                        Solution.objects.create(
-                            analysis_task=sample,
-                            title=ref_title,
-                            solution_type=ref_type,
-                            content=ref_content or '',
-                            author=request.user,
-                            hidden_until=hidden_until
-                        )
-                    elif ref_url:
-                        Solution.objects.create(
-                            analysis_task=sample,
-                            title=ref_title,
-                            solution_type=ref_type,
-                            url=ref_url,
-                            author=request.user,
-                            hidden_until=hidden_until
-                        )
-            
-            # Transaction committed, Discord notification will fire now with correct data
-            messages.success(request, f'AnalysisTask {sample.sha256[:12]}... submitted successfully!')
-            return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
+            try:
+                # Atomic: tags/tools are saved before the Discord notification fires on
+                # commit, and a rejected reference solution leaves no task behind
+                with transaction.atomic():
+                    sample = _create_task(request, form)
+            except ValidationError as error:
+                form.add_error(None, error)
+            else:
+                # Forget the browser drafts the task was made from (static/js/drafts.js)
+                clear_drafts(request, 'task-form')
+                if form.cleaned_data.get('reference_draft_article_id'):
+                    clear_drafts(request, f"article:{form.cleaned_data['reference_draft_article_id']}")
+                messages.success(request, f'AnalysisTask {sample.sha256[:12]}... submitted successfully!')
+                return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
     else:
         form = AnalysisTaskForm(user=request.user, is_edit=False)
-    
+
     # Get available images from image library
     available_images = SampleImage.objects.all()
-    
+
     return render(request, 'samples/submit_task.html', {
         'form': form,
         'available_images': available_images,
@@ -354,11 +239,64 @@ def submit_task(request):
     })
 
 
+def _save_task(request, form, task):
+    """
+    Save a task from a valid AnalysisTaskForm: an uploaded image wins over a gallery
+    choice (or clearing it), and tags and tools are stored lowercased.
+    """
+    data = form.cleaned_data
+    image_id = request.POST.get('image_id', '')
+    if data.get('image_upload'):
+        # Upload directly to AnalysisTask.image (NOT to the SampleImage gallery)
+        task.image = data['image_upload']
+    elif image_id.isdigit():
+        gallery_image = SampleImage.objects.filter(id=image_id).first()
+        if gallery_image:
+            task.image = gallery_image.image
+    elif request.POST.get('clear_image'):
+        task.image = None
+    task.save()
+
+    if data.get('tags'):
+        task.tags.set([tag.strip().lower() for tag in data['tags'] if tag.strip()])
+    if data.get('tools'):
+        task.tools.set([tool.strip().lower() for tool in data['tools'] if tool.strip()])
+    return task
+
+
+def _create_task(request, form):
+    """Save a new task from a valid AnalysisTaskForm, with its reference solution if one was given."""
+    data = form.cleaned_data
+    sample = form.save(commit=False)
+    sample.author = request.user
+    _save_task(request, form, sample)
+
+    # Reference solution: required for non-staff (the form enforces it), optional for staff
+    hidden_until = hidden_until_from_weeks(data.get('hide_weeks'))
+    draft = data.get('_draft_article') if data.get('reference_draft_article_id') else None
+    if draft:
+        create_solution(
+            task=sample, author=request.user, solution_type=SolutionType.ONSITE,
+            article=draft, hidden_until=hidden_until,
+        )
+    elif data.get('reference_solution_title') and data.get('reference_solution_type'):
+        create_solution(
+            task=sample,
+            author=request.user,
+            solution_type=data['reference_solution_type'],
+            title=data['reference_solution_title'],
+            url=data.get('reference_solution_url') or '',
+            content=data.get('reference_solution_content') or '',
+            hidden_until=hidden_until,
+        )
+    return sample
+
+
 @login_required
 def edit_task(request, sha256, task_id):
     """Allow users to edit their own analysis task (or admins/contributors to edit any)"""
-    task = get_object_or_404(AnalysisTask, sha256=sha256, id=task_id)
-    
+    task = get_task_or_404(sha256, task_id)
+
     # Check permissions using model method
     if not task.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to edit this task.')
@@ -367,38 +305,9 @@ def edit_task(request, sha256, task_id):
     if request.method == 'POST':
         form = AnalysisTaskForm(request.POST, request.FILES, instance=task, user=request.user, is_edit=True)
         if form.is_valid():
-            # Use atomic transaction
             with transaction.atomic():
-                sample = form.save(commit=False)
-                
-                # Handle uploaded image (priority over gallery selection)
-                uploaded_image = form.cleaned_data.get('image_upload')
-                if uploaded_image:
-                    # Upload directly to AnalysisTask.image (NOT to SampleImage gallery)
-                    sample.image = uploaded_image
-                else:
-                    # Handle image selection from gallery
-                    image_id = request.POST.get('image_id')
-                    if image_id:
-                        try:
-                            sample_image = SampleImage.objects.get(id=image_id)
-                            sample.image = sample_image.image
-                        except SampleImage.DoesNotExist:
-                            pass
-                    elif request.POST.get('clear_image'):
-                        sample.image = None
-                
-                sample.save()
-                
-                # Convert tags and tools to lowercase and save
-                if form.cleaned_data.get('tags'):
-                    tags = [tag.strip().lower() for tag in form.cleaned_data['tags'] if tag.strip()]
-                    sample.tags.set(tags)
-                
-                if form.cleaned_data.get('tools'):
-                    tools = [tool.strip().lower() for tool in form.cleaned_data['tools'] if tool.strip()]
-                    sample.tools.set(tools)
-            
+                sample = _save_task(request, form, form.save(commit=False))
+                        
             messages.success(request, f'AnalysisTask {sample.sha256[:12]}... updated successfully!')
             return redirect('sample_detail', sha256=sample.sha256, task_id=sample.id)
     else:
@@ -434,8 +343,8 @@ def edit_task(request, sha256, task_id):
 @login_required
 def delete_task(request, sha256, task_id):
     """Allow users to delete their own analysis task (or admins/contributors to delete any)"""
-    task = get_object_or_404(AnalysisTask, sha256=sha256, id=task_id)
-    
+    task = get_task_or_404(sha256, task_id)
+
     # Check permissions using model method
     if not task.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to delete this task.')
@@ -455,5 +364,5 @@ def delete_task(request, sha256, task_id):
 def markdown_preview(request):
     """AJAX endpoint to render markdown preview"""
     content = request.POST.get('content', '')
-    html = markdownify(content)
+    html = render_markdown(content)
     return JsonResponse({'html': html})

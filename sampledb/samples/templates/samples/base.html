@@ -1,224 +1,220 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
   <meta charset="utf-8">
   <title>{% block title %}Samplepedia{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  {% if drafts_to_clear %}<meta name="sp-clear-drafts" content="{{ drafts_to_clear|join:' ' }}">{% endif %}
 
-  <!-- Bootstrap 4 CSS (REQUIRED) -->
+  <!-- Bootstrap 5 -->
   <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+        crossorigin="anonymous">
 
   <!-- Font Awesome (for icons) -->
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
   <!-- Google Fonts - Inter for modern look similar to malwareanalysis-for-hedgehogs -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
 
-  <!-- AdminLTE v3 CSS (REQUIRED) -->
-  <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
-  
-  <!-- Custom theme CSS - modular files for better maintenance -->
-  <link rel="stylesheet" href="{% static 'css/variables.css' %}">
-  <link rel="stylesheet" href="{% static 'css/dark-mode.css' %}">
+  <!-- Design system: tokens.css holds every design value, see static/css/README.md -->
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/bootstrap-theme.css' %}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
   <link rel="stylesheet" href="{% static 'css/layout.css' %}">
   <link rel="stylesheet" href="{% static 'css/components.css' %}">
   <link rel="stylesheet" href="{% static 'css/forms.css' %}">
-  <link rel="stylesheet" href="{% static 'css/tables.css' %}">
-  <!-- For highlight.js -->
-  <link id="hljsTheme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <link rel="stylesheet" href="{% static 'css/prose.css' %}">
+  {% block extra_css %}{% endblock %}
+
+  <!-- For highlight.js (theme-init.js picks the light or dark stylesheet) -->
+  <link id="hljsTheme" rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+        data-light-href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+        data-dark-href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+
+  <!-- Apply the saved light/dark theme before the page renders -->
+  <script src="{% static 'js/theme-init.js' %}"></script>
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="{% static 'myhegebatlogo_white.png' %}">
-  
 </head>
 
-<body class="hold-transition layout-top-nav">
+<body class="{% block body_class %}{% endblock %}">
 
-<!-- Apply dark mode immediately before page renders -->
-<script src="{% static 'js/dark-mode-init.js' %}"></script>
+<!-- Navbar -->
+<nav class="app-navbar navbar navbar-expand">
+  <div class="container-fluid">
+    <a href="/" class="navbar-brand">
+      <img src="{% static 'myhegebatlogo_white.png' %}" alt="Logo" class="app-brand-logo">
+      <span>Samplepedia</span>
+    </a>
 
-<!-- For markdown code highlighting -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', (event) => {
-    document.querySelectorAll('pre code').forEach((block) => {
-      hljs.highlightElement(block);
-    });
-  });
-</script>
-
-<div class="wrapper">
-
-  <!-- Navbar -->
-  <nav class="main-header navbar navbar-expand navbar-dark">
-    <div class="container-fluid">
-      <a href="/" class="navbar-brand">
-        <img src="{% static 'myhegebatlogo_white.png' %}" alt="Logo" style="height: 30px; margin-right: 10px;">
-        <span class="font-weight-bold">Samplepedia</span>
-      </a>
-
-      <ul class="navbar-nav ml-auto">
-        <li class="nav-item">
-          <a href="/?browse=true" class="nav-link" title="Training Samples">
-            <i class="fas fa-database"></i> Samples
+    <ul class="navbar-nav ms-auto">
+      <li class="nav-item">
+        <a href="/?browse=true" class="nav-link" title="Training Samples">
+          <i class="fas fa-database"></i> Samples
+        </a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link" data-bs-toggle="dropdown" href="#" title="Solutions" aria-expanded="false">
+          <i class="fas fa-lightbulb"></i> Solutions <i class="fas fa-caret-down"></i>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end">
+          <a href="{% url 'solutions_showcase' %}" class="dropdown-item">
+            <i class="fas fa-th-large"></i> Latest
           </a>
-        </li>
+          <a href="{% url 'solution_list' %}" class="dropdown-item">
+            <i class="fas fa-search"></i> Search
+          </a>
+          {% if user.is_authenticated %}
+            <a href="{% url 'user_profile' user.username %}" class="dropdown-item">
+              <i class="fas fa-user"></i> My Solutions
+            </a>
+          {% endif %}
+        </div>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'course_list' %}" class="nav-link" title="Courses">
+          <i class="fas fa-graduation-cap"></i> Courses
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'ranking' %}" class="nav-link" title="Ranking">
+          <i class="fas fa-trophy"></i> Ranking
+        </a>
+      </li>
+      {% if user.is_authenticated %}
+        <!-- Notifications Bell -->
         <li class="nav-item dropdown">
-          <a class="nav-link" data-toggle="dropdown" href="#" title="Solutions">
-            <i class="fas fa-lightbulb"></i> Solutions <i class="fas fa-caret-down"></i>
+          <a class="nav-link" data-bs-toggle="dropdown" href="#" title="Notifications" id="notificationBell" aria-expanded="false"
+             data-dropdown-url="{% url 'notification_dropdown' %}" data-unread-count-url="{% url 'unread_count' %}">
+            <i class="far fa-bell"></i>
+            <span class="badge nav-badge" id="notificationBadge"{% if unread_notifications_count == 0 %} hidden{% endif %}>
+              {{ unread_notifications_count }}
+            </span>
           </a>
-          <div class="dropdown-menu dropdown-menu-right">
-            <a href="{% url 'solutions_showcase' %}" class="dropdown-item">
-              <i class="fas fa-th-large"></i> Latest
-            </a>
-            <a href="{% url 'solution_list' %}" class="dropdown-item">
-              <i class="fas fa-search"></i> Search
-            </a>
-            {% if user.is_authenticated %}
-              <a href="{% url 'user_profile' user.username %}" class="dropdown-item">
-                <i class="fas fa-user"></i> My Solutions
-              </a>
-            {% endif %}
+          <div class="dropdown-menu dropdown-menu-end notification-menu" id="notificationDropdown">
+            <span class="notification-menu-header">
+              <span id="notificationCount">{{ unread_notifications_count }}</span> Notification<span id="notificationPlural">{% if unread_notifications_count != 1 %}s{% endif %}</span>
+            </span>
+            <div class="dropdown-divider"></div>
+            <div id="notificationList">
+              {% if unread_notifications_count > 0 %}
+                <div class="dropdown-item text-center text-muted">
+                  <i class="fas fa-spinner fa-spin"></i> Loading...
+                </div>
+              {% else %}
+                <div class="dropdown-item text-center text-muted">
+                  No new notifications
+                </div>
+              {% endif %}
+            </div>
+            <div class="dropdown-divider"></div>
+            <a href="{% url 'notification_list' %}" class="dropdown-item notification-menu-footer">See All Notifications</a>
           </div>
         </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link" data-bs-toggle="dropdown" href="#" title="User Menu" aria-expanded="false">
+            <i class="fas fa-user"></i> {{ user.username }} <i class="fas fa-caret-down"></i>
+          </a>
+          <div class="dropdown-menu dropdown-menu-end">
+            <a href="{% url 'user_profile' user.username %}" class="dropdown-item">
+              <i class="fas fa-user"></i> Profile
+            </a>
+            <a href="{% url 'profile_settings' %}" class="dropdown-item">
+              <i class="fas fa-cog"></i> Settings
+            </a>
+            <a href="{% url 'article_list' %}" class="dropdown-item">
+              <i class="fas fa-file-alt"></i> My Articles
+            </a>
+            <div class="dropdown-divider"></div>
+            <button type="button" class="dropdown-item" id="themeToggle" title="Toggle Dark Mode">
+              <span class="theme-when-light"><i class="fas fa-moon"></i><span class="ms-1">Dark</span></span>
+              <span class="theme-when-dark"><i class="fas fa-sun"></i><span class="ms-1">Light</span></span>
+            </button>
+            <div class="dropdown-divider"></div>
+            <form method="post" action="{% url 'logout' %}" class="m-0">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item">
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </button>
+            </form>
+          </div>
+        </li>
+      {% else %}
         <li class="nav-item">
-          <a href="{% url 'course_list' %}" class="nav-link" title="Courses">
-            <i class="fas fa-graduation-cap"></i> Courses
+          <a href="{% url 'login' %}" class="nav-link" title="Login">
+            <i class="fas fa-sign-in-alt"></i> Login
           </a>
         </li>
+      {% endif %}
+      {% if user.is_staff %}
         <li class="nav-item">
-          <a href="{% url 'ranking' %}" class="nav-link" title="Ranking">
-            <i class="fas fa-trophy"></i> Ranking
-          </a>
+          <a href="/admin/" class="nav-link">Admin</a>
         </li>
-        {% if user.is_authenticated %}
-          <!-- Notifications Bell -->
-          <li class="nav-item dropdown">
-            <a class="nav-link" data-toggle="dropdown" href="#" title="Notifications" id="notificationBell">
-              <i class="far fa-bell"></i>
-              <span class="badge badge-danger navbar-badge" id="notificationBadge" style="{% if unread_notifications_count == 0 %}display: none;{% endif %}">
-                {{ unread_notifications_count }}
-              </span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right" id="notificationDropdown">
-              <span class="dropdown-item dropdown-header">
-                <span id="notificationCount">{{ unread_notifications_count }}</span> Notification<span id="notificationPlural">{% if unread_notifications_count != 1 %}s{% endif %}</span>
-              </span>
-              <div class="dropdown-divider"></div>
-              <div id="notificationList">
-                {% if unread_notifications_count > 0 %}
-                  <div class="dropdown-item text-center text-muted">
-                    <i class="fas fa-spinner fa-spin"></i> Loading...
-                  </div>
-                {% else %}
-                  <div class="dropdown-item text-center text-muted">
-                    No new notifications
-                  </div>
-                {% endif %}
-              </div>
-              <div class="dropdown-divider"></div>
-              <a href="{% url 'notification_list' %}" class="dropdown-item dropdown-footer">See All Notifications</a>
-            </div>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link" data-toggle="dropdown" href="#" title="User Menu">
-              <i class="fas fa-user"></i> {{ user.username }} <i class="fas fa-caret-down"></i>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right">
-              <a href="{% url 'user_profile' user.username %}" class="dropdown-item">
-                <i class="fas fa-user"></i> Profile
-              </a>
-              <a href="{% url 'profile_settings' %}" class="dropdown-item">
-                <i class="fas fa-cog"></i> Settings
-              </a>
-              <a href="{% url 'article_list' %}" class="dropdown-item">
-                <i class="fas fa-file-alt"></i> My Articles
-              </a>
-              <div class="dropdown-divider"></div>
-              <a href="#" class="dropdown-item" id="darkToggle" title="Toggle Dark Mode">
-                <i class="fas fa-moon" id="darkIcon"></i>
-                <i class="fas fa-sun" id="lightIcon" style="display: none;"></i>
-                <span id="darkModeText" class="ml-1">Dark</span>
-              </a>
-              <div class="dropdown-divider"></div>
-              <form method="post" action="{% url 'logout' %}" style="margin: 0;">
-                {% csrf_token %}
-                <button type="submit" class="dropdown-item" style="border: none; background: none; cursor: pointer; text-align: left; width: 100%;">
-                  <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-              </form>
-            </div>
-          </li>
-        {% else %}
-          <li class="nav-item">
-            <a href="{% url 'login' %}" class="nav-link" title="Login">
-              <i class="fas fa-sign-in-alt"></i> Login
-            </a>
-          </li>
-        {% endif %}
-        {% if user.is_staff %}
-          <li class="nav-item">
-            <a href="/admin/" class="nav-link">Admin</a>
-          </li>
-        {% endif %}
-      </ul>
-    </div>
-  </nav>
-
-  <!-- Content -->
-  <div class="content-wrapper">
-    {% block content %}{% endblock %}
+      {% endif %}
+    </ul>
   </div>
+</nav>
 
-</div>
-
-<!-- JS (LOAD ONCE, IN THIS ORDER) -->
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>
-
-<!-- Custom application scripts -->
-<script src="{% static 'js/dark-mode-toggle.js' %}"></script>
-<script src="{% static 'js/spoiler.js' %}"></script>
-<script src="{% static 'js/draft-storage.js' %}"></script>
-<script src="{% static 'js/app.js' %}"></script>
-<script src="{% static 'js/comments.js' %}"></script>
-{% if user.is_authenticated %}
-<script src="{% static 'js/notifications.js' %}"></script>
-{% endif %}
+<!-- Content -->
+<main class="app-main">
+  {% block page_header %}
+  <header class="page-header">
+    <div class="{% block page_header_class %}container-fluid{% endblock %} page-header-inner">
+      <div>
+        <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+        {% block page_subtitle %}{% endblock %}
+      </div>
+      {% block page_actions %}{% endblock %}
+    </div>
+  </header>
+  {% endblock %}
+  {% include "samples/_messages.html" %}
+  {% block content %}{% endblock %}
+</main>
 
 <!-- Footer -->
-<footer class="main-footer text-center py-3" style="font-size: 0.875rem;">
+<footer class="app-footer">
   <div class="container">
-    <a href="/impressum/" class="text-muted mx-2">Impressum</a>
-    <span class="text-muted">|</span>
-    <a href="/privacy/" class="text-muted mx-2">Privacy Policy</a>
-    <span class="text-muted">|</span>
-    <a href="{{ settings.DISCORD_INVITE_URL }}" class="text-muted mx-2" target="_blank" rel="noopener">
+    <a href="/impressum/">Impressum</a>
+    <span class="app-footer-separator">|</span>
+    <a href="/privacy/">Privacy Policy</a>
+    <span class="app-footer-separator">|</span>
+    <a href="{{ settings.DISCORD_INVITE_URL }}" target="_blank" rel="noopener">
       <i class="fab fa-discord"></i> Discord
     </a>
-    <span class="text-muted">|</span>
-    <a href="https://www.youtube.com/@MalwareAnalysisForHedgehogs" class="text-muted mx-2" target="_blank" rel="noopener">
+    <span class="app-footer-separator">|</span>
+    <a href="https://www.youtube.com/@MalwareAnalysisForHedgehogs" target="_blank" rel="noopener">
       <i class="fab fa-youtube"></i> YouTube
     </a>
   </div>
 </footer>
 
-<!-- Dropdown caret toggle script -->
-<script>
-$(document).ready(function() {
-  $('.dropdown').on('show.bs.dropdown', function() {
-    $(this).find('.fa-caret-down').removeClass('fa-caret-down').addClass('fa-caret-up');
-  });
-  
-  $('.dropdown').on('hide.bs.dropdown', function() {
-    $(this).find('.fa-caret-up').removeClass('fa-caret-up').addClass('fa-caret-down');
-  });
-});
-</script>
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+<!-- For markdown code highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<!-- Custom application scripts -->
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/theme-toggle.js' %}"></script>
+<script src="{% static 'js/spoiler.js' %}"></script>
+<script src="{% static 'js/tag-list.js' %}"></script>
+<script src="{% static 'js/drafts.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+<script src="{% static 'js/comments.js' %}"></script>
+{% if user.is_authenticated %}
+<script src="{% static 'js/notifications.js' %}"></script>
+{% endif %}
+{% block extra_js %}{% endblock %}
 
 </body>
 </html>

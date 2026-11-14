@@ -1,24 +1,31 @@
+import logging
+
 from django.shortcuts import render, get_object_or_404, redirect
+from django.core.exceptions import ValidationError
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.utils import timezone
-from markdownx.utils import markdownify
+from django.urls import reverse
 from django.db.models import Q, F
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Lower
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from ..models import AnalysisTask, Solution, SolutionType, EditorImage, Article
-from ..forms import SolutionForm
+from taggit.models import Tag
+from ..models import AnalysisTask, Difficulty, Platform, Solution, SolutionType, EditorImage, Article
+from ..forms import ArticleForm, SolutionForm
+from ..constants import SHOWCASE_PER_PAGE, SOLUTIONS_PER_PAGE
+from ..querysets import difficulty_order
+from ..services.solutions import create_solution as add_solution, update_onsite_solution
+from ..utils.drafts import clear_drafts
+from ..utils.http import safe_next_url
+from ..utils.markdown import render_markdown
+from .lookups import get_task_or_404
+
+logger = logging.getLogger(__name__)
 
 
 def solution_list(request):
     """List all solutions with optional filtering by solution type, search, and sorting"""
-    from django.db.models import Q, Count, Case, When, IntegerField
-    from django.db.models.functions import Lower
-    from taggit.models import Tag
-    from ..models import Difficulty, Platform
-    
     solution_type = request.GET.get("solution_type", "")
     q = request.GET.get("q", "").strip()
     tag = request.GET.get("tag")
@@ -26,34 +33,12 @@ def solution_list(request):
     platform = request.GET.get("platform")
     sort = request.GET.get("sort", "-created")
     
-    # Get all solutions with like count and difficulty order annotations
-    solutions = Solution.objects.select_related('analysis_task', 'author').prefetch_related(
+    solutions = Solution.objects.visible_to(request.user).for_listing().prefetch_related(
         'analysis_task__tags'
     ).annotate(
-        like_count_annotated=Count('liked_by'),
-        difficulty_order=Case(
-            When(analysis_task__difficulty='easy', then=1),
-            When(analysis_task__difficulty='medium', then=2),
-            When(analysis_task__difficulty='advanced', then=3),
-            When(analysis_task__difficulty='expert', then=4),
-            output_field=IntegerField(),
-        )
+        difficulty_order=difficulty_order('analysis_task__difficulty'),
     )
-    
-    # Filter out hidden solutions for non-staff users (but allow seeing own solutions)
-    if not request.user.is_staff:
-        if request.user.is_authenticated:
-            solutions = solutions.filter(
-                Q(hidden_until__isnull=True) | 
-                Q(hidden_until__lte=timezone.now()) |
-                Q(author=request.user)
-            )
-        else:
-            solutions = solutions.filter(
-                Q(hidden_until__isnull=True) | 
-                Q(hidden_until__lte=timezone.now())
-            )
-    
+
     # Filter by solution type if specified
     if solution_type:
         solutions = solutions.filter(solution_type=solution_type)
@@ -100,15 +85,10 @@ def solution_list(request):
     else:
         solutions = solutions.order_by('-created_at')
     
-    # Paginate the results (18 per page)
-    paginator = Paginator(solutions, 17)
+    paginator = Paginator(solutions, SOLUTIONS_PER_PAGE)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-    
-    # Add flag to each solution for whether user can see hidden status
-    for solution in page_obj:
-        solution.user_can_see_hidden_status = solution.user_can_see_hidden_status(request.user)
-    
+
     # Get user's liked solution IDs for display
     user_liked_solution_ids = set()
     if request.user.is_authenticated:
@@ -133,6 +113,7 @@ def solution_list(request):
         'all_tags': all_tags,
         'difficulties': Difficulty.choices,
         'platforms': Platform.choices,
+        'is_filtered': any([q, solution_type, tag, difficulty, platform]),
         'user_liked_solution_ids': user_liked_solution_ids,
         'sort': sort,
     })
@@ -141,64 +122,34 @@ def solution_list(request):
 @login_required
 def create_solution(request, sha256, task_id):
     """Create a new solution for an analysis task"""
-    sample = get_object_or_404(AnalysisTask, id=task_id)
+    sample = get_task_or_404(sha256, task_id)
     
     if request.method == 'POST':
-        form = SolutionForm(request.POST)
+        form = SolutionForm(request.POST, task=sample, user=request.user)
         if form.is_valid():
-            draft_article_id = form.cleaned_data.get('draft_article_id')
-            
-            # If draft article is selected, attach it to a new solution
-            if draft_article_id:
-                article = get_object_or_404(Article, id=draft_article_id, author=request.user)
-                
-                # Create solution with the article
-                solution = Solution.objects.create(
-                    analysis_task=sample,
+            data = form.cleaned_data
+            draft = data.get('draft_article')
+            try:
+                add_solution(
+                    task=sample,
                     author=request.user,
-                    title=article.title,
-                    solution_type='onsite',
-                    article=article,
-                    url=''  # Not used for onsite solutions
+                    solution_type=data['solution_type'],
+                    title=data.get('title') or '',
+                    url=data.get('url') or '',
+                    content=data.get('content') or '',
+                    article=draft,
                 )
-                messages.success(request, f'Draft article "{article.title}" has been published as a solution!')
+            except ValidationError as error:
+                form.add_error(None, error)
             else:
-                # Regular solution creation
-                solution_type = form.cleaned_data.get('solution_type')
-                
-                # For onsite solutions, create an Article to store the content
-                if solution_type == 'onsite':
-                    content = form.cleaned_data.get('content', '')
-                    title = form.cleaned_data.get('title')
-                    
-                    # Create the article
-                    article = Article.objects.create(
-                        title=title,
-                        content=content,
-                        author=request.user
-                    )
-                    
-                    # Create solution with the article
-                    solution = Solution.objects.create(
-                        analysis_task=sample,
-                        author=request.user,
-                        title=title,
-                        solution_type='onsite',
-                        article=article,
-                        url=''
-                    )
+                if draft:
+                    clear_drafts(request, f'article:{draft.id}')
+                    messages.success(request, f'Draft article "{draft.title}" has been published as a solution!')
                 else:
-                    # External solution (blog, paper, video) - just save normally
-                    solution = form.save(commit=False)
-                    solution.analysis_task = sample
-                    solution.author = request.user
-                    solution.save()
-                
-                messages.success(request, 'Solution added successfully!')
-            
-            return redirect('sample_detail', sha256=sha256, task_id=task_id)
+                    messages.success(request, 'Solution added successfully!')
+                return redirect('sample_detail', sha256=sha256, task_id=task_id)
     else:
-        form = SolutionForm()
+        form = SolutionForm(task=sample)
     
     return render(request, 'samples/solution_form.html', {
         'form': form,
@@ -209,28 +160,25 @@ def create_solution(request, sha256, task_id):
 @login_required
 def edit_solution(request, sha256, task_id, solution_id):
     """Edit a solution (by author or staff)"""
-    from django.urls import reverse
-    
-    sample = get_object_or_404(AnalysisTask, id=task_id)
+    sample = get_task_or_404(sha256, task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample)
     
-    # Only allow the author or staff to edit
-    if solution.author != request.user and not request.user.is_staff:
+    if not solution.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to edit this solution.')
         return redirect('sample_detail', sha256=sha256, task_id=task_id)
-    
+
     # Redirect onsite solutions to the dedicated editor
-    if solution.solution_type == 'onsite':
+    if solution.solution_type == SolutionType.ONSITE:
         return redirect('edit_onsite_solution', sha256=sha256, task_id=task_id, solution_id=solution_id)
     
     if request.method == 'POST':
-        form = SolutionForm(request.POST, instance=solution)
+        form = SolutionForm(request.POST, instance=solution, task=sample)
         if form.is_valid():
             form.save()
             messages.success(request, 'Solution updated successfully!')
             return redirect('sample_detail', sha256=sha256, task_id=task_id)
     else:
-        form = SolutionForm(instance=solution)
+        form = SolutionForm(instance=solution, task=sample)
     
     return render(request, 'samples/solution_form.html', {
         'form': form,
@@ -241,92 +189,60 @@ def edit_solution(request, sha256, task_id, solution_id):
 
 @login_required
 def delete_solution(request, sha256, task_id, solution_id):
-    """Delete a solution (only by its author)"""
-    sample = get_object_or_404(AnalysisTask, id=task_id)
+    """Delete a solution (by its author or staff)"""
+    sample = get_task_or_404(sha256, task_id)
     solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample)
     
-    # Get redirect target from POST data or referrer
-    redirect_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
-    default_redirect = 'sample_detail'
-    default_kwargs = {'sha256': sha256, 'task_id': task_id}
-    
-    # Only allow the author to delete their own solution
-    if solution.author != request.user and not request.user.is_staff:
+    next_url = safe_next_url(request, 'sample_detail', sha256=sha256, task_id=task_id)
+
+    if not solution.user_can_edit(request.user):
         messages.error(request, 'You can only delete your own solutions.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect, **default_kwargs)
-    
+        return redirect(next_url)
+
     if request.method == 'POST':
-        # Check if this is a reference solution (author is task author)
-        is_reference_solution = solution.author == sample.author
-        
-        # Prevent deleting the last reference solution (for everyone, including staff)
-        if is_reference_solution:
-            # Count reference solutions for this task
-            reference_solution_count = Solution.objects.filter(
-                analysis_task=sample,
-                author=sample.author
-            ).count()
-            
-            if reference_solution_count <= 1:
-                messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
-                if redirect_url:
-                    return redirect(redirect_url)
-                return redirect(default_redirect, **default_kwargs)
-        
+        # Applies to everyone, including staff
+        if solution.is_last_reference():
+            messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
+            return redirect(next_url)
+
         solution.delete()
         messages.success(request, 'Solution deleted successfully.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect, **default_kwargs)
-    
-    if redirect_url:
-        return redirect(redirect_url)
-    return redirect(default_redirect, **default_kwargs)
+
+    return redirect(next_url)
 
 
 def view_onsite_solution(request, sha256, task_id, solution_id):
     """View an on-site solution with rendered markdown content"""
-    from django.urls import reverse
+    sample = get_task_or_404(sha256, task_id)
+    solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type=SolutionType.ONSITE)
     
-    sample = get_object_or_404(AnalysisTask, id=task_id)
-    solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type='onsite')
-    
-    # Increment article view count using F expression for atomic update
+    if not solution.user_can_view(request.user):
+        messages.error(request, 'This solution is not yet available.')
+        return redirect('sample_detail', sha256=sha256, task_id=task_id)
+
+    # Count only views that actually show the solution (atomic F-expression update)
     if solution.article:
         Article.objects.filter(id=solution.article.id).update(view_count=F('view_count') + 1)
         solution.article.refresh_from_db()
-    
-    # Check if solution is hidden and user has permission to view
-    if solution.hidden_until and timezone.now() < solution.hidden_until:
-        if not (request.user.is_authenticated and 
-                (request.user.is_staff or request.user == solution.author or request.user == sample.author)):
-            messages.error(request, 'This solution is not yet available.')
-            return redirect('sample_detail', sha256=sha256, task_id=task_id)
-    
+
     # Check if user liked this solution
     user_has_liked = False
     if request.user.is_authenticated:
         user_has_liked = solution.liked_by.filter(id=request.user.id).exists()
     
-    # Check if user can edit
-    user_can_edit = False
+    user_can_edit = solution.user_can_edit(request.user)
     edit_solution_url = None
-    if request.user.is_authenticated:
-        user_can_edit = solution.author == request.user or request.user.is_staff
-        if user_can_edit:
-            edit_solution_url = reverse('edit_onsite_solution', kwargs={
-                'sha256': sha256,
-                'task_id': task_id,
-                'solution_id': solution_id
-            })
+    if user_can_edit:
+        edit_solution_url = reverse('edit_onsite_solution', kwargs={
+            'sha256': sha256,
+            'task_id': task_id,
+            'solution_id': solution_id
+        })
     
-    # Render markdown content (use get_content property for backward compatibility)
-    rendered_content = markdownify(solution.get_content) if solution.get_content else ''
+    rendered_content = render_markdown(solution.get_content)
     
     # Prepare URLs for template
-    is_reference = solution.author == sample.author
+    is_reference = solution.is_reference
     user_profile_url = reverse('user_profile', kwargs={'username': solution.author.username})
     task_detail_url = reverse('sample_detail', kwargs={'sha256': sha256, 'task_id': task_id})
     
@@ -346,79 +262,57 @@ def view_onsite_solution(request, sha256, task_id, solution_id):
 @login_required
 def onsite_solution_editor(request, sha256, task_id, solution_id=None):
     """Dedicated editor page for creating/editing on-site solutions"""
-    sample = get_object_or_404(AnalysisTask, id=task_id)
+    sample = get_task_or_404(sha256, task_id)
     solution = None
     
     # If editing, get the solution
     if solution_id:
-        solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type='onsite')
+        solution = get_object_or_404(Solution, id=solution_id, analysis_task=sample, solution_type=SolutionType.ONSITE)
         
-        # Only allow the author or staff to edit
-        if solution.author != request.user and not request.user.is_staff:
+        if not solution.user_can_edit(request.user):
             messages.error(request, 'You do not have permission to edit this solution.')
             return redirect('sample_detail', sha256=sha256, task_id=task_id)
-    
+
+    # The browser draft of this editor (static/js/drafts.js)
+    draft_name = f'onsite-solution:{sample.id}' + (f':{solution.id}' if solution else '')
+
     if request.method == 'POST':
+        form = ArticleForm(request.POST)
         title = request.POST.get('title', '').strip()
         content = request.POST.get('content', '').strip()
-        
-        # Validation
-        if not title:
-            messages.error(request, 'Title is required.')
+
+        error = None if form.is_valid() else form.first_error()
+        if error is None:
+            title, content = form.cleaned_data['title'], form.cleaned_data['content']
+            try:
+                if solution:
+                    update_onsite_solution(solution, title=title, content=content)
+                    messages.success(request, 'Solution updated successfully!')
+                else:
+                    solution = add_solution(
+                        task=sample, author=request.user, solution_type=SolutionType.ONSITE,
+                        title=title, content=content,
+                    )
+                    messages.success(request, 'Solution added successfully!')
+            except ValidationError as validation_error:
+                error = ' '.join(validation_error.messages)
+
+        if error:
+            # Re-render with what the user typed so nothing is lost
+            messages.error(request, error)
             return render(request, 'samples/onsite_solution_editor.html', {
                 'sample': sample,
                 'solution': solution,
-                'form': {'title': {'value': title}, 'content': {'value': content}},
+                'initial_title': title,
+                'initial_content': content,
+                'draft_name': draft_name,
             })
-        
-        if not content:
-            messages.error(request, 'Content is required.')
-            return render(request, 'samples/onsite_solution_editor.html', {
-                'sample': sample,
-                'solution': solution,
-                'form': {'title': {'value': title}, 'content': {'value': content}},
-            })
-        
-        # Create or update solution with Article
-        if solution:
-            # Update existing solution and its article
-            if solution.article:
-                # Update existing article
-                solution.article.title = title
-                solution.article.content = content
-                solution.article.save()
-            else:
-                # Create new article for legacy solution
-                article = Article.objects.create(
-                    title=title,
-                    content=content,
-                    author=request.user,
-                )
-                solution.article = article
-            
-            solution.title = title  # Keep solution title in sync
-            solution.save()
-            messages.success(request, 'Solution updated successfully!')
-        else:
-            # Create new article and solution
-            article = Article.objects.create(
-                title=title,
-                content=content,
-                author=request.user,
-            )
-            solution = Solution.objects.create(
-                analysis_task=sample,
-                author=request.user,
-                title=title,
-                article=article,
-                solution_type='onsite',
-            )
-            messages.success(request, 'Solution added successfully!')
-        
+
+        clear_drafts(request, draft_name)
         # Redirect to view the published solution
         return redirect('view_onsite_solution', sha256=sha256, task_id=task_id, solution_id=solution.id)
     
-    # Prepare initial values for the form (use get_content for backward compatibility)
+    # Prepare initial values for the form
     initial_title = solution.title if solution else ''
     initial_content = solution.get_content if solution else ''
     
@@ -427,6 +321,7 @@ def onsite_solution_editor(request, sha256, task_id, solution_id=None):
         'solution': solution,
         'initial_title': initial_title,
         'initial_content': initial_content,
+        'draft_name': draft_name,
     })
 
 
@@ -435,18 +330,12 @@ def solutions_showcase(request):
     # Get all recent solutions with their related data
     # Exclude all hidden solutions from showcase
     # make sure the hidden_until is considered for ordering
-    solutions = Solution.objects.select_related(
-        'analysis_task', 'author'
-    ).filter(
-        Q(hidden_until__isnull=True) | 
-        Q(hidden_until__lte=timezone.now())
-    ).annotate(
+    solutions = Solution.objects.publicly_visible().for_listing().annotate(
         visible_date=Coalesce('hidden_until', 'created_at')
     ).order_by('-visible_date')
     
     # Pagination
-    from django.core.paginator import Paginator
-    paginator = Paginator(solutions, 6)  # 6 solutions per page (3 rows of 2)
+    paginator = Paginator(solutions, SHOWCASE_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -460,6 +349,7 @@ def solutions_showcase(request):
     return render(request, 'samples/solutions_showcase.html', {
         'solutions': page_obj,
         'page_obj': page_obj,
+        'page_numbers': list(paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)),
         'user_liked_solution_ids': user_liked_solution_ids,
     })
 
@@ -499,5 +389,6 @@ def upload_editor_image(request):
             'id': editor_image.id
         })
     
-    except Exception as e:
-        return JsonResponse({'error': f'Upload failed: {str(e)}'}, status=500)
+    except Exception:
+        logger.exception('Editor image upload failed for user %s', request.user.pk)
+        return JsonResponse({'error': 'Upload failed. Please try again.'}, status=500)

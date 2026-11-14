@@ -3,7 +3,7 @@
   {% for solution_type in solution_types %}
     <i class="fas {{ solution_type|solution_icon }}"></i>
   {% endfor %}
-  <span class="text-muted" style="font-size: 0.9em;">{{ total_count }}</span>
+  <span class="text-muted solution-count">{{ total_count }}</span>
 {% else %}
   <span class="text-muted">—</span>
 {% endif %}

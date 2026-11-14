@@ -1,89 +1,181 @@
-/* Layout and Structure Styles */
+/*
+ * App shell: navbar, page header, content area, footer.
+ * Replaces AdminLTE's top-nav layout. Values come from tokens.css.
+ */
 
+/* Sticky footer: the main area grows to fill the viewport */
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-/* Headings */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
+.app-main {
+  flex: 1 0 auto;
 }
 
-/* Links */
-a {
-  color: var(--primary-red);
+/* ------------------------------------------------------------------ */
+/* Navbar                                                              */
+/* ------------------------------------------------------------------ */
+.app-navbar {
+  --bs-navbar-padding-x: var(--sp-navbar-px);
+  --bs-navbar-padding-y: var(--sp-navbar-py);
+  --bs-navbar-color: var(--sp-navbar-link);
+  --bs-navbar-hover-color: var(--sp-navbar-link-hover);
+  --bs-navbar-active-color: var(--sp-navbar-link-hover);
+  --bs-navbar-brand-color: var(--sp-navbar-brand);
+  --bs-navbar-brand-hover-color: var(--sp-navbar-brand);
+  --bs-navbar-brand-font-size: var(--sp-fs-brand);
+  --bs-navbar-brand-margin-end: var(--sp-space-2);
+  --bs-navbar-nav-link-padding-x: var(--sp-nav-link-px);
+  position: relative;
+  z-index: var(--sp-z-navbar);
+  background-color: var(--sp-navbar-bg);
+  border-bottom: var(--sp-border-width) solid var(--sp-navbar-border);
 }
 
-a:hover {
-  color: var(--accent-red);
+.app-navbar > .container-fluid {
+  padding-right: 0;
+  padding-left: 0;
 }
 
-/* Keep text-muted links gray but red on hover */
-a.text-muted {
-  color: var(--gray-600) !important;
+.app-navbar .navbar-brand {
+  font-weight: var(--sp-fw-semibold);
+  letter-spacing: var(--sp-ls-brand);
 }
 
-a.text-muted:hover {
-  color: var(--accent-red) !important;
+.app-brand-logo {
+  height: var(--sp-logo-height);
+  margin-right: var(--sp-logo-gap);
 }
 
-/* Navbar */
-.navbar-brand {
-  font-weight: 600;
-  letter-spacing: -0.5px;
+.app-navbar .nav-link {
+  position: relative;
+  height: var(--sp-nav-link-height);
 }
 
-/* Mobile navbar optimization - hide text labels, keep icons */
-@media (max-width: 767px) {
-  /* Hide nav link text on mobile, keep icons */
-  .navbar-nav .nav-link:not(.navbar-brand) {
+/* Logout button rendered as a dropdown item */
+.app-navbar .dropdown-item[type="submit"] {
+  cursor: pointer;
+}
+
+/* Dropdown caret flips while the menu is open */
+.app-navbar .fa-caret-down {
+  transition: transform var(--sp-dur-fast) var(--sp-ease);
+}
+
+.app-navbar [aria-expanded="true"] .fa-caret-down {
+  transform: rotate(180deg);
+}
+
+/* Unread notification counter on the bell */
+.nav-badge {
+  position: absolute;
+  top: 9px;
+  right: 5px;
+  padding: 2px 4px;
+  font-size: var(--sp-fs-nav-badge);
+  font-weight: var(--sp-fw-light);
+  background-color: var(--sp-badge-emphasis);
+}
+
+/* Notification dropdown */
+.notification-menu {
+  --bs-dropdown-padding-y: 0;
+  --bs-dropdown-divider-margin-y: 0;
+  --bs-dropdown-item-padding-y: var(--sp-space-2);
+  min-width: var(--sp-notification-menu-min);
+  max-width: var(--sp-notification-menu-max);
+}
+
+.notification-menu .dropdown-item {
+  white-space: normal;
+}
+
+.notification-menu-header,
+.notification-menu-footer {
+  display: block;
+  padding: var(--sp-space-2) var(--sp-space-3);
+  font-size: var(--sp-fs-sm);
+  text-align: center;
+}
+
+.notification-menu-header {
+  color: var(--sp-dropdown-header-fg);
+}
+
+/* Mobile: icons only (labels, username and brand text hidden) */
+@media (max-width: 767.98px) {
+  .app-navbar .navbar-nav .nav-link {
     font-size: 0;
   }
-  
-  .navbar-nav .nav-link i {
-    font-size: 1.1rem;
+
+  .app-navbar .navbar-nav .nav-link i {
     margin: 0;
+    font-size: var(--sp-fs-nav-icon-mobile);
   }
-  
-  /* Keep icon visible */
-  .navbar-nav .nav-link i::before {
-    font-size: 1.1rem;
-  }
-  
-  /* Hide username text but keep icon and caret */
-  .navbar-nav .dropdown > .nav-link {
-    font-size: 0;
-  }
-  
-  .navbar-nav .dropdown > .nav-link i {
-    font-size: 1.1rem;
-  }
-  
-  /* Hide "Samplepedia" text on mobile, keep logo only */
-  .navbar-brand span {
+
+  .app-navbar .navbar-brand span {
     display: none;
   }
-  
-  /* Remove right margin from logo when text is hidden */
-  .navbar-brand img {
-    margin-right: 0 !important;
+
+  .app-brand-logo {
+    margin-right: 0;
   }
 }
 
-/* Footer - uses context-aware variables */
-.main-footer {
-  border-top: 1px solid var(--primary-red-alpha-30);
-  background-color: var(--footer-bg);
+/* ------------------------------------------------------------------ */
+/* Page header and content area                                        */
+/* ------------------------------------------------------------------ */
+.page-header {
+  padding: var(--sp-page-header-py) var(--sp-page-x);
 }
 
-.main-footer a {
-  transition: color 0.2s ease;
+/* Title (+ subtitle) on the left, page actions on the right */
+.page-header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-space-2);
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
-.main-footer .text-muted {
-  color: rgba(255, 255, 255, 0.85) !important;
+.page-header h1,
+.page-title {
+  margin: 0;
+  font-size: var(--sp-fs-page-title);
 }
 
-.main-footer .text-muted:hover {
-  color: var(--accent-red) !important;
+.page-content {
+  padding: 0 var(--sp-page-x);
+}
+
+.app-messages {
+  padding: 0 var(--sp-page-x);
+}
+
+/* ------------------------------------------------------------------ */
+/* Footer                                                              */
+/* ------------------------------------------------------------------ */
+.app-footer {
+  padding: var(--sp-space-3);
+  font-size: var(--sp-fs-sm);
+  text-align: center;
+  background-color: var(--sp-footer-bg);
+  border-top: var(--sp-border-width) solid var(--sp-footer-border);
+}
+
+.app-footer a,
+.app-footer-separator {
+  margin: 0 var(--sp-space-2);
+  color: var(--sp-footer-link);
+  transition: color var(--sp-dur) var(--sp-ease);
+}
+
+.app-footer-separator {
+  margin: 0;
+}
+
+.app-footer a:hover {
+  color: var(--sp-footer-link-hover);
 }

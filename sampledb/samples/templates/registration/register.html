@@ -1,15 +1,13 @@
 {% extends "samples/base.html" %}
+{% load form_tags %}
 
-{% block title %}Register{% endblock %}
+{% block title %}Register - Samplepedia{% endblock %}
+
+{% block page_title %}Create Account{% endblock %}
 
 {% block content %}
-<section class="content-header">
-  <div class="container-fluid">
-    <h1>Create Account</h1>
-  </div>
-</section>
 
-<section class="content">
+<section class="page-content">
   <div class="container-fluid">
     <div class="row justify-content-center">
       <div class="col-md-6">
@@ -18,13 +16,6 @@
             <h3 class="card-title">Register for Samplepedia</h3>
           </div>
           <div class="card-body">
-            {% if messages %}
-              {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                  {{ message }}
-                </div>
-              {% endfor %}
-            {% endif %}
 
             <form method="post" action="{% url 'register' %}">
               {% csrf_token %}
@@ -35,69 +26,16 @@
                 </div>
               {% endif %}
 
-              <div class="form-group">
-                <label for="{{ form.username.id_for_label }}">Username:</label>
-                {{ form.username }}
-                {% if form.username.errors %}
-                  <div class="text-danger">
-                    {{ form.username.errors }}
-                  </div>
-                {% endif %}
-                <small class="form-text text-muted">
-                  Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
-                </small>
-              </div>
+              {% form_field form.username %}
 
-              <div class="form-group">
-                <label for="{{ form.email.id_for_label }}">Email:</label>
-                {{ form.email }}
-                {% if form.email.errors %}
-                  <div class="text-danger">
-                    {{ form.email.errors }}
-                  </div>
-                {% endif %}
-                <small class="form-text text-muted">
-                  Required. We'll send a verification link to this address.
-                </small>
-              </div>
+              {% form_field form.email help_text="Required. We'll send a verification link to this address." %}
 
-              <div class="form-group">
-                <label for="{{ form.password1.id_for_label }}">Password:</label>
-                {{ form.password1 }}
-                {% if form.password1.errors %}
-                  <div class="text-danger">
-                    {{ form.password1.errors }}
-                  </div>
-                {% endif %}
-                <small class="form-text text-muted">
-                  <ul class="mb-0">
-                    <li>Your password can't be too similar to your other personal information.</li>
-                    <li>Your password must contain at least 8 characters.</li>
-                    <li>Your password can't be a commonly used password.</li>
-                    <li>Your password can't be entirely numeric.</li>
-                  </ul>
-                </small>
-              </div>
+              {% password_rules as rules %}
+              {% form_field form.password1 help_text=rules %}
 
-              <div class="form-group">
-                <label for="{{ form.password2.id_for_label }}">Confirm Password:</label>
-                {{ form.password2 }}
-                {% if form.password2.errors %}
-                  <div class="text-danger">
-                    {{ form.password2.errors }}
-                  </div>
-                {% endif %}
-                <small class="form-text text-muted">
-                  Enter the same password as before, for verification.
-                </small>
-              </div>
+              {% form_field form.password2 label="Confirm Password" %}
 
-              <div class="form-group">
-                {{ form.turnstile }}
-                {% if form.turnstile.errors %}
-                  <div class="text-danger">{{ form.turnstile.errors }}</div>
-                {% endif %}
-              </div>
+              {% turnstile form.turnstile 'register-button' %}
 
               <button type="submit" id="register-button" class="btn btn-primary" disabled>
                 <i class="fas fa-user-plus"></i> Create Account
@@ -106,8 +44,6 @@
                 <i class="fas fa-sign-in-alt"></i> Back to Login
               </a>
             </form>
-            
-            {% include 'samples/_turnstile_script.html' with button_id='register-button' callback_name='enableRegisterButton' %}
           </div>
           <div class="card-footer text-muted">
             Already have an account? <a href="{% url 'login' %}">Login here</a>

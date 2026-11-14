@@ -2,26 +2,20 @@
 
 {% load cloudinary %}
 
-{% block title %}{{ course_display_name }} Course Samples - Samplepedia{% endblock %}
+{% block title %}{{ course.name }} Course Samples - Samplepedia{% endblock %}
+
+{% block page_title %}{{ course.name }} Course Samples{% endblock %}
 
 {% block content %}
 
-<section class="content-header">
-  <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center">
-      <h1>{{ course_display_name }} Course Samples</h1>
-    </div>
-  </div>
-</section>
-
-<section class="content">
+<section class="page-content">
   <div class="container-fluid">
 
     <div class="card">
       <div class="card-header">
         <h3 class="card-title">Samples by Section</h3>
-        <div class="card-tools">
-          <span class="badge badge-info mr-2">{{ distinct_sample_count }} sample{{ distinct_sample_count|pluralize }}</span>
+        <div class="card-header-actions">
+          <span class="badge badge-count me-2">{{ distinct_sample_count }} sample{{ distinct_sample_count|pluralize }}</span>
         </div>
       </div>
 
@@ -35,7 +29,7 @@
                 <th>SHA256</th>
                 <th>Tags</th>
                 <th>Description</th>
-                <th style="width: 80px; text-align: center;">Download</th>
+                <th class="text-center" style="width: 80px;">Download</th>
               </tr>
             </thead>
             <tbody>
@@ -43,22 +37,18 @@
               <tr>
                 <!-- Section number -->
                 <td>
-                  <span class="badge badge-secondary">{{ item.section }}</span>
+                  <span class="badge text-bg-secondary">{{ item.section }}</span>
                 </td>
                 
                 <!-- Lecture Title -->
-                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ item.lecture_title }}">
+                <td class="text-truncate" style="max-width: 200px;" title="{{ item.lecture_title }}">
                   <a href="{% url 'sample_detail' item.sample.sha256 item.sample.id %}" class="text-muted">
                     {{ item.lecture_title|truncatechars:40 }}
                   </a>
                 </td>
 
                 <!-- Sample SHA256 -->
-                <td style="max-width: 200px; padding: 0.3rem 0.75rem;">
-                  <a href="{% url 'sample_detail' item.sample.sha256 item.sample.id %}" class="d-flex align-items-center" style="min-width: 0;">
-                    <code style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;" title="{{ item.sample.sha256 }}">{{ item.sample.sha256 }}</code>
-                  </a>
-                </td>
+                {% include 'samples/_sha256_cell.html' with task=item.sample no_icon=True %}
 
                 <!-- Tags -->
                 <td>
@@ -66,7 +56,7 @@
                 </td>
 
                 <!-- Description -->
-                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <td class="text-truncate" style="max-width: 250px;">
                   <a href="{% url 'sample_detail' item.sample.sha256 item.sample.id %}" class="text-muted">
                     {% if item.sample.description %}
                       {{ item.sample.description|striptags|truncatechars:80 }}
@@ -77,9 +67,9 @@
                 </td>
 
                   <!-- Download -->
-                <td style="text-align: center;">
+                <td class="text-center">
                   {% if item.sample.download_link %}
-                    <a href="{{ item.sample.download_link }}" target="_blank" class="btn btn-xs btn-primary" title="Download sample">
+                    <a href="{{ item.sample.download_link }}" target="_blank" class="btn btn-compact btn-primary" title="Download sample">
                       <i class="fas fa-download"></i>
                     </a>
                   {% else %}
@@ -97,7 +87,7 @@
         {% endif %}
       </div>
     </div>
-    <button onclick="history.back()" class="btn-back mt-2">
+    <button type="button" class="btn-back mt-2" data-back-url="{% url 'course_list' %}">
   ← Back to courses
   </button>
   </div>

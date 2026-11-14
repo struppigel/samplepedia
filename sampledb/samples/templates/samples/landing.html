@@ -3,19 +3,17 @@
 
 {% block title %}Welcome to Samplepedia{% endblock %}
 
-{% block content %}
-<div class="content-header">
-    <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-12 text-center">
-                <h1 class="m-0">Welcome to Samplepedia</h1>
-                <p class="lead">Free, searchable resource for malware analysis trainings samples and solutions</p>
-            </div>
-        </div>
+{% block page_header %}
+<header class="page-header">
+    <div class="container-fluid text-center mb-2">
+        <h1 class="page-title">Welcome to Samplepedia</h1>
+        <p class="lead">Free, searchable resource for malware analysis trainings samples and solutions</p>
     </div>
-</div>
+</header>
+{% endblock %}
 
-<section class="content">
+{% block content %}
+<section class="page-content">
     <div class="container-fluid">
         <!-- Feedback Notice -->
         <div class="row mb-4">
@@ -25,9 +23,7 @@
                     <p class="mb-0">
                         Please provide feedback or report issues on our <a href="{{ settings.DISCORD_INVITE_URL }}" target="_blank" class="alert-link"><i class="fab fa-discord"></i> Discord server</a>.
                     </p>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             </div>
         </div>
@@ -35,7 +31,7 @@
         <!-- Hero Section -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card card-primary">
+                <div class="card">
                     <div class="card-body text-center py-5">
                         <h2 class="mb-4">Malware Analysis Trainings Samples</h2>
                         <p class="lead mb-4">
@@ -44,10 +40,10 @@
                             After registration you can also submit samples and solutions, comment on them and compare approaches with others in the community.
                         </p>
                         <div class="mt-4">
-                            <a href="{% url 'register' %}" class="btn btn-primary btn-lg mr-2">
+                            <a href="{% url 'register' %}" class="btn btn-primary btn-lg me-2">
                                 <i class="fas fa-user-plus"></i> Register
                             </a>
-                            <a href="?browse=true" class="btn btn-success btn-lg mr-2">
+                            <a href="?browse=true" class="btn btn-secondary btn-lg me-2">
                                 <i class="fas fa-list"></i> Browse Samples
                             </a>
                             <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg">

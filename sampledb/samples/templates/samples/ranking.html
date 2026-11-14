@@ -3,23 +3,15 @@
 
 {% block title %}User Ranking - Samplepedia{% endblock %}
 
-{% block content %}
-<div class="content-header">
-  <div class="container-fluid">
-    <div class="row mb-2">
-      <div class="col-sm-12">
-        <h1 class="m-0">
-          <i class="fas fa-trophy"></i> User Ranking
-        </h1>
-        <p class="text-muted mt-2">
-          Users ranked by total score.
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
+{% block page_title %}<i class="fas fa-trophy"></i> User Ranking{% endblock %}
+{% block page_subtitle %}
+  <p class="text-muted mt-2">
+    Users ranked by total score.
+  </p>
+{% endblock %}
 
-<section class="content">
+{% block content %}
+<section class="page-content">
   <div class="container-fluid">
     
     <!-- Ranking Table -->
@@ -37,11 +29,11 @@
                     <tr>
                       <th style="width: 80px;">Rank</th>
                       <th>User</th>
-                      <th style="text-align: center;">Score</th>
-                      <th style="text-align: center;">Samples</th>
-                      <th style="text-align: center;">Solutions</th>
-                      <th style="text-align: center;">Sample Likes</th>
-                      <th style="text-align: center;">Solution Likes</th>
+                      <th class="text-center">Score</th>
+                      <th class="text-center">Samples</th>
+                      <th class="text-center">Solutions</th>
+                      <th class="text-center">Sample Likes</th>
+                      <th class="text-center">Solution Likes</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -54,37 +46,37 @@
                         
                         <!-- User with groups -->
                         <td>
-                          <a href="{% url 'user_profile' item.user.username %}" class="font-weight-bold">
-                            <i class="fas fa-user"></i> {{ item.user.username }}
+                          <a href="{% url 'user_profile' item.username %}" class="fw-bold">
+                            <i class="fas fa-user"></i> {{ item.username }}
                           </a>
-                          {% display_user_groups item.user %}
+                          {% display_user_groups item %}
                         </td>
                         
                         <!-- Score with badge -->
-                        <td style="text-align: center;">
-                          <span class="badge badge-danger" style="font-size: 1em;">{{ item.score }}</span>
+                        <td class="text-center">
+                          <span class="badge score-badge">{{ item.score }}</span>
                         </td>
                         
                         <!-- Sample Count -->
-                        <td style="text-align: center;">
+                        <td class="text-center">
                           <span class="text-muted">{{ item.task_count }}</span>
                         </td>
                         
                         <!-- Solution Count -->
-                        <td style="text-align: center;">
+                        <td class="text-center">
                           <span class="text-muted">{{ item.solution_count }}</span>
                         </td>
                         
                         <!-- Task Likes by Difficulty -->
-                        <td style="text-align: center;">
-                          <div class="d-flex justify-content-center gap-2" style="gap: 8px;">
+                        <td class="text-center">
+                          <div class="d-flex justify-content-center gap-2">
                             {% include 'samples/_likes_badges.html' with likes_easy=item.task_likes_easy likes_medium=item.task_likes_medium likes_advanced=item.task_likes_advanced likes_expert=item.task_likes_expert %}
                           </div>
                         </td>
                         
                         <!-- Solution Likes by Difficulty -->
-                        <td style="text-align: center;">
-                          <div class="d-flex justify-content-center gap-2" style="gap: 8px;">
+                        <td class="text-center">
+                          <div class="d-flex justify-content-center gap-2">
                             {% include 'samples/_likes_badges.html' with likes_easy=item.solution_likes_easy likes_medium=item.solution_likes_medium likes_advanced=item.solution_likes_advanced likes_expert=item.solution_likes_expert %}
                           </div>
                         </td>
@@ -95,44 +87,7 @@
               </div>
               
               <!-- Pagination -->
-              {% if page_obj.has_other_pages %}
-              <div class="card-footer clearfix">
-                <span class="float-left text-muted">
-                  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                </span>
-                <ul class="pagination pagination-sm m-0 float-right">
-                  {% if page_obj.has_previous %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page=1">
-                      «« First
-                    </a>
-                  </li>
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                      « Previous
-                    </a>
-                  </li>
-                  {% endif %}
-                  
-                  <li class="page-item disabled">
-                    <span class="page-link">Page {{ page_obj.number }}</span>
-                  </li>
-                  
-                  {% if page_obj.has_next %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                      Next »
-                    </a>
-                  </li>
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
-                      Last »»
-                    </a>
-                  </li>
-                  {% endif %}
-                </ul>
-              </div>
-              {% endif %}
+              {% include 'samples/_pagination.html' %}
             {% else %}
               <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> No rankings available yet.
@@ -157,7 +112,6 @@
               <li>{% difficulty_badge 'medium' 'Medium' %} {{ difficulty_points.medium }} points per like</li>
               <li>{% difficulty_badge 'advanced' 'Advanced' %} {{ difficulty_points.advanced }} points per like</li>
               <li>{% difficulty_badge 'expert' 'Expert' %} {{ difficulty_points.expert }} points per like</li>
-              <!-- <li>{% difficulty_badge 'expert' 'Expert' %} {{ difficulty_points.expert }} points per like</li> temp disabled until it is implemented completely -->
             </ul>
           </div>
         </div>

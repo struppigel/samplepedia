@@ -1,194 +1,154 @@
-// Comment editing functions
-function editComment(commentId) {
-  document.getElementById('comment-body-' + commentId).style.display = 'none';
-  document.getElementById('edit-form-' + commentId).style.display = 'block';
-}
+/**
+ * Comments (comments/list.html, comments/form.html)
+ * - Edit in place: [data-comment-edit] / [data-comment-cancel] inside a .comment swap
+ *   its .comment-body and .comment-edit-form (delete is a data-post-url button, see utils.js)
+ * - ?highlight=comment-<id> (set after posting) scrolls to and highlights that comment
+ * - @mention autocomplete on textarea[data-mention-search-url]
+ * Mentions in posted comments are linked by the server (|mention_links, templatetags/comment_tags.py).
+ */
+(function() {
+  'use strict';
 
-function cancelEdit(commentId) {
-  document.getElementById('comment-body-' + commentId).style.display = 'block';
-  document.getElementById('edit-form-' + commentId).style.display = 'none';
-}
-
-function deleteComment(commentId, returnUrl) {
-  if (confirm('Are you sure you want to delete this comment? This action cannot be undone.')) {
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/comments/' + commentId + '/delete/';
-    
-    const csrfInput = document.createElement('input');
-    csrfInput.type = 'hidden';
-    csrfInput.name = 'csrfmiddlewaretoken';
-    const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
-    if (csrfCookie) {
-      csrfInput.value = csrfCookie.split('=')[1];
-    }
-    form.appendChild(csrfInput);
-    
-    const nextInput = document.createElement('input');
-    nextInput.type = 'hidden';
-    nextInput.name = 'next';
-    nextInput.value = returnUrl;
-    form.appendChild(nextInput);
-    
-    document.body.appendChild(form);
-    form.submit();
+  function showEditForm(comment, editing) {
+    window.sp.show(comment.querySelector('.comment-body'), !editing);
+    window.sp.show(comment.querySelector('.comment-edit-form'), editing);
   }
-}
 
-// Highlight newly posted comment
-document.addEventListener('DOMContentLoaded', function() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const highlightParam = urlParams.get('highlight');
-  
-  if (highlightParam) {
+  document.addEventListener('click', function(e) {
+    const edit = e.target.closest('[data-comment-edit]');
+    const cancel = e.target.closest('[data-comment-cancel]');
+    const button = edit || cancel;
+    if (!button) return;
+    const comment = button.closest('.comment');
+    if (comment) {
+      showEditForm(comment, Boolean(edit));
+    }
+  });
+
+  // Highlight newly posted comment
+  function highlightComment() {
+    const highlightParam = new URLSearchParams(window.location.search).get('highlight');
+    if (!highlightParam) return;
+
     const commentElement = document.getElementById(highlightParam);
-    if (commentElement) {
-      // Add highlight class
-      commentElement.classList.add('comment-highlighted');
-      
-      // Smooth scroll to the comment
-      setTimeout(() => {
-        commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
-      
-      // Remove highlight after animation
-      setTimeout(() => {
-        commentElement.classList.remove('comment-highlighted');
-        // Clean up URL without reloading page
-        const url = new URL(window.location);
-        url.searchParams.delete('highlight');
-        window.history.replaceState({}, '', url);
-      }, 3000);
-    }
-  }
-  
-  // Initialize @ mention autocomplete for comment textareas
-  initializeMentionAutocomplete();
-  
-  // Convert @mentions to clickable links in existing comments
-  convertMentionsToLinks();
-});
+    if (!commentElement) return;
 
-// @ Mention Autocomplete functionality
-function initializeMentionAutocomplete() {
-  const commentTextareas = document.querySelectorAll('textarea[name="comment"]');
-  
-  commentTextareas.forEach(textarea => {
+    commentElement.classList.add('comment-highlighted');
+
+    setTimeout(() => {
+      commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+
+    // Remove highlight after animation and clean up the URL without reloading
+    setTimeout(() => {
+      commentElement.classList.remove('comment-highlighted');
+      const url = new URL(window.location);
+      url.searchParams.delete('highlight');
+      window.history.replaceState({}, '', url);
+    }, 3000);
+  }
+
+  // @ Mention autocomplete
+  function initializeMentionAutocomplete(textarea) {
+    const searchUrl = textarea.dataset.mentionSearchUrl;
     let autocompleteDiv = null;
     let currentMentionStart = -1;
-    let currentQuery = '';
     let selectedIndex = -1;
     let userSuggestions = [];
-    
-    // Create autocomplete dropdown
+
     function createAutocomplete() {
       if (!autocompleteDiv) {
         autocompleteDiv = document.createElement('div');
         autocompleteDiv.className = 'mention-autocomplete';
-        autocompleteDiv.style.display = 'none';
-        textarea.parentElement.style.position = 'relative';
+        autocompleteDiv.hidden = true;
+        textarea.parentElement.classList.add('position-relative');
         textarea.parentElement.appendChild(autocompleteDiv);
       }
       return autocompleteDiv;
     }
-    
-    // Position autocomplete dropdown
+
+    // Position the dropdown below the textarea (layout only, no design values)
     function positionAutocomplete() {
       const div = createAutocomplete();
       const rect = textarea.getBoundingClientRect();
       const parentRect = textarea.parentElement.getBoundingClientRect();
-      
-      // Position below textarea
+
       div.style.top = (rect.bottom - parentRect.top + 5) + 'px';
       div.style.left = '0px';
       div.style.width = textarea.offsetWidth + 'px';
     }
-    
-    // Show suggestions
+
     function showSuggestions(users) {
       const div = createAutocomplete();
       userSuggestions = users;
       selectedIndex = -1;
-      
+
       if (users.length === 0) {
-        div.style.display = 'none';
+        window.sp.show(div, false);
         return;
       }
-      
-      div.innerHTML = users.map((user, index) => 
-        `<div class="mention-item" data-index="${index}">@${user}</div>`
+
+      div.innerHTML = users.map((user, index) =>
+        `<div class="mention-item" data-index="${index}">@${window.sp.escapeHtml(user)}</div>`
       ).join('');
-      
+
       positionAutocomplete();
-      div.style.display = 'block';
-      
-      // Add click handlers
+      window.sp.show(div, true);
+
       div.querySelectorAll('.mention-item').forEach(item => {
         item.addEventListener('click', function() {
-          insertMention(this.textContent.substring(1)); // Remove @ prefix
+          insertMention(userSuggestions[Number(this.dataset.index)]);
         });
-        
+
         item.addEventListener('mouseenter', function() {
-          selectedIndex = parseInt(this.dataset.index);
+          selectedIndex = Number(this.dataset.index);
           updateSelection();
         });
       });
     }
-    
-    // Update visual selection
+
     function updateSelection() {
-      const items = autocompleteDiv.querySelectorAll('.mention-item');
-      items.forEach((item, index) => {
-        if (index === selectedIndex) {
-          item.classList.add('selected');
-        } else {
-          item.classList.remove('selected');
-        }
+      autocompleteDiv.querySelectorAll('.mention-item').forEach((item, index) => {
+        item.classList.toggle('selected', index === selectedIndex);
       });
     }
-    
-    // Insert selected mention
+
     function insertMention(username) {
       const text = textarea.value;
       const beforeMention = text.substring(0, currentMentionStart);
       const afterMention = text.substring(textarea.selectionStart);
-      
+
       textarea.value = beforeMention + '@' + username + ' ' + afterMention;
       const newPos = beforeMention.length + username.length + 2;
       textarea.setSelectionRange(newPos, newPos);
       textarea.focus();
-      
+
       hideAutocomplete();
     }
-    
-    // Hide autocomplete
+
     function hideAutocomplete() {
-      if (autocompleteDiv) {
-        autocompleteDiv.style.display = 'none';
-      }
+      window.sp.show(autocompleteDiv, false);
       currentMentionStart = -1;
-      currentQuery = '';
       selectedIndex = -1;
       userSuggestions = [];
     }
-    
-    // Fetch user suggestions
+
     async function fetchUsers(query) {
       try {
-        const response = await fetch(`/comments/search-users/?q=${encodeURIComponent(query)}`);
-        const data = await response.json();
+        const url = new URL(searchUrl, window.location.href);
+        url.searchParams.set('q', query);
+        const data = await window.sp.fetchJSON(url);
         showSuggestions(data.users || []);
       } catch (error) {
         console.error('Error fetching users:', error);
         hideAutocomplete();
       }
     }
-    
-    // Handle input
-    textarea.addEventListener('input', function(e) {
+
+    textarea.addEventListener('input', function() {
       const cursorPos = this.selectionStart;
       const text = this.value;
-      
+
       // Find if we're in a mention
       let mentionStart = -1;
       for (let i = cursorPos - 1; i >= 0; i--) {
@@ -200,34 +160,27 @@ function initializeMentionAutocomplete() {
           break;
         }
       }
-      
-      if (mentionStart !== -1) {
-        const query = text.substring(mentionStart + 1, cursorPos);
-        
-        // Check if valid mention query (alphanumeric and underscore only)
-        if (/^[a-zA-Z0-9_]*$/.test(query)) {
-          currentMentionStart = mentionStart;
-          currentQuery = query;
-          
-          if (query.length >= 1) {
-            fetchUsers(query);
-          } else {
-            hideAutocomplete();
-          }
-        } else {
-          hideAutocomplete();
-        }
+
+      if (mentionStart === -1) {
+        hideAutocomplete();
+        return;
+      }
+
+      const query = text.substring(mentionStart + 1, cursorPos);
+      // A valid mention query is alphanumeric and underscore only
+      if (/^[a-zA-Z0-9_]+$/.test(query)) {
+        currentMentionStart = mentionStart;
+        fetchUsers(query);
       } else {
         hideAutocomplete();
       }
     });
-    
-    // Handle keyboard navigation
+
     textarea.addEventListener('keydown', function(e) {
-      if (!autocompleteDiv || autocompleteDiv.style.display === 'none') {
+      if (!autocompleteDiv || autocompleteDiv.hidden) {
         return;
       }
-      
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         selectedIndex = Math.min(selectedIndex + 1, userSuggestions.length - 1);
@@ -246,43 +199,21 @@ function initializeMentionAutocomplete() {
         hideAutocomplete();
       }
     });
-    
+
     // Hide on blur (with delay for click handling)
     textarea.addEventListener('blur', function() {
-      setTimeout(() => hideAutocomplete(), 200);
+      setTimeout(hideAutocomplete, 200);
     });
-  });
-}
+  }
 
-// Convert @mentions to clickable profile links
-function convertMentionsToLinks() {
-  // Find all comment bodies
-  const commentBodies = document.querySelectorAll('.comment-body');
-  
-  commentBodies.forEach(commentBody => {
-    // Skip if already processed
-    if (commentBody.dataset.mentionsProcessed === 'true') {
-      return;
-    }
-    
-    // Get the HTML content
-    let html = commentBody.innerHTML;
-    
-    // Replace @username patterns with links
-    // Match @username (alphanumeric and underscore)
-    const mentionRegex = /(@([a-zA-Z0-9_]+))/g;
-    
-    html = html.replace(mentionRegex, function(match, fullMention, username) {
-      // Don't replace if already inside an anchor tag
-      const beforeMatch = html.substring(0, html.indexOf(match));
-      if (/<a[^>]*$/.test(beforeMatch)) {
-        return match;
-      }
-      
-      return `<a href="/profile/${username}/" class="mention-link">${fullMention}</a>`;
-    });
-    
-    commentBody.innerHTML = html;
-    commentBody.dataset.mentionsProcessed = 'true';
-  });
-}
+  function init() {
+    highlightComment();
+    document.querySelectorAll('textarea[data-mention-search-url]').forEach(initializeMentionAutocomplete);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();

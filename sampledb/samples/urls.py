@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, re_path, include
 from django.contrib.auth import views as auth_views
 from . import views
 
@@ -54,10 +54,14 @@ urlpatterns = [
     path("settings/delete-account/", views.delete_account, name="delete_account"),
     path("verify-email-change/<uidb64>/<token>/", views.verify_email_change, name="verify_email_change"),
     path("comments/<int:comment_id>/edit/", views.edit_comment, name="comments-xtd-edit"),
-    path("comments/<int:comment_id>/delete/", views.delete_comment, name="comments-delete"),
+    path("comments/<int:comment_id>/delete/", views.delete_comment, name="delete_comment"),
     path("comments/search-users/", views.search_users, name="search_users"),
-    path("comments/posted/", views.post_comment, name="comments-post-comment"),  # Custom comment posting - overrides default
-    path(r'comments/', include('django_comments_xtd.urls')),
+    # Same paths and names as django-comments, so {% comment_form_target %} lands here
+    path("comments/post/", views.post_comment, name="comments-post-comment"),
+    path("comments/posted/", views.comment_posted, name="comments-comment-done"),
+    # The comments REST API is unused by the site and accepts anonymous posts
+    re_path(r"^comments/api/", views.comments_api_disabled),
+    path("comments/", include('django_comments_xtd.urls')),
     # Notifications
     path("notifications/", views.notification_list, name="notification_list"),
     path("notifications/dropdown/", views.notification_dropdown, name="notification_dropdown"),
@@ -67,4 +71,5 @@ urlpatterns = [
     path("notifications/unread-count/", views.unread_count, name="unread_count"),
     # Markdown preview
     path("markdown-preview/", views.markdown_preview, name="markdown_preview"),
+    path("csp-report/", views.csp_report, name="csp_report"),
 ]

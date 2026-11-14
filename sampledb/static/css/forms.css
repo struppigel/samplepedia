@@ -1,313 +1,58 @@
-/* Form Controls and Input Styling */
+/*
+ * Project form widgets: SHA256 field, image picker, markdown write/preview
+ * tabs. Bootstrap's own form controls are themed in bootstrap-theme.css.
+ */
 
-/* Form inputs - uses context-aware variables */
-.form-control {
-  background-color: var(--form-bg) !important;
-  border-color: var(--form-border) !important;
-  color: var(--body-color) !important;
-}
-
-.form-control:focus {
-  background-color: var(--form-bg-focus) !important;
-  border-color: var(--primary-red) !important;
-  box-shadow: 0 0 0 0.2rem var(--primary-red-alpha-25) !important;
-  color: var(--body-color) !important;
-}
-
-/* Ensure placeholder text is visible */
-.form-control::placeholder {
-  color: var(--form-placeholder) !important;
-  opacity: 0.6 !important;
-}
-
-/* Fix for autofill and active input states */
-.dark-mode input.form-control:-webkit-autofill,
-.dark-mode input.form-control:-webkit-autofill:hover,
-.dark-mode input.form-control:-webkit-autofill:focus,
-.dark-mode input.form-control:-webkit-autofill:active,
-.dark-mode textarea.form-control:-webkit-autofill,
-.dark-mode textarea.form-control:-webkit-autofill:hover,
-.dark-mode textarea.form-control:-webkit-autofill:focus,
-.dark-mode textarea.form-control:-webkit-autofill:active,
-.dark-mode select.form-control:-webkit-autofill,
-.dark-mode select.form-control:-webkit-autofill:hover,
-.dark-mode select.form-control:-webkit-autofill:focus,
-.dark-mode select.form-control:-webkit-autofill:active {
-  -webkit-text-fill-color: #ffffff !important;
-  color: #ffffff !important;
-  background-color: var(--card-bg) !important;
-  -webkit-box-shadow: 0 0 0 1000px var(--card-bg) inset !important;
-  box-shadow: 0 0 0 1000px var(--card-bg) inset !important;
-  caret-color: #ffffff !important;
-  transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
-}
-
-/* Additional fix for Firefox and other browsers */
-.dark-mode input.form-control:-moz-autofill,
-.dark-mode textarea.form-control:-moz-autofill,
-.dark-mode select.form-control:-moz-autofill {
-  background-color: var(--card-bg) !important;
-  color: #ffffff !important;
-  -moz-text-fill-color: #ffffff !important;
-}
-
-/* SHA256 readonly field - uses context-aware variables */
-.sha256-readonly-field {
-  background-color: var(--sha256-readonly-bg) !important;
-  color: var(--sha256-readonly-color) !important;
+/* SHA256 field (filled in from the uploaded file, js/submit-task-form.js) */
+.form-control.sha256-readonly-field {
+  color: var(--sp-sha-readonly-fg);
   cursor: not-allowed;
+  background-color: var(--sp-sha-readonly-bg);
 }
 
-/* SHA256 field when successfully extracted - uses context-aware variables */
-.sha256-readonly-field.is-valid {
-  background-color: var(--sha256-valid-bg) !important;
-  border-color: var(--sha256-valid-border) !important;
-  color: var(--sha256-valid-color) !important;
+.form-control.sha256-readonly-field.is-valid {
+  color: var(--sp-sha-valid-fg);
+  background-color: var(--sp-sha-valid-bg);
+  border-color: var(--sp-sha-valid-border);
 }
 
-/* Image selection card for submit/edit task form */
+/* Image selection cards (submit/edit task gallery) */
 .image-select-card {
-  transition: all 0.2s ease;
-  border: 2px solid transparent;
   overflow: hidden;
+  border: var(--sp-border-width-thick) solid transparent;
+  transition: all var(--sp-dur) var(--sp-ease);
 }
 
 .image-select-card:hover {
-  border-color: var(--primary-red);
+  border-color: var(--sp-brand);
+  box-shadow: var(--sp-shadow-image-hover);
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .image-select-card.selected {
-  border-color: var(--primary-red);
-  box-shadow: 0 0 10px var(--primary-red-alpha-40);
+  border-color: var(--sp-brand);
+  box-shadow: var(--sp-shadow-image-selected);
 }
 
 .image-select-card img {
-  transition: transform 0.2s ease;
-  background-color: var(--image-bg);
+  background-color: var(--sp-image-bg);
+  transition: transform var(--sp-dur) var(--sp-ease);
 }
 
 .image-select-card:hover img {
   transform: scale(1.05);
 }
 
-/* Markdown preview tabs */
-.markdown-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: -1px;
-  border-bottom: 1px solid var(--form-border);
+/* Dashed option box / divider (submit task: draft picker, image gallery) */
+.dropzone-box {
+  border: var(--sp-border-width) dashed var(--sp-dropzone-border);
 }
 
-.markdown-tab {
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-weight: 500;
-  transition: all 0.15s ease;
+.dashed-divider {
+  border-top: var(--sp-border-width) dashed var(--sp-dropzone-border);
 }
 
-.markdown-tab:hover {
-  color: var(--body-color);
-  border-bottom-color: var(--form-border);
-}
-
-.markdown-tab.active {
-  color: var(--primary-red);
-  border-bottom-color: var(--primary-red);
-}
-
-.markdown-tab-content {
-  position: relative;
-}
-
-.markdown-pane {
-  display: none;
-}
-
-.markdown-pane.active {
-  display: block;
-}
-
-.markdown-pane[data-pane="preview"] {
-  border: 1px solid var(--form-border);
-  border-radius: 0.25rem;
-  padding: 0.75rem;
-  background-color: var(--form-bg);
-  min-height: 200px;
-}
-
-.markdown-preview-content {
-  color: var(--body-color);
-}
-
-.markdown-preview-content p:last-child {
-  margin-bottom: 0;
-}
-
-/* Image source tabs (upload vs gallery) */
-.image-source-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.image-tab {
-  border: 1px solid var(--form-border) !important;
-  background-color: var(--form-bg) !important;
-  color: var(--text-muted) !important;
-  transition: all 0.15s ease;
-}
-
-.image-tab:hover {
-  color: var(--body-color) !important;
-  border-color: var(--primary-red) !important;
-  background-color: var(--form-bg-focus) !important;
-}
-
-.image-tab.active {
-  color: var(--primary-red) !important;
-  border-color: var(--primary-red) !important;
-  background-color: var(--form-bg-focus) !important;
-  font-weight: 500;
-}
-
-.image-tab-content {
-  position: relative;
-}
-
-.image-pane {
-  display: none;
-}
-
-.image-pane.active {
-  display: block;
-}
-
-/* Markdown content styling in preview */
-.markdown-preview-content h1,
-.markdown-preview-content h2,
-.markdown-preview-content h3,
-.markdown-preview-content h4,
-.markdown-preview-content h5,
-.markdown-preview-content h6 {
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.markdown-preview-content h1:first-child,
-.markdown-preview-content h2:first-child,
-.markdown-preview-content h3:first-child,
-.markdown-preview-content h4:first-child,
-.markdown-preview-content h5:first-child,
-.markdown-preview-content h6:first-child {
-  margin-top: 0;
-}
-
-.markdown-preview-content code {
-  background-color: rgb(255, 255, 255) !important;
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-size: 0.9em;
-  color: #030112;
-}
-
-.markdown-preview-content del {
-  text-decoration: line-through;
-  opacity: 0.7;
-}
-
-.markdown-preview-content pre {
-  background-color: rgb(255, 255, 255) !important;
-  padding: 0.75rem;
-  border-radius: 4px;
-  overflow-x: auto;
-  margin: 0.75rem 0;
-}
-
-.markdown-preview-content pre code {
-  background-color: transparent;
-  padding: 0;
-}
-
-.markdown-preview-content blockquote {
-  border-left: 4px solid var(--primary-red);
-  padding-left: 1rem;
-  margin: 0.75rem 0;
-  color: var(--text-muted);
-}
-
-.markdown-preview-content img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 1rem 0;
-  border-radius: 4px;
-}
-
-.markdown-preview-content ul,
-.markdown-preview-content ol {
-  margin-bottom: 0.75rem;
-  padding-left: 1.5rem;
-}
-
-.markdown-preview-content li {
-  margin-bottom: 0.25rem;
-}
-
-.markdown-preview-content table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 0.75rem 0;
-  border: 1px solid var(--form-border);
-}
-
-.markdown-preview-content table th,
-.markdown-preview-content table td {
-  border: 1px solid var(--form-border);
-  padding: 0.5rem 0.75rem;
-  text-align: left;
-}
-
-.markdown-preview-content table th {
-  background-color: rgba(0, 170, 255, 0.614);
-  font-weight: 600;
-}
-
-.markdown-preview-content table tr:nth-child(even) {
-  background-color: rgba(155, 168, 255, 0.042);
-}
-
-.markdown-preview-content table tr:nth-child(odd) {
-  background-color: rgb(255, 255, 255);
-}
-
-/* Dark mode adjustments for markdown preview */
-.dark-mode .markdown-preview-content code {
-  background-color: #000000 !important;
-  color: #f4f4f4;
-}
-
-.dark-mode .markdown-preview-content pre {
-  background-color: #000000 !important;
-}
-
-.dark-mode .markdown-preview-content pre code {
-  /*color: #00d5ff7e; */
-}
-
-.dark-mode .markdown-preview-content table th {
-  background-color: rgb(0, 0, 0);
-}
-
-.dark-mode .markdown-preview-content table tr:nth-child(even) {
-  background-color: rgba(255, 255, 255, 0.02);
-}
-
-.dark-mode .markdown-preview-content table tr:nth-child(odd) {
-  background-color: rgba(255, 255, 255, 0.05); 
+/* Selected draft summary (submit task, js/draft-selection.js) */
+.selected-draft-info {
+  border-top: var(--sp-border-width) solid var(--sp-input-border);
 }

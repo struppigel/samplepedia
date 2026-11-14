@@ -1,0 +1,7 @@
+{% extends "samples/base.html" %}
+{% comment %}
+  Shim for third-party templates (django_comments_xtd) that extend "base.html".
+  They fill the blocks title, header and content.
+{% endcomment %}
+
+{% block page_title %}{% block header %}{% endblock %}{% endblock %}

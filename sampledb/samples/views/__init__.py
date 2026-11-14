@@ -6,7 +6,6 @@ from .courses import course_list, course_samples
 from .likes import toggle_like, toggle_solution_like
 from .auth import (
     register, 
-    send_verification_email, 
     verification_sent, 
     verify_email, 
     resend_verification,
@@ -21,7 +20,10 @@ from .auth import (
     delete_account
 )
 from .pages import impressum, privacy_policy, markdown_editor
-from .comments import edit_comment, delete_comment, post_comment, search_users
+from .comments import (
+    edit_comment, delete_comment, post_comment, comment_posted, comments_api_disabled, search_users
+)
+from .csp import csp_report
 from .notifications import (
     notification_list,
     notification_dropdown,
@@ -53,6 +55,11 @@ __all__ = [
     'article_editor',
     'article_view',
     'article_delete',
+    'article_unpublish',
+    'search_samples_ajax',
+    'get_user_drafts_ajax',
+    'publish_article',
+    'attach_draft_to_sample',
     # Courses
     'course_list',
     'course_samples',
@@ -61,7 +68,6 @@ __all__ = [
     'toggle_solution_like',
     # Auth
     'register',
-    'send_verification_email',
     'verification_sent',
     'verify_email',
     'resend_verification',
@@ -81,6 +87,10 @@ __all__ = [
     # Comments
     'edit_comment',
     'delete_comment',
+    'post_comment',
+    'comment_posted',
+    'comments_api_disabled',
+    'search_users',
     # Notifications
     'notification_list',
     'notification_dropdown',
@@ -88,4 +98,6 @@ __all__ = [
     'mark_all_read',
     'delete_notification',
     'unread_count',
+    # Security
+    'csp_report',
 ]

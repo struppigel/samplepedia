@@ -1,9 +1,9 @@
 {% if user.is_superuser %}
-  <span class="badge badge-danger">admin</span>
+  <span class="badge badge-admin">admin</span>
 {% endif %}
 {% for group in user.groups.all %}
-  <span class="badge badge-primary">{{ group.name }}</span>
+  <span class="badge text-bg-primary">{{ group.name }}</span>
 {% endfor %}
 {% if not user.is_superuser and not user.groups.all %}
-  <span class="badge badge-secondary">standard member</span>
+  <span class="badge text-bg-secondary">standard member</span>
 {% endif %}

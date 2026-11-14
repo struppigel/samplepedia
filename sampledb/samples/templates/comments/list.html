@@ -1,14 +1,20 @@
 {% load comments %}
+{% load comment_tags %}
 {% load i18n %}
+{% comment %}
+  Comment list of a task's detail page. js/comments.js toggles the inline edit form
+  ([data-comment-edit] / [data-comment-cancel]); delete is a [data-post-url] button (js/utils.js).
+{% endcomment %}
 
 {% if comment_list %}
+  {% mentioned_users comment_list as known_users %}
   <div class="comment-list mb-4">
     {% for comment in comment_list %}
-      <div class="comment mb-3" id="comment-{{ comment.id }}" style="border-left: 3px solid #007bff; padding-left: 15px;">
+      <div class="comment mb-3" id="comment-{{ comment.id }}">
         <div class="comment-header mb-2 clearfix">
           <strong>
             {% if comment.user %}
-              <a href="{% url 'user_profile' comment.user.username %}" style="color: inherit; text-decoration: none;">{{ comment.user_name }}</a>
+              <a href="{% url 'user_profile' comment.user.username %}" class="text-reset">{{ comment.user_name }}</a>
             {% else %}
               <span class="text-muted">Deleted User</span>
             {% endif %}
@@ -21,14 +27,17 @@
             Show delete button: Comment author OR staff member OR task author can delete
           {% endcomment %}
           {% if user.is_authenticated %}
-            <span class="float-right">
+            <span class="float-end">
               {% if comment.user and comment.user.id == user.id %}
-                <button class="btn btn-link btn-sm text-muted p-0" onclick="editComment({{ comment.id }})" title="Edit comment" style="text-decoration: none;">
+                <button type="button" class="btn btn-link btn-sm text-muted p-0" data-comment-edit title="Edit comment">
                   <i class="fas fa-edit"></i>
                 </button>
               {% endif %}
               {% if comment.user and comment.user.id == user.id or user.is_staff or sample.author.id == user.id %}
-                <button class="btn btn-link btn-sm text-danger p-0 ml-1" onclick="deleteComment({{ comment.id }}, '{{ request.path }}')" title="Delete comment" style="text-decoration: none;">
+                <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-1"
+                        data-post-url="{% url 'delete_comment' comment.id %}"
+                        data-confirm="Are you sure you want to delete this comment? This action cannot be undone."
+                        title="Delete comment">
                   <i class="fas fa-trash-alt"></i>
                 </button>
               {% endif %}
@@ -36,18 +45,19 @@
           {% endif %}
         </div>
         <div class="comment-body mb-2" id="comment-body-{{ comment.id }}">
-          {{ comment.comment|linebreaks }}
+          {{ comment.comment|mention_links:known_users }}
         </div>
-        <div class="comment-edit-form" id="edit-form-{{ comment.id }}" style="display: none;">
+        <div class="comment-edit-form" id="edit-form-{{ comment.id }}" hidden>
           <form method="post" action="{% url 'comments-xtd-edit' comment.id %}">
             {% csrf_token %}
-            <div class="form-group mb-2">
-              <textarea name="comment" class="form-control" rows="3" required>{{ comment.comment }}</textarea>
+            <div class="mb-2">
+              <textarea name="comment" class="form-control" rows="3" required
+                        data-mention-search-url="{% url 'search_users' %}">{{ comment.comment }}</textarea>
             </div>
             <button type="submit" class="btn btn-sm btn-primary">
               <i class="fas fa-save"></i> Save
             </button>
-            <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEdit({{ comment.id }})">
+            <button type="button" class="btn btn-sm btn-secondary" data-comment-cancel>
               Cancel
             </button>
           </form>

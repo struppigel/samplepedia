@@ -1,351 +1,182 @@
 """
-Discord webhook utility for posting sample notifications.
+Discord webhook notifications.
+
+New samples and solutions go to the channel for the task's difficulty (falling
+back to DISCORD_WEBHOOK_URL); account events go to DISCORD_WEBHOOK_LOGGING.
+Sending is best effort: failures are logged and never break the request.
 """
-import requests
 import logging
+import threading
+
+import requests
 from django.conf import settings
+from django.db import connections
+
+from .design_tokens import DANGER_COLOR, SUCCESS_COLOR, difficulty_embed_color, hex_to_int
+from .models import SolutionType
 
 logger = logging.getLogger(__name__)
 
+BOT_NAME = 'Samplepedia Bot'
+FOOTER = 'Samplepedia • Malware Training Samples'
+TIMEOUT_SECONDS = 10
+PREVIEW_LENGTH = 200
 
-def send_sample_notification(sample):
+
+def send_in_background(send, *args):
     """
-    Send a Discord notification for a newly created sample.
-    
-    Args:
-        sample: Sample model instance
+    Run one of the send_* functions without making the user's request wait for
+    Discord. Tests run it inline so they can assert on the result.
     """
-    # Select webhook based on difficulty level
-    webhook_map = {
-        'easy': settings.DISCORD_WEBHOOK_EASY,
-        'medium': settings.DISCORD_WEBHOOK_MEDIUM,
-        'advanced': settings.DISCORD_WEBHOOK_ADVANCED,
-        'expert': settings.DISCORD_WEBHOOK_EXPERT,
-    }
-    
-    # Get difficulty-specific webhook, fallback to default
-    webhook_url = webhook_map.get(sample.difficulty) or settings.DISCORD_WEBHOOK_URL
-    
-    if not webhook_url:
-        logger.warning(f"Discord webhook URL not configured for difficulty '{sample.difficulty}', skipping notification")
+    if getattr(settings, 'TESTING', False):
+        _run(send, args)
         return
-    
-    # Build the absolute URL for the sample detail page
-    base_url = settings.BASE_URL
-    sample_url = f"{base_url}/sample/{sample.sha256}/{sample.id}/"
-    
-    # Map difficulty to colors
-    difficulty_colors = {
-        'easy': 0x28a745,      # Green
-        'medium': 0xffc107,    # Yellow
-        'advanced': 0xdc3545,  # Red
-        'expert': 0x343a40,    # Dark
-    }
-    
-    # Build Discord embed
-    embed = {
-        "title": sample.sha256,
-        "url": sample_url,
-        "description": "A new malware training sample has been added to Samplepedia.",
-        "color": difficulty_colors.get(sample.difficulty, 0x007bff),
-        "fields": [
-            {
-                "name": "Description",
-                "value": "||" + (sample.description[:200] + "..." if len(sample.description) > 200 else sample.description or "N/A") + "||",
-                "inline": False
-            },
-            {
-                "name": "Goal",
-                "value": sample.goal[:200] + "..." if len(sample.goal) > 200 else sample.goal or "N/A",
-                "inline": False
-            },
-            {
-                "name": "Difficulty",
-                "value": sample.get_difficulty_display(),
-                "inline": True
-            },
-            {
-                "name": "Tags",
-                "value": ", ".join([tag.name for tag in sample.tags.all()]) if sample.tags.exists() else "None",
-                "inline": True
-            }
-        ],
-        "footer": {
-            "text": "Samplepedia • Malware Training Samples"
-        }
-    }
-    
-    # Add tools if available
-    if sample.tools.exists():
-        tools_list = [tool.name for tool in sample.tools.all()]
-        tools_text = ", ".join(tools_list)
-        embed["fields"].append({
-            "name": "Tools",
-            "value": "||" + tools_text + "||",
-            "inline": True
-        })
-    
-    # Add download link if available
-    if sample.download_link:
-        embed["fields"].append({
-            "name": "Download",
-            "value": f"[Click here]({sample.download_link})",
-            "inline": True
-        })
-    
-    # Add YouTube video if available
-    if sample.youtube_id:
-        embed["fields"].append({
-            "name": "Tutorial",
-            "value": f"[Watch on YouTube](https://www.youtube.com/watch?v={sample.youtube_id})",
-            "inline": True
-        })
-    
-    # Add thumbnail if image is available
-    if sample.image:
+
+    def run_and_close_connection():
         try:
-            # Get Cloudinary URL for the image
-            embed["thumbnail"] = {
-                "url": sample.image.url
-            }
-        except:
-            pass
-    
-    payload = {
-        "embeds": [embed],
-        "username": "Samplepedia Bot"
-    }
-    
+            _run(send, args)
+        finally:
+            connections.close_all()  # this thread's DB connection
+
+    threading.Thread(target=run_and_close_connection, daemon=True).start()
+
+
+def _run(send, args):
     try:
-        logger.info(f"Sending Discord notification for sample {sample.sha256} to webhook")
+        send(*args)
+    except Exception:
+        logger.exception('Discord notification %s failed', send.__name__)
+
+
+def absolute_url(path):
+    return f"{settings.BASE_URL.rstrip('/')}{path}"
+
+
+def _webhook_for(difficulty):
+    return getattr(settings, f'DISCORD_WEBHOOK_{difficulty.upper()}', '') or settings.DISCORD_WEBHOOK_URL
+
+
+def _post(webhook_url, embed, *, about):
+    """Send one embed. Returns whether Discord accepted it."""
+    if not webhook_url:
+        logger.info('Discord webhook not configured, skipping %s', about)
+        return False
+    try:
         response = requests.post(
-            webhook_url,
-            json=payload,
-            timeout=10
+            webhook_url, json={'embeds': [embed], 'username': BOT_NAME}, timeout=TIMEOUT_SECONDS,
         )
         response.raise_for_status()
-        logger.info(f"Successfully sent Discord notification for sample {sample.sha256}")
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to send Discord notification for {sample.sha256}: {e}")
-        if hasattr(e.response, 'text'):
-            logger.error(f"Response: {e.response.text}")
+    except requests.RequestException as error:
+        details = getattr(getattr(error, 'response', None), 'text', '')
+        logger.error('Discord notification for %s failed: %s %s', about, error, details)
+        return False
+    logger.info('Sent Discord notification for %s', about)
+    return True
+
+
+def _field(name, value, inline=False):
+    return {'name': name, 'value': value, 'inline': inline}
+
+
+def _preview(text):
+    if not text:
+        return 'N/A'
+    return text[:PREVIEW_LENGTH] + '...' if len(text) > PREVIEW_LENGTH else text
+
+
+def _add_thumbnail(embed, image):
+    if not image:
+        return
+    try:
+        embed['thumbnail'] = {'url': image.url}
+    except Exception:
+        logger.warning('Could not build a thumbnail URL for %s', image, exc_info=True)
+
+
+def send_sample_notification(sample):
+    """Announce a new sample in its difficulty's channel."""
+    tags = [tag.name for tag in sample.tags.all()]
+    tools = [tool.name for tool in sample.tools.all()]
+
+    fields = [
+        _field('Description', f'||{_preview(sample.description)}||'),  # spoiler
+        _field('Goal', _preview(sample.goal)),
+        _field('Difficulty', sample.get_difficulty_display(), inline=True),
+        _field('Tags', ', '.join(tags) or 'None', inline=True),
+    ]
+    if tools:
+        fields.append(_field('Tools', f"||{', '.join(tools)}||", inline=True))
+    if sample.download_link:
+        fields.append(_field('Download', f'[Click here]({sample.download_link})', inline=True))
+    if sample.youtube_id:
+        fields.append(_field(
+            'Tutorial', f'[Watch on YouTube](https://www.youtube.com/watch?v={sample.youtube_id})', inline=True,
+        ))
+
+    embed = {
+        'title': sample.sha256,
+        'url': absolute_url(sample.get_absolute_url()),
+        'description': 'A new malware training sample has been added to Samplepedia.',
+        'color': difficulty_embed_color(sample.difficulty),
+        'fields': fields,
+        'footer': {'text': FOOTER},
+    }
+    _add_thumbnail(embed, sample.image)
+    return _post(_webhook_for(sample.difficulty), embed, about=f'sample {sample.sha256}')
 
 
 def send_solution_notification(solution):
-    """
-    Send a Discord notification for a newly created solution.
-    
-    Args:
-        solution: Solution model instance
-    """
+    """Announce a new solution, or a hidden one whose hidden period ended, in its task's difficulty channel."""
     task = solution.analysis_task
-    
-    # Select webhook based on task difficulty level
-    webhook_map = {
-        'easy': settings.DISCORD_WEBHOOK_EASY,
-        'medium': settings.DISCORD_WEBHOOK_MEDIUM,
-        'advanced': settings.DISCORD_WEBHOOK_ADVANCED,
-        'expert': settings.DISCORD_WEBHOOK_EXPERT,
-    }
-    
-    # Get difficulty-specific webhook, fallback to default
-    webhook_url = webhook_map.get(task.difficulty) or settings.DISCORD_WEBHOOK_URL
-    
-    if not webhook_url:
-        logger.warning(f"Discord webhook URL not configured for difficulty '{task.difficulty}', skipping notification")
-        return
-    
-    # Build the absolute URL for the solution
-    base_url = settings.BASE_URL
-    solution_url = f"{base_url}/sample/{task.sha256}/{task.id}/"
-    
-    # For onsite solutions, link to the dedicated view page
-    if solution.solution_type == 'onsite':
-        solution_url = f"{base_url}/sample/{task.sha256}/{task.id}/solution/{solution.id}/view/"
-    
-    # Map difficulty to colors
-    difficulty_colors = {
-        'easy': 0x28a745,      # Green
-        'medium': 0xffc107,    # Yellow
-        'advanced': 0xdc3545,  # Red
-        'expert': 0x343a40,    # Dark
-    }
-    
-    # Get solution type display
-    solution_type_display = solution.get_solution_type_display()
-    
-    # Build Discord embed
+    page_url = absolute_url(solution.get_absolute_url())
+    type_display = solution.get_solution_type_display()
+    # External solutions link straight to the writeup; on-site ones to their page here
+    link = page_url if solution.solution_type == SolutionType.ONSITE else solution.url
+    if solution.hidden_until:
+        description = f'A {type_display.lower()} solution is now available for a malware sample.'
+    else:
+        description = f'A new {type_display.lower()} solution has been added to a malware sample.'
+
     embed = {
-        "title": solution.title,
-        "url": solution_url,
-        "description": f"A new {solution_type_display.lower()} solution has been added to a malware sample.",
-        "color": difficulty_colors.get(task.difficulty, 0x007bff),
-        "fields": [
-            {
-                "name": "Author",
-                "value": solution.author.username,
-                "inline": True
-            },
-            {
-                "name": "Sample SHA256",
-                "value": f"[{task.sha256[:16]}...]({base_url}/sample/{task.sha256}/{task.id}/)",
-                "inline": True
-            },
-            {
-                "name": "Solution Type",
-                "value": solution_type_display,
-                "inline": True
-            },
-            {
-                "name": "Difficulty",
-                "value": task.get_difficulty_display(),
-                "inline": True
-            },
-            {
-                "name": "Solution Link",
-                "value": f"[View Solution]({solution.url if solution.solution_type != 'onsite' else solution_url})",
-                "inline": False
-            }
+        'title': solution.title,
+        'url': page_url,
+        'description': description,
+        'color': difficulty_embed_color(task.difficulty),
+        'fields': [
+            _field('Author', solution.author.username, inline=True),
+            _field('Sample SHA256', f'[{task.sha256[:16]}...]({absolute_url(task.get_absolute_url())})', inline=True),
+            _field('Solution Type', type_display, inline=True),
+            _field('Difficulty', task.get_difficulty_display(), inline=True),
+            _field('Solution Link', f'[View Solution]({link})'),
         ],
-        "footer": {
-            "text": "Samplepedia • Malware Training Samples"
-        }
+        'footer': {'text': FOOTER},
     }
-    
-    # Add thumbnail if task has image
-    if task.image:
-        try:
-            embed["thumbnail"] = {
-                "url": task.image.url
-            }
-        except:
-            pass
-    
-    payload = {
-        "embeds": [embed],
-        "username": "Samplepedia Bot"
-    }
-    
-    try:
-        logger.info(f"Sending Discord notification for solution {solution.id} (task {task.sha256}) to webhook")
-        response = requests.post(
-            webhook_url,
-            json=payload,
-            timeout=10
-        )
-        response.raise_for_status()
-        logger.info(f"Successfully sent Discord notification for solution {solution.id}")
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to send Discord notification for solution {solution.id}: {e}")
-        if hasattr(e.response, 'text'):
-            logger.error(f"Response: {e.response.text}")
+    _add_thumbnail(embed, task.image)
+    return _post(_webhook_for(task.difficulty), embed, about=f'solution {solution.id} (task {task.sha256})')
 
 
 def send_user_registration_notification(username):
-    """
-    Send a Discord notification when a new user registers.
-    
-    Args:
-        username: Username of the newly registered user
-    """
-    webhook_url = settings.DISCORD_WEBHOOK_LOGGING
-    
-    if not webhook_url:
-        logger.warning("Discord logging webhook URL not configured, skipping registration notification")
-        return
-    
-    # Build Discord embed
+    """Log a new registration in the logging channel."""
     embed = {
-        "title": "🎉 New User Registration",
-        "description": f"A new user has joined Samplepedia!",
-        "color": 0x28a745,  # Green
-        "fields": [
-            {
-                "name": "Username",
-                "value": username,
-                "inline": True
-            }
-        ],
-        "footer": {
-            "text": "Samplepedia • User Registration"
-        },
-        "timestamp": None  # Discord will use current timestamp
+        'title': '🎉 New User Registration',
+        'description': 'A new user has joined Samplepedia!',
+        'color': hex_to_int(SUCCESS_COLOR),
+        'fields': [_field('Username', username, inline=True)],
+        'footer': {'text': 'Samplepedia • User Registration'},
     }
-    
-    payload = {
-        "embeds": [embed],
-        "username": "Samplepedia Bot"
-    }
-    
-    try:
-        logger.info(f"Sending Discord notification for new user registration: {username}")
-        response = requests.post(
-            webhook_url,
-            json=payload,
-            timeout=10
-        )
-        response.raise_for_status()
-        logger.info(f"Successfully sent Discord notification for user registration: {username}")
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to send Discord notification for user registration ({username}): {e}")
-        if hasattr(e, 'response') and hasattr(e.response, 'text'):
-            logger.error(f"Response: {e.response.text}")
+    return _post(settings.DISCORD_WEBHOOK_LOGGING, embed, about=f'registration of {username}')
 
 
 def send_account_deletion_notification(username, task_count, solution_count):
-    """
-    Send a Discord notification when a user account is deleted.
-    
-    Args:
-        username: Username of the deleted account
-        task_count: Number of tasks the user had contributed
-        solution_count: Number of solutions the user had contributed
-    """
-    webhook_url = settings.DISCORD_WEBHOOK_LOGGING
-    
-    if not webhook_url:
-        logger.warning("Discord logging webhook URL not configured, skipping deletion notification")
-        return
-    
-    # Build Discord embed
+    """Log a deleted account and how much it had contributed in the logging channel."""
     embed = {
-        "title": "👋 User Account Deleted",
-        "description": f"A user has deleted their account.",
-        "color": 0xdc3545,  # Red
-        "fields": [
-            {
-                "name": "Username",
-                "value": username,
-                "inline": True
-            },
-            {
-                "name": "Contributions",
-                "value": f"{task_count} tasks, {solution_count} solutions",
-                "inline": True
-            }
+        'title': '👋 User Account Deleted',
+        'description': 'A user has deleted their account.',
+        'color': hex_to_int(DANGER_COLOR),
+        'fields': [
+            _field('Username', username, inline=True),
+            _field('Contributions', f'{task_count} tasks, {solution_count} solutions', inline=True),
         ],
-        "footer": {
-            "text": "Samplepedia • Account Deletion"
-        },
-        "timestamp": None  # Discord will use current timestamp
+        'footer': {'text': 'Samplepedia • Account Deletion'},
     }
-    
-    payload = {
-        "embeds": [embed],
-        "username": "Samplepedia Bot"
-    }
-    
-    try:
-        logger.info(f"Sending Discord notification for account deletion: {username}")
-        response = requests.post(
-            webhook_url,
-            json=payload,
-            timeout=10
-        )
-        response.raise_for_status()
-        logger.info(f"Successfully sent Discord notification for account deletion: {username}")
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to send Discord notification for account deletion ({username}): {e}")
-        if hasattr(e, 'response') and hasattr(e.response, 'text'):
-            logger.error(f"Response: {e.response.text}")
-
+    return _post(settings.DISCORD_WEBHOOK_LOGGING, embed, about=f'deletion of {username}')

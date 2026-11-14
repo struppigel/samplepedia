@@ -1,170 +1,35 @@
-{% extends "samples/base.html" %}
-{% load user_tags %}
+{% extends "samples/editor_base.html" %}
 {% block title %}{% if solution %}Edit On-Site Solution{% else %}Create On-Site Solution{% endif %}{% endblock %}
+{% block editor_title %}{% if solution %}Edit On-Site Solution{% else %}Create On-Site Solution{% endif %}{% endblock %}
 
-{% block content %}
+{% block editor_subtitle %}
+<p class="text-muted mb-0">
+  <i class="fas fa-hashtag"></i> Sample:
+  <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}">
+    <code class="text-danger">{{ sample.sha256|slice:":12" }}</code>
+  </a>
+  {% if sample.goal %}— {{ sample.goal|truncatewords:10 }}{% endif %}
+</p>
+{% endblock %}
 
-<section class="content-header">
-  <div class="container-fluid">
-    <div class="row mb-2">
-      <div class="col-sm-6">
-        <h1>{% if solution %}Edit On-Site Solution{% else %}Create On-Site Solution{% endif %}</h1>      
-        <p class="text-muted mb-0">
-          <i class="fas fa-hashtag"></i> Sample: 
-          <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}">
-            <code class="text-danger">{{ sample.sha256|slice:":12" }}</code>
-          </a>
-          {% if sample.goal %}— {{ sample.goal|truncatewords:10 }}{% endif %}
-        </p>
-      </div>
-      <div class="col-sm-6">
-        <div class="float-right">
-          <button type="button" class="btn btn-secondary" id="clearEditor" {% if solution %}style="display:none;"{% endif %}>
-            <i class="fas fa-trash"></i> Clear
-          </button>
-          <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-outline-secondary">
-            <i class="fas fa-times"></i> Cancel
-          </a>
-          <button type="button" class="btn {% if solution %}btn-danger{% else %}btn-primary{% endif %}" id="submitSolution">
-            <i class="fas fa-save"></i> {% if solution %}Update Solution{% else %}Save Solution{% endif %}
-          </button>
-        </div>
-      </div>
-    </div>
-     <div class="alert alert-warning mt-3" role="alert">
-            <i class="fas fa-exclamation-triangle mr-2"></i>
-            Please do not post any malware code directly or this site will be detected by antivirus software, use screenshots of malicious code instead.
-        </div>
-  </div>
-</section>
+{% block editor_actions %}
+{% if not solution %}
+<button type="button" class="btn btn-secondary" data-md-clear>
+  <i class="fas fa-trash"></i> Clear
+</button>
+{% endif %}
+<a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}" class="btn btn-outline-secondary">
+  <i class="fas fa-times"></i> Cancel
+</a>
+<button type="submit" form="editorForm" class="btn {% if solution %}btn-danger{% else %}btn-primary{% endif %}">
+  <i class="fas fa-save"></i> {% if solution %}Update Solution{% else %}Save Solution{% endif %}
+</button>
+{% endblock %}
 
-<section class="content">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-12">
-        
-        {% include "samples/_onsite_editor.html" with initial_title=initial_title initial_content=initial_content sample=sample %}
-        
-      </div>
-    </div>
-  </div>
-</section>
-
-<form method="post" id="solutionForm" style="display:none;">
+{% block editor %}
+<form method="post" id="editorForm" novalidate>
   {% csrf_token %}
-  <input type="hidden" name="title" id="hiddenTitle">
-  <input type="hidden" name="content" id="hiddenContent">
   <input type="hidden" name="solution_type" value="onsite">
+  {% include "samples/_onsite_editor.html" with initial_title=initial_title initial_content=initial_content sample=sample draft=draft_name required=True %}
 </form>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Wait for editor API to be available
-  const waitForEditor = setInterval(function() {
-    if (window.editorAPI) {
-      clearInterval(waitForEditor);
-      initPageSpecificFeatures();
-    }
-  }, 50);
-  
-  function initPageSpecificFeatures() {
-    const textarea = window.editorAPI.getTextarea();
-    const titleInput = window.editorAPI.getTitleInput();
-    const previewTitle = document.getElementById('previewTitle');
-    const previewContent = window.editorAPI.getPreviewContent();
-    const clearBtn = document.getElementById('clearEditor');
-    const submitBtn = document.getElementById('submitSolution');
-    const titleError = document.getElementById('titleError');
-    
-    const STORAGE_KEY = 'onsite_solution_{{ sample.id }}{% if solution %}_{{ solution.id }}{% endif %}';
-    const AUTOSAVE_INTERVAL = 5000; // 5 seconds
-    
-    // Clear editor (only for new solutions)
-    if (clearBtn) {
-      clearBtn.addEventListener('click', function() {
-        if (textarea.value && !confirm('Are you sure you want to clear all content?')) {
-          return;
-        }
-        textarea.value = '';
-        titleInput.value = '';
-        window.editorAPI.setPreviewCache('');
-        previewTitle.textContent = 'Untitled Solution';
-        window.editorAPI.updateCharCount();
-        previewContent.innerHTML = '<p class="text-muted">Nothing to preview</p>';
-        localStorage.removeItem(STORAGE_KEY);
-      });
-    }
-    
-    // Submit solution
-    submitBtn.addEventListener('click', function() {
-      const title = titleInput.value.trim();
-      const content = textarea.value.trim();
-      
-      // Validation
-      let hasError = false;
-      
-      if (!title) {
-        titleError.textContent = 'Title is required';
-        titleError.style.display = 'block';
-        titleInput.focus();
-        hasError = true;
-      } else {
-        titleError.style.display = 'none';
-      }
-      
-      if (!content) {
-        alert('Please write some content for your solution');
-        textarea.focus();
-        hasError = true;
-      }
-      
-      if (hasError) return;
-      
-      // Populate hidden form and submit
-      document.getElementById('hiddenTitle').value = title;
-      document.getElementById('hiddenContent').value = content;
-      
-      // Disable button to prevent double submission
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-      
-      document.getElementById('solutionForm').submit();
-    });
-    
-    // Auto-save to localStorage (only for new solutions)
-    {% if not solution %}
-    // Load saved content on page load
-    const savedData = localStorage.getItem(STORAGE_KEY);
-    if (savedData) {
-      try {
-        const data = JSON.parse(savedData);
-        if (confirm('Found auto-saved content. Would you like to restore it?')) {
-          titleInput.value = data.title || '';
-          textarea.value = data.content || '';
-          window.editorAPI.updateCharCount();
-          if (titleInput.value.trim()) {
-            previewTitle.textContent = titleInput.value.trim();
-          }
-        } else {
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      } catch (e) {
-        console.error('Error loading auto-save:', e);
-        localStorage.removeItem(STORAGE_KEY);
-      }
-    }
-    {% endif %}
-    
-    // Auto-save interval
-    setInterval(function() {
-      const title = titleInput.value.trim();
-      const content = textarea.value.trim();
-      if (title || content) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ title, content }));
-      }
-    }, AUTOSAVE_INTERVAL);
-  }
-});
-</script>
-
 {% endblock %}

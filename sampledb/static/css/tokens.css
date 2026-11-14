@@ -1,0 +1,606 @@
+/*
+ * Design tokens: the single source of truth for Samplepedia's look.
+ *
+ * Every raw design value (color, font, font size, radius, shadow, duration,
+ * z-index) lives in this file and nowhere else. The other stylesheets only
+ * reference these via var(--sp-*). This is enforced by
+ * samples/tests/test_design_system.py.
+ *
+ * :root holds the light theme plus everything that is the same in both themes.
+ * [data-bs-theme="dark"] only overrides what changes in dark mode.
+ *
+ * Component tokens refer to palette primitives (var(--sp-white), var(--sp-brand),
+ * rgba(var(--sp-brand-rgb), 0.1), ...) instead of repeating literals, so a
+ * palette change reaches every component. Naming: --sp-on-<color> is text on
+ * a palette color, --sp-<component>-fg / -bg / -border are a component's
+ * foreground, background and border.
+ *
+ * Mirrored in Python (Discord embeds): samples/design_tokens.py
+ */
+
+:root {
+  /* ------------------------------------------------------------------ */
+  /* Typography                                                          */
+  /* ------------------------------------------------------------------ */
+  --sp-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --sp-font-mono: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --sp-font-editor: Consolas, Monaco, 'Courier New', monospace;
+  --sp-font-kbd: Arial, sans-serif;
+
+  --sp-fs-base: 1rem;
+  --sp-fs-sm: 0.875rem;
+  --sp-fs-xs: 0.75rem;
+  --sp-fs-fine-print: 80%;
+  --sp-fs-code: 0.9em;
+  --sp-fs-h1: 2.5rem;
+  --sp-fs-h2: 2rem;
+  --sp-fs-h3: 1.75rem;
+  --sp-fs-h4: 1.5rem;
+  --sp-fs-h5: 1.25rem;
+  --sp-fs-h6: 1rem;
+  --sp-fs-display-4: 3.5rem;
+  --sp-fs-lead: 1.25rem;
+  --sp-fs-page-title: 1.8rem;
+  --sp-fs-card-title: 1.1rem;
+  --sp-fs-brand: 1.25rem;
+  --sp-fs-nav-badge: 0.6rem;
+  --sp-fs-nav-icon-mobile: 1.1rem;
+  --sp-fs-icon-lg: 1.2rem;
+  --sp-fs-hero-icon: 3rem;
+  --sp-fs-hero-icon-lg: 4rem;
+  --sp-fs-article: 1.05rem;
+  --sp-fs-article-mobile: 1rem;
+  --sp-fs-article-title: 2.5rem;
+  --sp-fs-article-title-mobile: 2rem;
+  --sp-fs-article-h1: 2rem;
+  --sp-fs-article-h2: 1.75rem;
+  --sp-fs-article-h3: 1.5rem;
+  --sp-fs-article-meta: 0.95rem;
+  --sp-fs-editor: 14px;
+  --sp-fs-kbd: 11px;
+  --sp-fs-medal: 1.1em;
+  --sp-fs-medal-sm: 0.85em;
+  --sp-fs-score: 1em;
+  --sp-fs-count: 0.9em;
+  --sp-fs-editor-count: 0.85rem;
+
+  --sp-fw-light: 300;
+  --sp-fw-normal: 400;
+  --sp-fw-medium: 500;
+  --sp-fw-semibold: 600;
+  --sp-fw-bold: 700;
+  --sp-fw-heading: var(--sp-fw-semibold);
+  --sp-fw-label: var(--sp-fw-bold);
+
+  --sp-lh-base: 1.5;
+  --sp-lh-heading: 1.2;
+  --sp-lh-article: 1.8;
+  --sp-lh-article-heading: 1.3;
+  --sp-lh-editor: 1.6;
+  --sp-lh-kbd: 1.4;
+  --sp-lh-tag-row: 1.6em;      /* one row of tag badges */
+  --sp-lh-card-title: 1.25em;  /* showcase titles are clamped to two lines */
+  --sp-ls-brand: -0.5px;
+
+  /* ------------------------------------------------------------------ */
+  /* Shape                                                               */
+  /* ------------------------------------------------------------------ */
+  --sp-radius: 0.25rem;
+  --sp-radius-sm: 0.2rem;
+  --sp-radius-xs: 0.15rem;
+  --sp-radius-lg: 0.3rem;
+  --sp-radius-card: 8px;
+  --sp-radius-content: 4px;
+  --sp-radius-code: 3px;
+  --sp-radius-article: 6px;
+  --sp-radius-pill: 10rem;
+
+  --sp-border-width: 1px;
+  --sp-border-width-thick: 2px;
+  --sp-border-accent-width: 4px;
+  --sp-border-callout-width: 5px;
+  --sp-border-comment-width: 3px;
+
+  /* ------------------------------------------------------------------ */
+  /* Spacing and layout                                                  */
+  /* ------------------------------------------------------------------ */
+  --sp-space-1: 0.25rem;
+  --sp-space-2: 0.5rem;
+  --sp-space-3: 1rem;
+  --sp-space-4: 1.5rem;
+  --sp-space-block: 0.75rem;  /* between blocks of rendered text, inside panes */
+
+  --sp-gutter-x: 15px;
+  --sp-page-x: 0.5rem;
+  --sp-page-header-py: 15px;
+  --sp-card-spacer: 1.25rem;
+  --sp-card-cap-py: 0.5rem;
+  --sp-card-cap-px: 0.75rem;
+  --sp-card-mb: 1rem;
+  --sp-table-cell-p: 0.75rem;
+  --sp-table-cell-p-sm: 0.3rem;
+  --sp-alert-py: 0.75rem;
+  --sp-alert-px: 1.25rem;
+  --sp-list-item-py: 0.75rem;
+  --sp-list-item-px: 1.25rem;
+  --sp-badge-py: 0.25em;
+  --sp-badge-px: 0.4em;
+  --sp-badge-pill-px: 0.6em;
+  --sp-navbar-py: 0.5rem;
+  --sp-navbar-px: 0.5rem;
+  --sp-nav-link-px: 1rem;
+  --sp-nav-link-height: 2.5rem;
+  --sp-logo-height: 30px;
+  --sp-logo-gap: 10px;
+  --sp-notification-menu-min: 280px;
+  --sp-notification-menu-max: 300px;
+  --sp-container-max-xxl: 1140px;
+  --sp-select-sm-pe: 1.25rem;
+  --sp-select-sm-arrow: 12px 9px;
+  --sp-btn-compact-py: 0.125rem;
+  --sp-btn-compact-px: 0.25rem;
+
+  /* ------------------------------------------------------------------ */
+  /* Motion, elevation, layering                                         */
+  /* ------------------------------------------------------------------ */
+  --sp-dur-fast: 0.15s;
+  --sp-dur: 0.2s;
+  --sp-dur-slow: 0.3s;
+  --sp-dur-highlight: 3s;
+  --sp-ease: ease;
+  --sp-ease-out: ease-out;
+  --sp-ease-in-out: ease-in-out;
+
+  --sp-shadow-card: 0 0 1px rgba(0, 0, 0, 0.125), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --sp-shadow-callout: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --sp-shadow-modal: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
+  --sp-shadow-popover: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --sp-shadow-image-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --sp-shadow-image-selected: 0 0 10px rgba(var(--sp-brand-rgb), 0.4);
+  --sp-shadow-toast: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --sp-focus-ring: 0 0 0 0.2rem rgba(var(--sp-brand-rgb), 0.25);
+
+  --sp-z-spoiler: 1;
+  --sp-z-tag-expanded: 100;
+  --sp-z-autocomplete: 1000;
+  --sp-z-navbar: 1034;
+  --sp-z-toast: 9999;
+
+  /* ------------------------------------------------------------------ */
+  /* Palette (same in both themes)                                       */
+  /* rgb triplets exist where Bootstrap utilities need them              */
+  /* ------------------------------------------------------------------ */
+  --sp-brand: #e63946;
+  --sp-brand-rgb: 230, 57, 70;
+  --sp-brand-hover: #ff4757;
+  --sp-brand-hover-rgb: 255, 71, 87;
+  --sp-brand-tint: rgba(var(--sp-brand-rgb), 0.1);
+  --sp-brand-tint-strong: rgba(var(--sp-brand-rgb), 0.2);
+  --sp-brand-line: rgba(var(--sp-brand-rgb), 0.3);
+  --sp-on-brand: var(--sp-white);
+
+  /* Bootstrap 4's "primary" blue: text-primary, btn-link, outline-primary */
+  --sp-accent: #007bff;
+  --sp-accent-rgb: 0, 123, 255;
+  --sp-accent-hover: #0056b3;
+
+  --sp-white: #fff;
+  --sp-white-rgb: 255, 255, 255;
+  --sp-black: #000;
+  --sp-black-rgb: 0, 0, 0;
+  --sp-secondary: #6c757d;
+  --sp-secondary-rgb: 108, 117, 125;
+  --sp-secondary-hover: #5a6268;
+  --sp-secondary-hover-border: #545b62;
+  --sp-success: #28a745;
+  --sp-success-rgb: 40, 167, 69;
+  --sp-info: #17a2b8;
+  --sp-info-rgb: 23, 162, 184;
+  --sp-warning: #ffc107;
+  --sp-warning-rgb: 255, 193, 7;
+  --sp-danger: #dc3545;
+  --sp-danger-rgb: 220, 53, 69;
+  --sp-dark: #343a40;
+  --sp-dark-rgb: 52, 58, 64;
+  --sp-light: #f8f9fa;
+  --sp-light-rgb: 248, 249, 250;
+  --sp-on-warning: #1f2d3d;
+
+  /* Difficulty: mirrored in samples/design_tokens.py */
+  --sp-difficulty-easy: #17a2b8;
+  --sp-difficulty-medium: #ffa726;
+  --sp-difficulty-advanced: #ef5350;
+  --sp-difficulty-expert: #111111;
+  --sp-difficulty-unknown: #6c757d;
+  --sp-difficulty-fg: var(--sp-white);
+  --sp-difficulty-expert-text: var(--sp-difficulty-expert);
+
+  /* Ranking medals */
+  --sp-medal-gold: #FFD700;
+  --sp-medal-gold-fg: var(--sp-black);
+  --sp-medal-silver: #C0C0C0;
+  --sp-medal-silver-fg: var(--sp-black);
+  --sp-medal-bronze: #CD7F32;
+  --sp-medal-bronze-fg: var(--sp-white);
+
+  /* Badge tones */
+  --sp-badge-fg: var(--sp-white);
+  --sp-badge-reference: var(--sp-info);
+  --sp-badge-count: var(--sp-info);
+  /* Hidden and emphasis badges reuse the difficulty palette */
+  --sp-badge-hidden: var(--sp-difficulty-medium);
+  --sp-badge-emphasis: var(--sp-difficulty-advanced);
+  --sp-badge-brand: var(--sp-brand);
+  --sp-badge-hover-overlay: rgba(255, 255, 255, 0.25);
+
+  /* Tag badges: hue is computed per tag name in app.js */
+  --sp-tag-saturation: 65%;
+  --sp-tag-lightness: 50%;
+  --sp-tag-fg: var(--sp-white);
+
+  /* Solution type icons */
+  --sp-solution-icon-blog: var(--sp-info);
+  --sp-solution-icon-paper: var(--sp-secondary);
+  --sp-solution-icon-video: var(--sp-danger);
+  --sp-solution-icon-onsite: var(--sp-success);
+  --sp-solution-icon-link: var(--sp-accent);
+  --sp-like-active: var(--sp-danger);
+
+  /* Buttons */
+  --sp-btn-danger: var(--sp-danger);
+  --sp-btn-danger-hover: #c82333;
+  --sp-btn-danger-hover-border: #bd2130;
+  --sp-btn-info: var(--sp-info);
+  --sp-btn-info-hover: #138496;
+  --sp-btn-info-hover-border: #117a8b;
+  --sp-btn-warning: var(--sp-warning);
+  --sp-btn-warning-hover: #e0a800;
+  --sp-btn-warning-hover-border: #d39e00;
+  --sp-btn-warning-fg: var(--sp-on-warning);
+  --sp-btn-outline-accent: var(--sp-accent);
+
+  /* ------------------------------------------------------------------ */
+  /* Theme-dependent (light values)                                      */
+  /* ------------------------------------------------------------------ */
+  --sp-page-bg: #f4f6f9;
+  --sp-surface: var(--sp-white);
+  --sp-surface-rgb: var(--sp-white-rgb);
+  --sp-surface-raised: var(--sp-surface);
+  --sp-surface-muted: var(--sp-light);
+  --sp-surface-muted-rgb: var(--sp-light-rgb);
+  --sp-surface-sunken: var(--sp-light);
+
+  --sp-text: #212529;
+  --sp-text-rgb: 33, 37, 41;
+  --sp-text-emphasis: var(--sp-black);
+  --sp-text-emphasis-rgb: var(--sp-black-rgb);
+  --sp-text-strong: var(--sp-dark);
+  --sp-text-strong-hover: #121416;
+  --sp-text-muted: var(--sp-secondary);
+  --sp-text-muted-rgb: var(--sp-secondary-rgb);
+  --sp-heading: inherit;
+
+  --sp-border-color: #dee2e6;
+  --sp-border-translucent: rgba(0, 0, 0, 0.125);
+  --sp-hr-color: rgba(0, 0, 0, 0.1);
+
+  --sp-link: var(--sp-brand);
+  --sp-link-rgb: var(--sp-brand-rgb);
+  --sp-link-hover: var(--sp-brand-hover);
+  --sp-link-hover-rgb: var(--sp-brand-hover-rgb);
+  --sp-code-fg: #e83e8c;
+
+  /* App shell */
+  --sp-navbar-bg: var(--sp-dark);
+  --sp-navbar-border: #4b545c;
+  --sp-navbar-link: rgba(255, 255, 255, 0.75);
+  --sp-navbar-link-hover: var(--sp-white);
+  --sp-navbar-brand: var(--sp-white);
+  --sp-footer-bg: var(--sp-dark);
+  --sp-footer-border: var(--sp-brand-line);
+  --sp-footer-link: rgba(255, 255, 255, 0.85);
+  --sp-footer-link-hover: var(--sp-brand-hover);
+
+  /* Cards */
+  --sp-card-border-width: 0;
+  --sp-card-border-color: transparent;
+  --sp-card-header-bg: transparent;
+  --sp-card-header-border: var(--sp-border-translucent);
+  --sp-card-footer-bg: rgba(0, 0, 0, 0.03);
+  --sp-card-status-fg: var(--sp-white);
+  --sp-card-success-bg: var(--sp-success);
+  --sp-card-danger-bg: var(--sp-danger);
+
+  /* Forms */
+  --sp-input-bg: rgba(0, 0, 0, 0.02);
+  --sp-input-bg-focus: rgba(0, 0, 0, 0.04);
+  --sp-input-border: #ced4da;
+  --sp-input-border-focus: var(--sp-brand);
+  --sp-input-placeholder: rgba(0, 0, 0, 0.24);
+  --sp-input-fg: var(--sp-text);
+  --sp-option-bg: var(--sp-surface);
+  --sp-autofill-bg: transparent;
+  --sp-autofill-fg: currentcolor;
+  --sp-autofill-shadow: 0 0 0 1000px var(--sp-autofill-bg) inset;
+  --sp-check-checked: var(--sp-accent);
+  --sp-check-bg: var(--sp-surface-raised);
+  --sp-check-border: #adb5bd;
+  --sp-input-group-bg: #e9ecef;
+
+  /* Tables */
+  --sp-table-stripe: rgba(0, 0, 0, 0.03);
+  --sp-table-hover: var(--sp-brand-tint);
+  --sp-table-border: rgba(0, 0, 0, 0.08);
+
+  /* List groups */
+  --sp-list-border: var(--sp-border-translucent);
+  --sp-list-action-fg: #495057;
+  --sp-list-action-hover-bg: var(--sp-light);
+
+  /* Pagination */
+  --sp-page-link-bg: var(--sp-surface);
+  --sp-page-link-fg: #545b62;
+  --sp-page-link-border: var(--sp-border-color);
+  --sp-page-link-hover-bg: var(--sp-brand-tint);
+
+  /* Dropdowns and modals */
+  --sp-dropdown-bg: var(--sp-surface-raised);
+  --sp-dropdown-fg: var(--sp-text);
+  --sp-dropdown-hover-bg: var(--sp-light);
+  --sp-dropdown-hover-fg: #16181b;
+  --sp-dropdown-divider: #e9ecef;
+  --sp-dropdown-border: rgba(0, 0, 0, 0.15);
+  --sp-dropdown-header-fg: var(--sp-secondary);
+  --sp-modal-bg: var(--sp-surface-raised);
+  --sp-modal-border: rgba(0, 0, 0, 0.2);
+  --sp-modal-divider: var(--sp-dropdown-divider);
+
+  /* Alerts (bg / border / text / link) */
+  --sp-alert-link-decoration: underline;
+  --sp-alert-success-bg: var(--sp-success);
+  --sp-alert-success-border: #23923d;
+  --sp-alert-success-fg: var(--sp-white);
+  --sp-alert-info-bg: #d1ecf1;
+  --sp-alert-info-border: #bee5eb;
+  --sp-alert-info-fg: #333;
+  --sp-alert-info-link: var(--sp-brand);
+  --sp-alert-info-link-hover: var(--sp-accent);
+  --sp-alert-warning-bg: var(--sp-warning);
+  --sp-alert-warning-border: #edb100;
+  --sp-alert-warning-fg: var(--sp-on-warning);
+  --sp-alert-danger-bg: var(--sp-danger);
+  --sp-alert-danger-border: #d32535;
+  --sp-alert-danger-fg: var(--sp-white);
+  --sp-alert-link: var(--sp-white);
+
+  /* Callouts */
+  --sp-callout-bg: var(--sp-surface);
+  --sp-callout-info: #117a8b;
+  --sp-callout-warning: #d39e00;
+  --sp-callout-link: #495057;
+
+  /* Buttons (theme-dependent) */
+  --sp-btn-plain-bg: var(--sp-light);
+  --sp-btn-plain-border: #ddd;
+  --sp-btn-plain-fg: #444;
+  --sp-btn-plain-hover-bg: #e9ecef;
+  --sp-btn-plain-hover-fg: #2b2b2b;
+
+  /* Prose (rendered markdown) */
+  --sp-prose-code-bg: #f5f5f5;
+  --sp-prose-code-fg: var(--sp-code-fg);
+  --sp-prose-pre-bg: #f8f8f8;
+  --sp-prose-pre-fg: inherit;
+  --sp-prose-table-border: var(--sp-input-border);
+  --sp-prose-th-bg: rgba(0, 0, 0, 0.05);
+  --sp-prose-stripe: rgba(0, 0, 0, 0.02);
+  --sp-prose-blockquote-border: var(--sp-brand);
+  --sp-prose-blockquote-bg: var(--sp-surface);
+  --sp-prose-blockquote-fg: var(--sp-text-muted);
+  --sp-prose-link-underline: var(--sp-brand-line);
+  --sp-prose-link-underline-hover: var(--sp-accent);
+  --sp-prose-del-opacity: 0.7;
+
+  /* Spoilers */
+  --sp-spoiler-bg: var(--sp-light);
+  --sp-spoiler-border: #dee2e6;
+  --sp-spoiler-overlay-bg: var(--sp-secondary);
+  --sp-spoiler-overlay-fg: var(--sp-white);
+
+  /* Solutions, comments, mentions */
+  --sp-solution-row-even: rgba(0, 0, 0, 0.02);
+  --sp-solution-row-hover: rgba(0, 0, 0, 0.05);
+  --sp-solution-highlight-bg: var(--sp-brand-line);
+  --sp-highlight-start: rgba(var(--sp-danger-rgb), 0.3);
+  --sp-highlight-mid: rgba(var(--sp-danger-rgb), 0.2);
+  --sp-highlight-end: rgba(var(--sp-danger-rgb), 0);
+  --sp-highlight-glow: 0 0 10px rgba(var(--sp-danger-rgb), 0.5);
+  --sp-comment-border: var(--sp-accent);
+  --sp-comment-highlight-bg: rgba(var(--sp-danger-rgb), 0.1);
+  --sp-comment-highlight-border: var(--sp-danger);
+  --sp-comment-preview-bg: var(--sp-light);
+  --sp-mention-link: var(--sp-accent);
+  --sp-mention-link-hover: var(--sp-accent-hover);
+  --sp-autocomplete-bg: var(--sp-surface-raised);
+  --sp-autocomplete-border: #ced4da;
+  --sp-autocomplete-hover: var(--sp-light);
+
+  /* Form widgets */
+  --sp-sha-readonly-bg: var(--sp-light);
+  --sp-sha-readonly-fg: #212529;
+  --sp-sha-valid-bg: #d4edda;
+  --sp-sha-valid-border: #2872a7;
+  --sp-sha-valid-fg: #212529;
+  --sp-image-bg: var(--sp-surface-sunken);
+  --sp-dropzone-border: var(--sp-input-border);
+
+  /* Articles */
+  --sp-task-ref-bg: #f0f0f0;
+  --sp-task-ref-border: var(--sp-danger);
+
+  /* Markdown editor */
+  --sp-kbd-bg: #f7f7f7;
+  --sp-kbd-border: #ccc;
+  --sp-kbd-fg: #333;
+  --sp-kbd-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 0 0 2px #fff inset;
+  --sp-kbd-text-shadow: 0 1px 0 #fff;
+  --sp-editor-help-pre-bg: rgba(0, 0, 0, 0.05);
+  --sp-editor-pane-bg: var(--sp-surface-sunken);
+
+  /* Solutions showcase */
+  --sp-placeholder-bg: var(--sp-dark);
+  --sp-placeholder-gradient: linear-gradient(180deg, #52585d, #343a40);
+  --sp-placeholder-fg: var(--sp-white);
+  --sp-showcase-accent: var(--sp-danger);
+  --sp-showcase-title: var(--sp-dark);
+  --sp-showcase-max: 1400px;
+
+  /* Theme toggle icons and labels */
+  --sp-when-light-display: inline-block;
+  --sp-when-dark-display: none;
+}
+
+/* ==================================================================== */
+/* Dark theme: only what differs from :root                              */
+/* ==================================================================== */
+[data-bs-theme="dark"] {
+  --sp-difficulty-expert-text: #ced4da;
+  --sp-solution-icon-paper: #fff;
+  --sp-badge-hover-overlay: rgba(255, 255, 255, 0.15);
+  --sp-shadow-image-hover: 0 4px 12px var(--sp-brand-line);
+
+  --sp-page-bg: #141414;
+  --sp-surface: #2a2a2a;
+  --sp-surface-rgb: 42, 42, 42;
+  --sp-surface-raised: #343a40;
+  --sp-surface-muted: #454d55;
+  --sp-surface-muted-rgb: 69, 77, 85;
+  --sp-surface-sunken: #1a1a1a;
+
+  --sp-text: #fff;
+  --sp-text-rgb: 255, 255, 255;
+  --sp-text-emphasis: #fff;
+  --sp-text-emphasis-rgb: 255, 255, 255;
+  --sp-text-strong: #ced4da;
+  --sp-text-strong-hover: var(--sp-brand);
+  --sp-text-muted: #adb5bd;
+  --sp-text-muted-rgb: 173, 181, 189;
+
+  --sp-border-color: rgba(255, 255, 255, 0.1);
+  --sp-border-translucent: var(--sp-border-color);
+  --sp-hr-color: var(--sp-border-color);
+
+  --sp-link-hover: #3395ff;
+  --sp-link-hover-rgb: 51, 149, 255;
+
+  --sp-navbar-bg: #1e1e1e;
+  --sp-navbar-border: var(--sp-brand-line);
+  --sp-footer-border: #4b545c;
+
+  --sp-card-border-width: 1px;
+  --sp-card-border-color: var(--sp-border-color);
+  --sp-card-header-bg: rgba(0, 0, 0, 0.2);
+  --sp-card-header-border: var(--sp-brand-line);
+  --sp-card-success-bg: rgba(0, 0, 0, 0.2);
+  --sp-card-danger-bg: rgba(0, 0, 0, 0.2);
+
+  --sp-input-bg: rgba(255, 255, 255, 0.05);
+  --sp-input-bg-focus: rgba(255, 255, 255, 0.08);
+  --sp-input-border: var(--sp-border-color);
+  --sp-input-placeholder: rgba(255, 255, 255, 0.24);
+  --sp-autofill-bg: var(--sp-surface);
+  --sp-autofill-fg: #fff;
+  --sp-check-border: var(--sp-secondary);
+  --sp-input-group-bg: var(--sp-surface-raised);
+
+  --sp-table-stripe: rgba(255, 255, 255, 0.03);
+  --sp-table-border: rgba(255, 255, 255, 0.08);
+
+  --sp-list-action-fg: var(--sp-text);
+  --sp-list-action-hover-bg: var(--sp-brand-tint);
+
+  --sp-page-link-fg: var(--sp-text);
+  --sp-page-link-hover-bg: var(--sp-brand-tint-strong);
+
+  --sp-dropdown-hover-bg: #3f474e;
+  --sp-dropdown-hover-fg: var(--sp-text);
+  --sp-dropdown-divider: var(--sp-secondary);
+  --sp-dropdown-header-fg: var(--sp-text);
+
+  --sp-alert-success-bg: #00bc8c;
+  --sp-alert-success-border: #00a379;
+  --sp-alert-info-bg: rgba(57, 92, 230, 0.437);
+  --sp-alert-info-border: rgba(57, 69, 230, 0.4);
+  --sp-alert-info-fg: #fff;
+  --sp-alert-info-link: #fff;
+  --sp-alert-info-link-hover: #000;
+  --sp-alert-warning-bg: #f39c12;
+  --sp-alert-warning-border: #e08e0b;
+  --sp-alert-danger-bg: #e74c3c;
+  --sp-alert-danger-border: #e43725;
+
+  --sp-callout-bg: #3f474e;
+  --sp-callout-info: #5faee3;
+  --sp-callout-warning: #f5b043;
+  --sp-callout-link: #ced4da;
+
+  --sp-btn-danger: #e74c3c;
+  --sp-btn-danger-hover: #e12e1c;
+  --sp-btn-danger-hover-border: #d62c1a;
+  --sp-btn-info: #3498db;
+  --sp-btn-info-hover: #2384c6;
+  --sp-btn-info-hover-border: #217dbb;
+  --sp-btn-warning: #f39c12;
+  --sp-btn-warning-hover: #d4860b;
+  --sp-btn-warning-hover-border: #c87f0a;
+  --sp-btn-outline-accent: #4a9eff;
+  --sp-btn-plain-bg: #3a4047;
+  --sp-btn-plain-border: var(--sp-secondary);
+  --sp-btn-plain-fg: var(--sp-text);
+  --sp-btn-plain-hover-bg: #3f474e;
+  --sp-btn-plain-hover-fg: #dee2e6;
+
+  --sp-prose-code-bg: #000;
+  --sp-prose-code-fg: #ffd700;
+  --sp-prose-pre-bg: #000;
+  --sp-prose-pre-fg: #ffd700;
+  --sp-prose-th-bg: rgba(255, 255, 255, 0.05);
+  --sp-prose-stripe: rgba(255, 255, 255, 0.02);
+  --sp-prose-blockquote-bg: #3f474e;
+
+  --sp-spoiler-bg: var(--sp-brand-tint);
+  --sp-spoiler-border: var(--sp-brand-line);
+  --sp-spoiler-overlay-bg: rgba(0, 0, 0, 0.6);
+  --sp-spoiler-overlay-fg: var(--sp-brand);
+
+  --sp-solution-row-even: rgba(255, 255, 255, 0.02);
+  --sp-solution-row-hover: rgba(255, 255, 255, 0.05);
+  --sp-solution-highlight-bg: rgba(var(--sp-brand-rgb), 0.4);
+  --sp-comment-highlight-bg: rgba(var(--sp-danger-rgb), 0.15);
+  --sp-comment-preview-bg: #3f474e;
+  --sp-mention-link: #4dabf7;
+  --sp-mention-link-hover: #74c0fc;
+  --sp-autocomplete-border: #495057;
+  --sp-autocomplete-hover: #495057;
+
+  --sp-sha-readonly-bg: #482d2d;
+  --sp-sha-readonly-fg: #c0a0a0;
+  --sp-sha-valid-bg: #1e3c46;
+  --sp-sha-valid-border: #2887a7;
+  --sp-sha-valid-fg: #9ae6e0;
+
+  --sp-task-ref-bg: rgba(255, 255, 255, 0.05);
+  --sp-task-ref-border: #17a2b8;
+
+  --sp-kbd-bg: #3a3a3a;
+  --sp-kbd-border: #555;
+  --sp-kbd-fg: #eee;
+  --sp-kbd-shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 0 0 2px #2a2a2a inset;
+  --sp-kbd-text-shadow: none;
+  --sp-editor-help-pre-bg: rgba(255, 255, 255, 0.05);
+
+  --sp-showcase-title: var(--sp-text);
+
+  --sp-when-light-display: none;
+  --sp-when-dark-display: inline-block;
+}

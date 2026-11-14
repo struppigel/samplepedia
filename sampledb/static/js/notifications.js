@@ -3,6 +3,8 @@
  * - Polls for unread notification count every 60 seconds
  * - Updates bell icon badge
  * - Loads notifications into dropdown when clicked
+ * URLs come from the bell (base.html): data-dropdown-url and data-unread-count-url;
+ * each dropdown item links to the read_url the server sends with it.
  */
 
 (function() {
@@ -11,6 +13,12 @@
     const POLL_INTERVAL = 60000; // 60 seconds
     let pollTimer = null;
     let dropdownLoaded = false;
+
+    /** An endpoint URL from the bell's data-* attribute (rendered with {% url %} in base.html) */
+    function endpointUrl(attribute) {
+        const bell = document.getElementById('notificationBell');
+        return bell ? bell.dataset[attribute] : null;
+    }
     
     /**
      * Update the notification badge with current count
@@ -21,12 +29,8 @@
         const pluralSpan = document.getElementById('notificationPlural');
         
         if (badge && countSpan) {
-            if (count > 0) {
-                badge.textContent = count;
-                badge.style.display = 'inline-block';
-            } else {
-                badge.style.display = 'none';
-            }
+            badge.textContent = count;
+            badge.hidden = !(count > 0);
             
             countSpan.textContent = count;
             if (pluralSpan) {
@@ -39,8 +43,9 @@
      * Poll the server for unread notification count
      */
     function pollNotificationCount() {
-        fetch('/notifications/unread-count/')
-            .then(response => response.json())
+        const url = endpointUrl('unreadCountUrl');
+        if (!url) return;
+        window.sp.fetchJSON(url)
             .then(data => {
                 updateBadge(data.unread_count);
             })
@@ -58,10 +63,10 @@
         }
         
         const listContainer = document.getElementById('notificationList');
-        if (!listContainer) return;
+        const url = endpointUrl('dropdownUrl');
+        if (!listContainer || !url) return;
         
-        fetch('/notifications/dropdown/')
-            .then(response => response.json())
+        window.sp.fetchJSON(url)
             .then(data => {
                 dropdownLoaded = true;
                 
@@ -72,24 +77,19 @@
                         </div>
                     `;
                 } else {
+                    const escapeHtml = window.sp.escapeHtml;
                     let html = '';
                     data.notifications.forEach(notification => {
                         const timeAgo = formatTimeAgo(new Date(notification.timestamp));
-                        let icon = '';
-                        
-                        if (notification.description.includes('liked')) {
-                            icon = '<i class="fas fa-heart text-danger mr-2"></i>';
-                        } else if (notification.description.includes('commented')) {
-                            icon = '<i class="fas fa-comment text-info mr-2"></i>';
-                        } else if (notification.description.includes('solution')) {
-                            icon = '<i class="fas fa-lightbulb text-warning mr-2"></i>';
-                        }
-                        
+                        // The server picks the icon from the notification's verb
+                        const icon = `<i class="${escapeHtml(notification.icon)} me-2"></i>`;
+
+                        // Descriptions contain user-provided text (usernames, titles): always escape
                         html += `
-                            <a href="/notifications/${notification.id}/read/" class="dropdown-item">
+                            <a href="${escapeHtml(notification.read_url)}" class="dropdown-item">
                                 ${icon}
-                                <span>${notification.description}</span>
-                                ${notification.sha256 ? `<span class="text-muted small d-block">[SHA256: ${notification.sha256}...]</span>` : ''}
+                                <span>${escapeHtml(notification.description)}</span>
+                                ${notification.sha256 ? `<span class="text-muted small d-block">[SHA256: ${escapeHtml(notification.sha256)}...]</span>` : ''}
                                 <span class="text-muted small d-block">
                                     <i class="far fa-clock"></i> ${timeAgo}
                                 </span>
@@ -144,20 +144,14 @@
         // Start polling for notification count
         pollTimer = setInterval(pollNotificationCount, POLL_INTERVAL);
         
-        // Load notifications when dropdown is clicked
+        // Load notifications when dropdown is clicked (kept loaded afterwards)
         const notificationBell = document.getElementById('notificationBell');
         if (notificationBell) {
             notificationBell.addEventListener('click', function(e) {
                 loadNotifications();
             });
         }
-        
-        // Reset dropdown loaded flag when dropdown is closed
-        $('#notificationDropdown').parent().on('hide.bs.dropdown', function() {
-            // Don't reset - keep loaded for better UX
-            // dropdownLoaded = false;
-        });
-        
+
         // Do an initial poll after 5 seconds
         setTimeout(pollNotificationCount, 5000);
     }

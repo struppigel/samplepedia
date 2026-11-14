@@ -12,252 +12,182 @@ This test suite covers:
 8. Permission-based submission rules
 """
 
-from django.test import TestCase, Client
-from django.contrib.auth.models import User, Group, Permission
 from django.urls import reverse
-from django.db import IntegrityError
-from samples.models import AnalysisTask, Solution, SampleImage, SolutionType, Difficulty, Platform
+
 from samples.forms import AnalysisTaskForm
-from cloudinary.models import CloudinaryResource
+from samples.models import AnalysisTask, Difficulty, Platform, Solution
+from samples.tests.base import SampleTestCase
+from samples.tests.factories import make_staff, make_task, make_user
+
+# A complete new-task submission without a reference solution
+FORM_DATA = {
+    'sha256': 'a' * 64,
+    'download_link': 'https://bazaar.abuse.ch/sample/abcd1234/',
+    'description': 'Test description',
+    'goal': 'Test goal',
+    'difficulty': Difficulty.EASY,
+    'platform': Platform.WINDOWS,
+    'tags': 'malware, test',
+    'tools': 'ghidra',
+}
+
+# A valid external reference solution
+BLOG_REFERENCE = {
+    'reference_solution_title': 'My Solution',
+    'reference_solution_type': 'blog',
+    'reference_solution_url': 'https://example.com/writeup',
+}
 
 
-class AnalysisTaskFormTestCase(TestCase):
+def detail_url(task):
+    return reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id})
+
+
+def edit_url(task):
+    return reverse('edit_task', kwargs={'sha256': task.sha256, 'task_id': task.id})
+
+
+class AnalysisTaskFormTestCase(SampleTestCase):
     """Test the AnalysisTaskForm validation logic"""
-    
-    def setUp(self):
-        """Create test users"""
-        self.regular_user = User.objects.create_user(
-            username='regular',
-            email='regular@test.com',
-            password='testpass123'
-        )
-        self.staff_user = User.objects.create_user(
-            username='staff',
-            email='staff@test.com',
-            password='testpass123',
-            is_staff=True
-        )
-    
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.regular_user = make_user()
+        cls.staff_user = make_staff()
+
+    def make_form(self, user, **fields):
+        """A new-task form for FORM_DATA with the given fields added or replaced"""
+        return AnalysisTaskForm(data={**FORM_DATA, **fields}, user=user, is_edit=False)
+
     def test_form_requires_core_fields(self):
         """Core fields should always be required"""
         form = AnalysisTaskForm(data={}, user=self.regular_user)
         self.assertFalse(form.is_valid())
-        
+
         required_fields = ['sha256', 'download_link', 'description', 'goal', 'difficulty', 'tags', 'tools']
         for field in required_fields:
             self.assertIn(field, form.errors)
-    
+
     def test_form_requires_reference_solution_for_regular_users(self):
         """Regular users must provide a reference solution when creating tasks"""
-        form_data = {
-            'sha256': 'a' * 64,
-            'download_link': 'https://bazaar.abuse.ch/sample/abcd1234/',
-            'description': 'Test description',
-            'goal': 'Test goal',
-            'difficulty': Difficulty.EASY,
-            'platform': Platform.WINDOWS,
-            'tags': 'malware, test',
-            'tools': 'ghidra',
-        }
-        
-        form = AnalysisTaskForm(data=form_data, user=self.regular_user, is_edit=False)
+        form = self.make_form(self.regular_user)
         self.assertFalse(form.is_valid())
         self.assertIn('You must provide a reference solution', str(form.errors))
-    
+
     def test_form_allows_no_reference_solution_for_staff(self):
         """Staff users can submit tasks without reference solutions"""
-        form_data = {
-            'sha256': 'a' * 64,
-            'download_link': 'https://bazaar.abuse.ch/sample/abcd1234/',
-            'description': 'Test description',
-            'goal': 'Test goal',
-            'difficulty': Difficulty.EASY,
-            'platform': Platform.WINDOWS,
-            'tags': 'malware, test',
-            'tools': 'ghidra',
-        }
-        
-        form = AnalysisTaskForm(data=form_data, user=self.staff_user, is_edit=False)
+        form = self.make_form(self.staff_user)
         self.assertTrue(form.is_valid())
-    
+
     def test_form_validates_onsite_solution_has_content(self):
         """Onsite reference solutions must have content"""
-        form_data = {
-            'sha256': 'a' * 64,
-            'download_link': 'https://bazaar.abuse.ch/sample/abcd1234/',
-            'description': 'Test description',
-            'goal': 'Test goal',
-            'difficulty': Difficulty.EASY,
-            'platform': Platform.WINDOWS,
-            'tags': 'malware, test',
-            'tools': 'ghidra',
-            'reference_solution_title': 'My Solution',
-            'reference_solution_type': 'onsite',
-            # Missing: reference_solution_content
-        }
-        
-        form = AnalysisTaskForm(data=form_data, user=self.regular_user, is_edit=False)
+        # Missing: reference_solution_content
+        form = self.make_form(
+            self.regular_user,
+            reference_solution_title='My Solution',
+            reference_solution_type='onsite',
+        )
         self.assertFalse(form.is_valid())
         self.assertIn('On-site reference solutions must have content', str(form.errors))
-    
+
     def test_form_validates_external_solution_has_url(self):
         """External reference solutions must have a URL"""
-        form_data = {
-            'sha256': 'a' * 64,
-            'download_link': 'https://bazaar.abuse.ch/sample/abcd1234/',
-            'description': 'Test description',
-            'goal': 'Test goal',
-            'difficulty': Difficulty.EASY,
-            'platform': Platform.WINDOWS,
-            'tags': 'malware, test',
-            'tools': 'ghidra',
-            'reference_solution_title': 'My Blog Post',
-            'reference_solution_type': 'blog',
-            # Missing: reference_solution_url
-        }
-        
-        form = AnalysisTaskForm(data=form_data, user=self.regular_user, is_edit=False)
+        # Missing: reference_solution_url
+        form = self.make_form(
+            self.regular_user,
+            reference_solution_title='My Blog Post',
+            reference_solution_type='blog',
+        )
         self.assertFalse(form.is_valid())
         self.assertIn('External reference solutions', str(form.errors))
-    
+
     def test_form_validates_malwarebazaar_url(self):
         """Form should accept MalwareBazaar URLs"""
-        form_data = {
-            'sha256': 'a' * 64,
-            'download_link': 'https://bazaar.abuse.ch/sample/abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234/',
-            'description': 'Test description',
-            'goal': 'Test goal',
-            'difficulty': Difficulty.EASY,
-            'platform': Platform.WINDOWS,
-            'tags': 'malware, test',
-            'tools': 'ghidra',
-            'reference_solution_title': 'My Solution',
-            'reference_solution_type': 'blog',
-            'reference_solution_url': 'https://example.com/writeup',
-        }
-        
-        form = AnalysisTaskForm(data=form_data, user=self.regular_user, is_edit=False)
+        form = self.make_form(
+            self.regular_user,
+            download_link='https://bazaar.abuse.ch/sample/abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234/',
+            **BLOG_REFERENCE,
+        )
         self.assertTrue(form.is_valid())
-    
+
     def test_form_validates_malshare_url(self):
         """Form should accept MalShare URLs"""
-        form_data = {
-            'sha256': 'a' * 64,
-            'download_link': 'https://malshare.com/sample.php?action=detail&hash=' + ('a' * 64),
-            'description': 'Test description',
-            'goal': 'Test goal',
-            'difficulty': Difficulty.EASY,
-            'platform': Platform.WINDOWS,
-            'tags': 'malware, test',
-            'tools': 'ghidra',
-            'reference_solution_title': 'My Solution',
-            'reference_solution_type': 'blog',
-            'reference_solution_url': 'https://example.com/writeup',
-        }
-        
-        form = AnalysisTaskForm(data=form_data, user=self.regular_user, is_edit=False)
+        form = self.make_form(
+            self.regular_user,
+            download_link='https://malshare.com/sample.php?action=detail&hash=' + ('a' * 64),
+            **BLOG_REFERENCE,
+        )
         self.assertTrue(form.is_valid())
-    
+
     def test_form_validates_malwarebazaar_download_url(self):
         """Form should accept MalwareBazaar download URLs (both /sample/ and /download/ paths)"""
-        # Test with /download/ path
-        form_data = {
-            'sha256': 'c' * 64,
-            'download_link': 'https://bazaar.abuse.ch/download/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
-            'description': 'Test description',
-            'goal': 'Test goal',
-            'difficulty': Difficulty.EASY,
-            'platform': Platform.WINDOWS,
-            'tags': 'malware, test',
-            'tools': 'ghidra',
-            'reference_solution_title': 'My Solution',
-            'reference_solution_type': 'blog',
-            'reference_solution_url': 'https://example.com/writeup',
-        }
-        
-        form = AnalysisTaskForm(data=form_data, user=self.regular_user, is_edit=False)
+        sha256 = 'c' * 64
+
+        form = self.make_form(
+            self.regular_user,
+            sha256=sha256,
+            download_link=f'https://bazaar.abuse.ch/download/{sha256}',
+            **BLOG_REFERENCE,
+        )
         self.assertTrue(form.is_valid())
-        
-        # Test with /sample/ path (already tested above, but verify explicitly here)
-        form_data['download_link'] = 'https://bazaar.abuse.ch/sample/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc/'
-        form = AnalysisTaskForm(data=form_data, user=self.regular_user, is_edit=False)
+
+        form = self.make_form(
+            self.regular_user,
+            sha256=sha256,
+            download_link=f'https://bazaar.abuse.ch/sample/{sha256}/',
+            **BLOG_REFERENCE,
+        )
         self.assertTrue(form.is_valid())
-    
+
     def test_form_rejects_invalid_download_urls_for_regular_users(self):
         """Regular users should not be able to use arbitrary download URLs"""
-        form_data = {
-            'sha256': 'a' * 64,
-            'download_link': 'https://example.com/malware.exe',
-            'description': 'Test description',
-            'goal': 'Test goal',
-            'difficulty': Difficulty.EASY,
-            'platform': Platform.WINDOWS,
-            'tags': 'malware, test',
-            'tools': 'ghidra',
-            'reference_solution_title': 'My Solution',
-            'reference_solution_type': 'blog',
-            'reference_solution_url': 'https://example.com/writeup',
-        }
-        
-        form = AnalysisTaskForm(data=form_data, user=self.regular_user, is_edit=False)
+        form = self.make_form(
+            self.regular_user,
+            download_link='https://example.com/malware.exe',
+            **BLOG_REFERENCE,
+        )
         self.assertFalse(form.is_valid())
         self.assertIn('download_link', form.errors)
         self.assertIn('MalwareBazaar', str(form.errors['download_link']))
-    
+
     def test_form_allows_any_url_for_staff(self):
         """Staff users can use any download URL"""
-        form_data = {
-            'sha256': 'a' * 64,
-            'download_link': 'https://example.com/malware.exe',
-            'description': 'Test description',
-            'goal': 'Test goal',
-            'difficulty': Difficulty.EASY,
-            'platform': Platform.WINDOWS,
-            'tags': 'malware, test',
-            'tools': 'ghidra',
-        }
-        
-        form = AnalysisTaskForm(data=form_data, user=self.staff_user, is_edit=False)
+        form = self.make_form(self.staff_user, download_link='https://example.com/malware.exe')
         self.assertTrue(form.is_valid())
 
 
-class TaskSubmissionViewTestCase(TestCase):
+class TaskSubmissionViewTestCase(SampleTestCase):
     """Test the submit_task view and task creation flow"""
-    
-    def setUp(self):
-        """Create test users and client"""
-        self.client = Client()
-        self.regular_user = User.objects.create_user(
-            username='regular',
-            email='regular@test.com',
-            password='testpass123'
-        )
-        self.staff_user = User.objects.create_user(
-            username='staff',
-            email='staff@test.com',
-            password='testpass123',
-            is_staff=True
-        )
-    
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.regular_user = make_user()
+        cls.staff_user = make_staff()
+
+    def assert_task_created(self, response, sha256):
+        """The task exists and the response redirects to its detail page. Returns the task."""
+        task = AnalysisTask.objects.filter(sha256=sha256).first()
+        self.assertIsNotNone(task, f"Task was not created (response status {response.status_code})")
+        self.assertRedirects(response, detail_url(task), fetch_redirect_response=False)
+        return task
+
     def test_submit_task_requires_login(self):
         """Submitting a task should require authentication"""
         response = self.client.get(reverse('submit_task'))
-        # assertRedirects handles both 301 and 302
         self.assertRedirects(response, '/login/?next=/submit/', fetch_redirect_response=False)
-    
+
     def test_submit_task_get_renders_form(self):
         """GET request should render the submission form"""
-        self.client.login(username='regular', password='testpass123')
+        self.login_as(self.regular_user)
         response = self.client.get(reverse('submit_task'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'samples/submit_task.html')
-        if response.context:
-            self.assertIn('form', response.context)
-    
+        self.assertIn('form', response.context)
+
     def test_regular_user_can_submit_task_with_reference_solution(self):
         """Regular users should be able to submit tasks with reference solutions"""
-        self.client.login(username='regular', password='testpass123')
-        
+        self.login_as(self.regular_user)
+
         post_data = {
             'sha256': 'b' * 64,
             'download_link': 'https://bazaar.abuse.ch/sample/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/',
@@ -271,37 +201,24 @@ class TaskSubmissionViewTestCase(TestCase):
             'reference_solution_type': 'blog',
             'reference_solution_url': 'https://myblog.com/writeup',
         }
-        
+
         response = self.client.post(reverse('submit_task'), data=post_data)
-        
-        # Verify we have a redirect (task was created successfully)
-        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
-        
-        # Task should be created
-        self.assertTrue(AnalysisTask.objects.filter(sha256='b' * 64).exists(), "Task was not created")
-        task = AnalysisTask.objects.get(sha256='b' * 64)
-        
-        # Verify redirect URL
-        self.assertRedirects(
-            response,
-            reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id}),
-            fetch_redirect_response=False
-        )
+
+        task = self.assert_task_created(response, 'b' * 64)
         self.assertEqual(task.author, self.regular_user)
         self.assertEqual(task.goal, 'Find the C2 server')
         self.assertEqual(task.difficulty, Difficulty.EASY)
-        
-        # Reference solution should be created
+
         solution = Solution.objects.get(analysis_task=task)
         self.assertEqual(solution.title, 'My Writeup')
         self.assertEqual(solution.solution_type, 'blog')
         self.assertEqual(solution.url, 'https://myblog.com/writeup')
         self.assertEqual(solution.author, self.regular_user)
-    
+
     def test_regular_user_can_submit_task_with_onsite_solution(self):
         """Regular users should be able to submit tasks with onsite solutions"""
-        self.client.login(username='regular', password='testpass123')
-        
+        self.login_as(self.regular_user)
+
         post_data = {
             'sha256': 'c' * 64,
             'download_link': 'https://bazaar.abuse.ch/sample/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc/',
@@ -315,33 +232,23 @@ class TaskSubmissionViewTestCase(TestCase):
             'reference_solution_type': 'onsite',
             'reference_solution_content': '# My Analysis\n\nThis is my detailed analysis...',
         }
-        
+
         response = self.client.post(reverse('submit_task'), data=post_data)
-        
-        # Verify we have a redirect (task was created successfully)
-        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
-        
-        # Task should be created
-        self.assertTrue(AnalysisTask.objects.filter(sha256='c' * 64).exists(), "Task was not created")
-        task = AnalysisTask.objects.get(sha256='c' * 64)
-        
-        # Verify redirect URL
-        self.assertRedirects(
-            response,
-            reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id}),
-            fetch_redirect_response=False
-        )
-        
-        # Reference solution should be created with content
+
+        task = self.assert_task_created(response, 'c' * 64)
+
+        # The text lives in an Article owned by the submitter
         solution = Solution.objects.get(analysis_task=task)
         self.assertEqual(solution.solution_type, 'onsite')
-        self.assertIn('My Analysis', solution.content)
+        self.assertEqual(solution.article.author, self.regular_user)
+        self.assertEqual(solution.article.title, 'My Analysis')
+        self.assertIn('This is my detailed analysis', solution.article.content)
         self.assertIsNone(solution.url)  # Onsite solutions don't have URLs
-    
+
     def test_staff_can_submit_task_without_reference_solution(self):
         """Staff users should be able to submit tasks without reference solutions"""
-        self.client.login(username='staff', password='testpass123')
-        
+        self.login_as(self.staff_user)
+
         post_data = {
             'sha256': 'd' * 64,
             'download_link': 'https://bazaar.abuse.ch/sample/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/',
@@ -352,31 +259,17 @@ class TaskSubmissionViewTestCase(TestCase):
             'tags': 'apt, evasion',
             'tools': 'ida, wireshark',
         }
-        
+
         response = self.client.post(reverse('submit_task'), data=post_data)
-        
-        # Verify we have a redirect (task was created successfully)
-        self.assertIn(response.status_code, [301, 302], f"Expected redirect, got {response.status_code}")
-        
-        # Task should be created
-        self.assertTrue(AnalysisTask.objects.filter(sha256='d' * 64).exists(), "Task was not created")
-        task = AnalysisTask.objects.get(sha256='d' * 64)
-        
-        # Verify redirect URL
-        self.assertRedirects(
-            response,
-            reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id}),
-            fetch_redirect_response=False
-        )
+
+        task = self.assert_task_created(response, 'd' * 64)
         self.assertEqual(task.author, self.staff_user)
-        
-        # No reference solution should exist
         self.assertEqual(Solution.objects.filter(analysis_task=task).count(), 0)
-    
+
     def test_tags_are_normalized_to_lowercase(self):
         """Tags should be converted to lowercase when saving"""
-        self.client.login(username='staff', password='testpass123')
-        
+        self.login_as(self.staff_user)
+
         post_data = {
             'sha256': 'e' * 64,
             'download_link': 'https://bazaar.abuse.ch/sample/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/',
@@ -387,116 +280,58 @@ class TaskSubmissionViewTestCase(TestCase):
             'tags': 'RaNsOmWaRe, APT, C2',
             'tools': 'Ghidra, IDA',
         }
-        
+
         response = self.client.post(reverse('submit_task'), data=post_data)
-        
-        # Task should be created
-        task = AnalysisTask.objects.get(sha256='e' * 64)
-        
-        # Should redirect to task detail page - assertRedirects handles 301 and 302
-        self.assertRedirects(
-            response,
-            reverse('sample_detail', kwargs={'sha256': task.sha256, 'task_id': task.id}),
-            fetch_redirect_response=False
-        )
-        
-        # Tags should be lowercase
+
+        task = self.assert_task_created(response, 'e' * 64)
+
         tag_names = [tag.name for tag in task.tags.all()]
         self.assertIn('ransomware', tag_names)
         self.assertIn('apt', tag_names)
         self.assertIn('c2', tag_names)
-        
-        # Tools should be lowercase
+
         tool_names = [tool.name for tool in task.tools.all()]
         self.assertIn('ghidra', tool_names)
         self.assertIn('ida', tool_names)
 
-class TaskEditPermissionTestCase(TestCase):
+
+class TaskEditPermissionTestCase(SampleTestCase):
     """Test edit permissions for analysis tasks"""
-    
-    def setUp(self):
-        """Create test users and a sample task"""
-        self.client = Client()
-        
-        self.author = User.objects.create_user(
-            username='author',
-            email='author@test.com',
-            password='testpass123'
-        )
-        
-        self.other_user = User.objects.create_user(
-            username='other',
-            email='other@test.com',
-            password='testpass123'
-        )
-        
-        self.staff_user = User.objects.create_user(
-            username='staff',
-            email='staff@test.com',
-            password='testpass123',
-            is_staff=True
-        )
-        
-        # Create a test task
-        self.task = AnalysisTask.objects.create(
-            sha256='9' * 64,
-            download_link='https://bazaar.abuse.ch/sample/test/',
-            description='Test task',
-            goal='Test goal',
-            difficulty=Difficulty.EASY,
-            author=self.author
-        )
-    
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.author = make_user()
+        cls.other_user = make_user()
+        cls.staff_user = make_staff()
+        cls.task = make_task(author=cls.author)
+
     def test_author_can_edit_own_task(self):
         """Authors should be able to edit their own tasks"""
-        self.client.login(username='author', password='testpass123')
-        url = reverse('edit_task', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id})
-        response = self.client.get(url)
+        self.login_as(self.author)
+        response = self.client.get(edit_url(self.task))
         self.assertEqual(response.status_code, 200)
-    
+
     def test_other_user_cannot_edit_task(self):
         """Non-authors should not be able to edit tasks"""
-        self.client.login(username='other', password='testpass123')
-        url = reverse('edit_task', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id})
-        response = self.client.get(url)
-        # assertRedirects handles both 301 and 302
-        self.assertRedirects(response, reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}), fetch_redirect_response=False)
-    
+        self.login_as(self.other_user)
+        response = self.client.get(edit_url(self.task))
+        self.assertRedirects(response, detail_url(self.task), fetch_redirect_response=False)
+
     def test_staff_can_edit_any_task(self):
         """Staff users should be able to edit any task"""
-        self.client.login(username='staff', password='testpass123')
-        url = reverse('edit_task', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id})
-        response = self.client.get(url)
+        self.login_as(self.staff_user)
+        response = self.client.get(edit_url(self.task))
         self.assertEqual(response.status_code, 200)
-    
+
     def test_edit_form_preserves_difficulty(self):
         """Test that edit form preserves the current difficulty value"""
-        # Create a task with ADVANCED difficulty
-        advanced_task = AnalysisTask.objects.create(
-            sha256='a' * 64,
-            download_link='https://bazaar.abuse.ch/sample/advanced/',
-            description='Advanced task',
-            goal='Advanced goal',
-            difficulty=Difficulty.ADVANCED,
-            platform=Platform.WINDOWS,
-            author=self.author
-        )
-        
-        # Login as author
-        self.client.login(username='author', password='testpass123')
-        
-        # Get the edit page
-        url = reverse('edit_task', kwargs={'sha256': advanced_task.sha256, 'task_id': advanced_task.id})
-        response = self.client.get(url)
-        
+        advanced_task = make_task(author=self.author, difficulty=Difficulty.ADVANCED)
+        self.login_as(self.author)
+
+        response = self.client.get(edit_url(advanced_task))
+
         self.assertEqual(response.status_code, 200)
-        
-        # Check that the form has the correct difficulty value selected
         form = response.context['form']
         self.assertEqual(form.instance.difficulty, Difficulty.ADVANCED)
-        
-        # Verify the form field's initial value is ADVANCED, not EASY
+        # The field's initial value is ADVANCED, not the EASY default
         self.assertEqual(form['difficulty'].value(), Difficulty.ADVANCED)
-
-
-# Run tests with: python manage.py test samples.test_task_submission

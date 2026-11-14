@@ -1,0 +1,48 @@
+{% load static %}
+{% comment %}
+Publish-article modal: search an analysis task and attach the article to it.
+Open it with openPublishModal(articleId, articleTitle) from js/publish-article.js, which
+this partial loads itself.
+{% endcomment %}
+<div class="modal fade" id="publishModal" tabindex="-1" role="dialog" aria-labelledby="publishModalLabel" aria-hidden="true"
+     data-search-url="{% url 'search_samples_ajax' %}"
+     data-publish-url="{% url 'publish_article' 0 %}">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="publishModalLabel">Publish Article: <span id="publishArticleTitle"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="sampleSearch">Search for an analysis task:</label>
+          <input type="text"
+                 class="form-control"
+                 id="sampleSearch"
+                 placeholder="Type SHA256, goal, or description (min 2 characters)"
+                 autocomplete="off">
+          <small class="form-text text-muted">Start typing to search for analysis tasks...</small>
+        </div>
+
+        <div id="searchResults" hidden>
+          <h6 class="mt-3 mb-2">Search Results:</h6>
+          <div id="sampleList" class="list-group" style="max-height: 400px; overflow-y: auto;">
+            <!-- Results will be populated here -->
+          </div>
+        </div>
+
+        <div id="noResults" class="alert alert-info mt-3" hidden>
+          No analysis tasks found matching your search.
+        </div>
+
+        <div id="searchLoading" class="text-center mt-3" hidden>
+          <i class="fas fa-spinner fa-spin"></i> Searching...
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/publish-article.js' %}"></script>

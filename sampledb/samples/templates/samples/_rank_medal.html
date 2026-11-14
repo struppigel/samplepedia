@@ -1,15 +1,7 @@
-{% if rank == 1 %}
-  <span class="badge" style="background-color: #FFD700; color: #000; font-size: {% if size == 'small' %}0.85em{% else %}1.1em{% endif %};">
-    <i class="fas fa-medal"></i> #1
-  </span>
-{% elif rank == 2 %}
-  <span class="badge" style="background-color: #C0C0C0; color: #000; font-size: {% if size == 'small' %}0.85em{% else %}1.1em{% endif %};">
-    <i class="fas fa-medal"></i> #2
-  </span>
-{% elif rank == 3 %}
-  <span class="badge" style="background-color: #CD7F32; color: #fff; font-size: {% if size == 'small' %}0.85em{% else %}1.1em{% endif %};">
-    <i class="fas fa-medal"></i> #3
+{% if rank == 1 or rank == 2 or rank == 3 %}
+  <span class="badge rank-medal rank-medal-{% if rank == 1 %}gold{% elif rank == 2 %}silver{% else %}bronze{% endif %}{% if size == 'small' %} rank-sm{% endif %}">
+    <i class="fas fa-medal"></i> #{{ rank }}
   </span>
 {% elif rank %}
-  <span class="text-muted" style="font-size: {% if size == 'small' %}0.85em{% else %}1em{% endif %};">#{{ rank }}</span>
+  <span class="text-muted rank-number{% if size == 'small' %} rank-sm{% endif %}">#{{ rank }}</span>
 {% endif %}

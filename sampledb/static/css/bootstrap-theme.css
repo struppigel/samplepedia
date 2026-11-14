@@ -1,0 +1,492 @@
+/*
+ * Bootstrap 5.3 theme: maps our design tokens (tokens.css) onto Bootstrap's
+ * own CSS variables, so Bootstrap components and utilities pick up the
+ * Samplepedia look in both themes.
+ *
+ * No raw values here, only var(--sp-*). Must load after bootstrap.min.css:
+ * every rule wins by load order at equal specificity, never by !important.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Root variables (both themes: tokens switch under [data-bs-theme])   */
+/* ------------------------------------------------------------------ */
+:root,
+[data-bs-theme] {
+  --bs-font-sans-serif: var(--sp-font-sans);
+  --bs-font-monospace: var(--sp-font-mono);
+  --bs-body-font-family: var(--sp-font-sans);
+  --bs-body-font-size: var(--sp-fs-base);
+  --bs-body-font-weight: var(--sp-fw-normal);
+  --bs-body-line-height: var(--sp-lh-base);
+  --bs-body-color: var(--sp-text);
+  --bs-body-color-rgb: var(--sp-text-rgb);
+  --bs-body-bg: var(--sp-surface);
+  --bs-body-bg-rgb: var(--sp-surface-rgb);
+
+  --bs-emphasis-color: var(--sp-text-emphasis);
+  --bs-emphasis-color-rgb: var(--sp-text-emphasis-rgb);
+  --bs-secondary-color: var(--sp-text-muted);
+  --bs-secondary-color-rgb: var(--sp-text-muted-rgb);
+  --bs-secondary-bg: var(--sp-input-group-bg);
+  --bs-tertiary-bg: var(--sp-surface-muted);
+  --bs-tertiary-bg-rgb: var(--sp-surface-muted-rgb);
+  --bs-heading-color: var(--sp-heading);
+
+  --bs-link-color: var(--sp-link);
+  --bs-link-color-rgb: var(--sp-link-rgb);
+  --bs-link-hover-color: var(--sp-link-hover);
+  --bs-link-hover-color-rgb: var(--sp-link-hover-rgb);
+  --bs-code-color: var(--sp-code-fg);
+
+  --bs-border-width: var(--sp-border-width);
+  --bs-border-color: var(--sp-border-color);
+  --bs-border-color-translucent: var(--sp-border-translucent);
+  --bs-border-radius: var(--sp-radius);
+  --bs-border-radius-sm: var(--sp-radius-sm);
+  --bs-border-radius-lg: var(--sp-radius-lg);
+  --bs-border-radius-pill: var(--sp-radius-pill);
+
+  /* Palette: Bootstrap 4 colors, used by text-*, bg-*, border-* utilities */
+  --bs-primary: var(--sp-accent);
+  --bs-primary-rgb: var(--sp-accent-rgb);
+  --bs-secondary: var(--sp-secondary);
+  --bs-secondary-rgb: var(--sp-secondary-rgb);
+  --bs-success: var(--sp-success);
+  --bs-success-rgb: var(--sp-success-rgb);
+  --bs-info: var(--sp-info);
+  --bs-info-rgb: var(--sp-info-rgb);
+  --bs-warning: var(--sp-warning);
+  --bs-warning-rgb: var(--sp-warning-rgb);
+  --bs-danger: var(--sp-danger);
+  --bs-danger-rgb: var(--sp-danger-rgb);
+  --bs-dark: var(--sp-dark);
+  --bs-dark-rgb: var(--sp-dark-rgb);
+  --bs-light: var(--sp-light);
+  --bs-light-rgb: var(--sp-light-rgb);
+  --bs-white-rgb: var(--sp-white-rgb);
+  --bs-black-rgb: var(--sp-black-rgb);
+
+  --bs-focus-ring-color: var(--sp-brand-line);
+  --bs-form-valid-color: var(--sp-success);
+  --bs-form-valid-border-color: var(--sp-success);
+  --bs-form-invalid-color: var(--sp-danger);
+  --bs-form-invalid-border-color: var(--sp-danger);
+}
+
+/* ------------------------------------------------------------------ */
+/* Grid: Bootstrap 4 / AdminLTE gutters (15px) and container widths     */
+/* ------------------------------------------------------------------ */
+.container,
+.container-fluid,
+.container-sm,
+.container-md,
+.container-lg,
+.container-xl,
+.container-xxl,
+.row {
+  --bs-gutter-x: var(--sp-gutter-x);
+}
+
+.row.g-0,
+.row.gx-0 {
+  --bs-gutter-x: 0;
+}
+
+@media (min-width: 1400px) {
+  .container,
+  .container-sm,
+  .container-md,
+  .container-lg,
+  .container-xl,
+  .container-xxl {
+    max-width: var(--sp-container-max-xxl);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Buttons                                                             */
+/* ------------------------------------------------------------------ */
+.btn {
+  --bs-btn-focus-box-shadow: var(--sp-focus-ring);
+}
+
+.btn-sm {
+  --bs-btn-border-radius: var(--sp-radius-sm);
+}
+
+.btn-primary {
+  --bs-btn-color: var(--sp-on-brand);
+  --bs-btn-bg: var(--sp-brand);
+  --bs-btn-border-color: var(--sp-brand);
+  --bs-btn-hover-color: var(--sp-on-brand);
+  --bs-btn-hover-bg: var(--sp-brand-hover);
+  --bs-btn-hover-border-color: var(--sp-brand-hover);
+  --bs-btn-focus-shadow-rgb: var(--sp-brand-rgb);
+  --bs-btn-active-color: var(--sp-on-brand);
+  --bs-btn-active-bg: var(--sp-brand-hover);
+  --bs-btn-active-border-color: var(--sp-brand-hover);
+  --bs-btn-disabled-color: var(--sp-on-brand);
+  --bs-btn-disabled-bg: var(--sp-brand);
+  --bs-btn-disabled-border-color: var(--sp-brand);
+}
+
+.btn-secondary {
+  --bs-btn-color: var(--sp-white);
+  --bs-btn-bg: var(--sp-secondary);
+  --bs-btn-border-color: var(--sp-secondary);
+  --bs-btn-hover-color: var(--sp-white);
+  --bs-btn-hover-bg: var(--sp-secondary-hover);
+  --bs-btn-hover-border-color: var(--sp-secondary-hover-border);
+  --bs-btn-focus-shadow-rgb: var(--sp-secondary-rgb);
+  --bs-btn-active-color: var(--sp-white);
+  --bs-btn-active-bg: var(--sp-secondary-hover-border);
+  --bs-btn-active-border-color: var(--sp-secondary-hover-border);
+  --bs-btn-disabled-color: var(--sp-white);
+  --bs-btn-disabled-bg: var(--sp-secondary);
+  --bs-btn-disabled-border-color: var(--sp-secondary);
+}
+
+.btn-danger {
+  --bs-btn-color: var(--sp-white);
+  --bs-btn-bg: var(--sp-btn-danger);
+  --bs-btn-border-color: var(--sp-btn-danger);
+  --bs-btn-hover-color: var(--sp-white);
+  --bs-btn-hover-bg: var(--sp-btn-danger-hover);
+  --bs-btn-hover-border-color: var(--sp-btn-danger-hover-border);
+  --bs-btn-focus-shadow-rgb: var(--sp-danger-rgb);
+  --bs-btn-active-color: var(--sp-white);
+  --bs-btn-active-bg: var(--sp-btn-danger-hover-border);
+  --bs-btn-active-border-color: var(--sp-btn-danger-hover-border);
+  --bs-btn-disabled-color: var(--sp-white);
+  --bs-btn-disabled-bg: var(--sp-btn-danger);
+  --bs-btn-disabled-border-color: var(--sp-btn-danger);
+}
+
+.btn-info {
+  --bs-btn-color: var(--sp-white);
+  --bs-btn-bg: var(--sp-btn-info);
+  --bs-btn-border-color: var(--sp-btn-info);
+  --bs-btn-hover-color: var(--sp-white);
+  --bs-btn-hover-bg: var(--sp-btn-info-hover);
+  --bs-btn-hover-border-color: var(--sp-btn-info-hover-border);
+  --bs-btn-focus-shadow-rgb: var(--sp-info-rgb);
+  --bs-btn-active-color: var(--sp-white);
+  --bs-btn-active-bg: var(--sp-btn-info-hover-border);
+  --bs-btn-active-border-color: var(--sp-btn-info-hover-border);
+  --bs-btn-disabled-color: var(--sp-white);
+  --bs-btn-disabled-bg: var(--sp-btn-info);
+  --bs-btn-disabled-border-color: var(--sp-btn-info);
+}
+
+.btn-warning {
+  --bs-btn-color: var(--sp-btn-warning-fg);
+  --bs-btn-bg: var(--sp-btn-warning);
+  --bs-btn-border-color: var(--sp-btn-warning);
+  --bs-btn-hover-color: var(--sp-btn-warning-fg);
+  --bs-btn-hover-bg: var(--sp-btn-warning-hover);
+  --bs-btn-hover-border-color: var(--sp-btn-warning-hover-border);
+  --bs-btn-focus-shadow-rgb: var(--sp-warning-rgb);
+  --bs-btn-active-color: var(--sp-btn-warning-fg);
+  --bs-btn-active-bg: var(--sp-btn-warning-hover-border);
+  --bs-btn-active-border-color: var(--sp-btn-warning-hover-border);
+  --bs-btn-disabled-color: var(--sp-btn-warning-fg);
+  --bs-btn-disabled-bg: var(--sp-btn-warning);
+  --bs-btn-disabled-border-color: var(--sp-btn-warning);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--sp-btn-outline-accent);
+  --bs-btn-border-color: var(--sp-btn-outline-accent);
+  --bs-btn-hover-color: var(--sp-white);
+  --bs-btn-hover-bg: var(--sp-btn-outline-accent);
+  --bs-btn-hover-border-color: var(--sp-btn-outline-accent);
+  --bs-btn-focus-shadow-rgb: var(--sp-accent-rgb);
+  --bs-btn-active-color: var(--sp-white);
+  --bs-btn-active-bg: var(--sp-btn-outline-accent);
+  --bs-btn-active-border-color: var(--sp-btn-outline-accent);
+  --bs-btn-disabled-color: var(--sp-btn-outline-accent);
+  --bs-btn-disabled-border-color: var(--sp-btn-outline-accent);
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--sp-secondary);
+  --bs-btn-border-color: var(--sp-secondary);
+  --bs-btn-hover-color: var(--sp-white);
+  --bs-btn-hover-bg: var(--sp-secondary);
+  --bs-btn-hover-border-color: var(--sp-secondary);
+  --bs-btn-focus-shadow-rgb: var(--sp-secondary-rgb);
+  --bs-btn-active-color: var(--sp-white);
+  --bs-btn-active-bg: var(--sp-secondary);
+  --bs-btn-active-border-color: var(--sp-secondary);
+  --bs-btn-disabled-color: var(--sp-secondary);
+  --bs-btn-disabled-border-color: var(--sp-secondary);
+}
+
+.btn-outline-danger {
+  --bs-btn-color: var(--sp-btn-danger);
+  --bs-btn-border-color: var(--sp-btn-danger);
+  --bs-btn-hover-color: var(--sp-white);
+  --bs-btn-hover-bg: var(--sp-btn-danger);
+  --bs-btn-hover-border-color: var(--sp-btn-danger);
+  --bs-btn-focus-shadow-rgb: var(--sp-danger-rgb);
+  --bs-btn-active-color: var(--sp-white);
+  --bs-btn-active-bg: var(--sp-btn-danger);
+  --bs-btn-active-border-color: var(--sp-btn-danger);
+  --bs-btn-disabled-color: var(--sp-btn-danger);
+  --bs-btn-disabled-border-color: var(--sp-btn-danger);
+}
+
+.btn-link {
+  --bs-btn-color: var(--sp-accent);
+  --bs-btn-hover-color: var(--sp-accent-hover);
+  --bs-btn-active-color: var(--sp-accent-hover);
+  --bs-btn-focus-shadow-rgb: var(--sp-accent-rgb);
+  text-decoration: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cards                                                               */
+/* ------------------------------------------------------------------ */
+.card {
+  --bs-card-spacer-y: var(--sp-card-spacer);
+  --bs-card-spacer-x: var(--sp-card-spacer);
+  --bs-card-cap-padding-y: var(--sp-card-cap-py);
+  --bs-card-cap-padding-x: var(--sp-card-cap-px);
+  --bs-card-border-width: var(--sp-card-border-width);
+  --bs-card-border-color: var(--sp-card-border-color);
+  --bs-card-border-radius: var(--sp-radius-card);
+  --bs-card-inner-border-radius: calc(var(--sp-radius-card) - var(--sp-card-border-width));
+  --bs-card-cap-bg: var(--sp-card-header-bg);
+  --bs-card-bg: var(--sp-surface);
+  box-shadow: var(--sp-shadow-card);
+  margin-bottom: var(--sp-card-mb);
+}
+
+.card-header {
+  position: relative;
+  border-bottom: var(--sp-border-width) solid var(--sp-card-header-border);
+}
+
+.card-footer {
+  background-color: var(--sp-card-footer-bg);
+  border-top: 0;
+}
+
+/* Card headers float the title left and .card-header-actions right */
+.card-header::after,
+.card-body::after,
+.card-footer::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+
+/* ------------------------------------------------------------------ */
+/* Tables: Bootstrap 4 spacing and borders, theme colors from tokens   */
+/* ------------------------------------------------------------------ */
+.table {
+  --bs-table-color: var(--sp-text);
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--sp-table-border);
+  --bs-table-striped-color: var(--sp-text);
+  --bs-table-striped-bg: var(--sp-table-stripe);
+  --bs-table-hover-color: var(--sp-text);
+  --bs-table-hover-bg: var(--sp-table-hover);
+}
+
+.table > :not(caption) > * > * {
+  padding: var(--sp-table-cell-p);
+  border-top-width: var(--sp-border-width);
+  border-bottom-width: 0;
+}
+
+.table-sm > :not(caption) > * > * {
+  padding: var(--sp-table-cell-p-sm);
+}
+
+.table > thead > tr > * {
+  border-bottom-width: var(--sp-border-width-thick);
+}
+
+/* ------------------------------------------------------------------ */
+/* Forms                                                               */
+/* ------------------------------------------------------------------ */
+.form-control,
+.form-select {
+  color: var(--sp-input-fg);
+  background-color: var(--sp-input-bg);
+  border-color: var(--sp-input-border);
+}
+
+.form-control:focus,
+.form-select:focus {
+  color: var(--sp-input-fg);
+  background-color: var(--sp-input-bg-focus);
+  border-color: var(--sp-input-border-focus);
+  box-shadow: var(--sp-focus-ring);
+}
+
+/* Bootstrap 4 had a narrower select arrow; keep short labels from being cut off */
+.form-select-sm {
+  padding-right: var(--sp-select-sm-pe);
+  background-position: right var(--sp-space-1) center;
+  background-size: var(--sp-select-sm-arrow);
+}
+
+/* Help text below inputs sits on its own line (Bootstrap 4 behavior) */
+.form-text {
+  display: block;
+}
+
+small.form-text {
+  font-size: var(--sp-fs-fine-print);
+}
+
+.form-control::placeholder {
+  color: var(--sp-input-placeholder);
+}
+
+.form-select option {
+  color: var(--sp-input-fg);
+  background-color: var(--sp-option-bg);
+}
+
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover,
+.form-control:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--sp-autofill-fg);
+  box-shadow: var(--sp-autofill-shadow);
+}
+
+.form-check-input {
+  background-color: var(--sp-check-bg);
+  border-color: var(--sp-check-border);
+}
+
+.form-check-input:checked {
+  background-color: var(--sp-check-checked);
+  border-color: var(--sp-check-checked);
+}
+
+.form-check-input:focus {
+  border-color: var(--sp-input-border-focus);
+  box-shadow: var(--sp-focus-ring);
+}
+
+/* ------------------------------------------------------------------ */
+/* Badges                                                              */
+/* ------------------------------------------------------------------ */
+.badge {
+  --bs-badge-padding-x: var(--sp-badge-px);
+  --bs-badge-padding-y: var(--sp-badge-py);
+  --bs-badge-font-weight: var(--sp-fw-bold);
+  --bs-badge-color: var(--sp-badge-fg);
+  --bs-badge-border-radius: var(--sp-radius);
+}
+
+.badge.rounded-pill {
+  --bs-badge-padding-x: var(--sp-badge-pill-px);
+}
+
+/* ------------------------------------------------------------------ */
+/* Alerts (AdminLTE style: solid colors)                               */
+/* ------------------------------------------------------------------ */
+.alert {
+  --bs-alert-padding-x: var(--sp-alert-px);
+  --bs-alert-padding-y: var(--sp-alert-py);
+  --bs-alert-link-color: var(--sp-alert-link);
+}
+
+.alert-success {
+  --bs-alert-color: var(--sp-alert-success-fg);
+  --bs-alert-bg: var(--sp-alert-success-bg);
+  --bs-alert-border-color: var(--sp-alert-success-border);
+}
+
+.alert-info {
+  --bs-alert-color: var(--sp-alert-info-fg);
+  --bs-alert-bg: var(--sp-alert-info-bg);
+  --bs-alert-border-color: var(--sp-alert-info-border);
+  --bs-alert-link-color: var(--sp-alert-info-link);
+}
+
+.alert-warning {
+  --bs-alert-color: var(--sp-alert-warning-fg);
+  --bs-alert-bg: var(--sp-alert-warning-bg);
+  --bs-alert-border-color: var(--sp-alert-warning-border);
+}
+
+.alert-danger {
+  --bs-alert-color: var(--sp-alert-danger-fg);
+  --bs-alert-bg: var(--sp-alert-danger-bg);
+  --bs-alert-border-color: var(--sp-alert-danger-border);
+}
+
+.alert a {
+  color: var(--bs-alert-link-color);
+  text-decoration: var(--sp-alert-link-decoration);
+}
+
+.alert-info a:hover {
+  color: var(--sp-alert-info-link-hover);
+}
+
+/* ------------------------------------------------------------------ */
+/* List groups                                                         */
+/* ------------------------------------------------------------------ */
+.list-group {
+  --bs-list-group-item-padding-x: var(--sp-list-item-px);
+  --bs-list-group-item-padding-y: var(--sp-list-item-py);
+  --bs-list-group-border-color: var(--sp-list-border);
+  --bs-list-group-action-color: var(--sp-list-action-fg);
+  --bs-list-group-action-hover-color: var(--sp-list-action-fg);
+  --bs-list-group-action-hover-bg: var(--sp-list-action-hover-bg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Pagination                                                          */
+/* ------------------------------------------------------------------ */
+.pagination {
+  --bs-pagination-color: var(--sp-page-link-fg);
+  --bs-pagination-bg: var(--sp-page-link-bg);
+  --bs-pagination-border-color: var(--sp-page-link-border);
+  --bs-pagination-hover-color: var(--sp-brand);
+  --bs-pagination-hover-bg: var(--sp-page-link-hover-bg);
+  --bs-pagination-hover-border-color: var(--sp-page-link-border);
+  --bs-pagination-focus-color: var(--sp-brand);
+  --bs-pagination-focus-bg: var(--sp-page-link-hover-bg);
+  --bs-pagination-focus-box-shadow: var(--sp-focus-ring);
+  --bs-pagination-active-color: var(--sp-on-brand);
+  --bs-pagination-active-bg: var(--sp-brand);
+  --bs-pagination-active-border-color: var(--sp-brand);
+  --bs-pagination-disabled-bg: var(--sp-page-link-bg);
+  --bs-pagination-disabled-border-color: var(--sp-page-link-border);
+}
+
+/* ------------------------------------------------------------------ */
+/* Dropdowns, modals, close buttons                                    */
+/* ------------------------------------------------------------------ */
+.dropdown-menu {
+  --bs-dropdown-bg: var(--sp-dropdown-bg);
+  --bs-dropdown-color: var(--sp-dropdown-fg);
+  --bs-dropdown-border-color: var(--sp-dropdown-border);
+  --bs-dropdown-divider-bg: var(--sp-dropdown-divider);
+  --bs-dropdown-link-color: var(--sp-dropdown-fg);
+  --bs-dropdown-link-hover-color: var(--sp-dropdown-hover-fg);
+  --bs-dropdown-link-hover-bg: var(--sp-dropdown-hover-bg);
+  --bs-dropdown-link-active-color: var(--sp-dropdown-hover-fg);
+  --bs-dropdown-link-active-bg: var(--sp-dropdown-hover-bg);
+  --bs-dropdown-header-color: var(--sp-dropdown-header-fg);
+}
+
+.modal {
+  --bs-modal-bg: var(--sp-modal-bg);
+  --bs-modal-border-color: var(--sp-modal-border);
+  --bs-modal-border-radius: var(--sp-radius-lg);
+  --bs-modal-header-border-color: var(--sp-modal-divider);
+  --bs-modal-footer-border-color: var(--sp-modal-divider);
+}
+
+.modal-content {
+  box-shadow: var(--sp-shadow-modal);
+}

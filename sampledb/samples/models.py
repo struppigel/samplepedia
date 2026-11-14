@@ -10,47 +10,25 @@ from taggit.models import TaggedItemBase
 from cloudinary.models import CloudinaryField
 from django.core.validators import RegexValidator
 
+from .querysets import AnalysisTaskQuerySet, SolutionQuerySet
 
-# Difficulty point multipliers - SINGLE SOURCE OF TRUTH
-# Used in score calculation and displayed in UI
-DIFFICULTY_POINTS = {
-    'easy': 10,
-    'medium': 20,
-    'advanced': 40,
-    'expert': 80,
+
+class NotificationVerb(models.TextChoices):
+    """The stored values are the legacy free-text verbs, so existing rows stay valid"""
+    LIKED_TASK = 'liked', 'Liked a task'
+    LIKED_SOLUTION = 'liked_solution', 'Liked a solution'
+    COMMENTED = 'commented', 'Commented'
+    MENTIONED = 'mentioned you in a comment', 'Mentioned in a comment'
+    SUBMITTED_SOLUTION = 'submitted a solution', 'Submitted a solution'
+
+
+NOTIFICATION_ICONS = {
+    NotificationVerb.LIKED_TASK: 'fas fa-heart text-danger',
+    NotificationVerb.LIKED_SOLUTION: 'fas fa-heart text-danger',
+    NotificationVerb.COMMENTED: 'fas fa-comment text-info',
+    NotificationVerb.MENTIONED: 'fas fa-at text-info',
+    NotificationVerb.SUBMITTED_SOLUTION: 'fas fa-lightbulb text-warning',
 }
-
-
-def get_user_score(user):
-    """Calculate user score based on likes received with difficulty multipliers.
-    
-    Scoring system:
-    - Easy task like: 10 points per like
-    - Medium task like: 20 points per like
-    - Advanced task like: 40 points per like
-    - Expert task like: 80 points per like
-    
-    - Easy solution like: 10 points per like
-    - Medium solution like: 20 points per like
-    - Advanced solution like: 40 points per like
-    - Expert solution like: 80 points per like
-    """
-    
-    # Score from analysis task likes
-    task_score = 0
-    for task in user.analysis_tasks.all():
-        likes_count = task.favorited_by.count()
-        points_per_like = DIFFICULTY_POINTS.get(task.difficulty, 1)
-        task_score += likes_count * points_per_like
-    
-    # Score from solution likes (based on the task difficulty they solved)
-    solution_score = 0
-    for solution in user.solutions.select_related('analysis_task').all():
-        likes_count = solution.liked_by.count()
-        points_per_like = DIFFICULTY_POINTS.get(solution.analysis_task.difficulty, 1)
-        solution_score += likes_count * points_per_like
-    
-    return task_score + solution_score
 
 
 class NotificationQuerySet(models.QuerySet):
@@ -102,8 +80,9 @@ class Notification(models.Model):
     
     verb = models.CharField(
         max_length=50,
+        choices=NotificationVerb.choices,
         verbose_name="Verb",
-        help_text="Action type: liked, commented, added_solution, etc."
+        help_text="What the actor did"
     )
     
     # GenericForeignKey for the target object (what was acted upon)
@@ -164,6 +143,11 @@ class Notification(models.Model):
     def __str__(self):
         return f"{self.actor.username} {self.verb} → {self.recipient.username}"
     
+    @property
+    def icon(self):
+        """Font Awesome classes for this kind of notification"""
+        return NOTIFICATION_ICONS.get(self.verb, 'fas fa-bell text-muted')
+
     def mark_as_read(self):
         """Mark this notification as read"""
         if self.unread:
@@ -182,6 +166,16 @@ class Difficulty(models.TextChoices):
     MEDIUM = "medium", "medium"
     ADVANCED = "advanced", "advanced"
     EXPERT = "expert", "expert"
+
+# Points per like, by task difficulty - SINGLE SOURCE OF TRUTH
+# Used by samples/scoring.py and displayed in the UI
+DIFFICULTY_POINTS = {
+    Difficulty.EASY: 10,
+    Difficulty.MEDIUM: 20,
+    Difficulty.ADVANCED: 40,
+    Difficulty.EXPERT: 80,
+}
+
 
 class Platform(models.TextChoices):
     WINDOWS = "windows", "Windows"
@@ -296,7 +290,6 @@ class AnalysisTask(models.Model):
     tools = TaggableManager(blank=True, verbose_name="Tools", related_name='tool_samples', through=TaggedTools)
     youtube_id = models.CharField(max_length=32, blank=True, verbose_name="YouTube ID")
     image = CloudinaryField('image', blank=True, null=True)
-    like_count = models.IntegerField(default=0, verbose_name="Like count")
     view_count = models.IntegerField(default=0, verbose_name="View count")
     favorited_by = models.ManyToManyField(User, related_name='favorite_samples', blank=True)
     course_references = models.ManyToManyField(CourseReference, related_name='samples', blank=True, verbose_name="Course references")
@@ -310,7 +303,9 @@ class AnalysisTask(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     send_discord_notification = models.BooleanField(default=True, verbose_name="Send Discord notification")
-    
+
+    objects = AnalysisTaskQuerySet.as_manager()
+
     class Meta:
         indexes = [
             models.Index(fields=['difficulty'], name='idx_difficulty'),
@@ -322,7 +317,9 @@ class AnalysisTask(models.Model):
     
     @property
     def favorite_count(self):
-        return self.favorited_by.count()
+        # Use the list annotation when the queryset provides it
+        annotated = getattr(self, 'favorite_count_annotated', None)
+        return self.favorited_by.count() if annotated is None else annotated
     
     def user_can_edit(self, user):
         """Check if a user has permission to edit this task"""
@@ -393,32 +390,15 @@ class Article(models.Model):
         return hasattr(self, 'solution') and self.solution is not None
     
     def get_publication_date(self):
-        """Get the date when this article was published (not hidden)"""
-        if not self.is_published():
+        """When the article became visible: None while unpublished or hidden"""
+        if not self.is_visible():
             return None
-        
-        solution = self.solution
-        # If solution has hidden_until and it's in the future, not yet published
-        if solution.hidden_until and solution.hidden_until > timezone.now():
-            return None
-        
-        # If solution was hidden, publication date is when it became visible
-        if solution.hidden_until:
-            return solution.hidden_until
-        
-        # Otherwise, publication date is when solution was created
-        return solution.created_at
-    
+        # A hidden solution was published when its hidden period ended
+        return self.solution.hidden_until or self.solution.created_at
+
     def is_visible(self):
         """Check if this article is visible (published and not hidden)"""
-        if not self.is_published():
-            return False
-        
-        solution = self.solution
-        if solution.hidden_until and solution.hidden_until > timezone.now():
-            return False
-        
-        return True
+        return self.is_published() and not self.solution.is_hidden
     
     def user_can_edit(self, user):
         """Check if a user has permission to edit this article"""
@@ -471,13 +451,6 @@ class Solution(models.Model):
         help_text="Article content for on-site solutions"
     )
     
-    # Deprecated: kept for backward compatibility with existing solutions
-    content = models.TextField(
-        verbose_name="Content",
-        blank=True,
-        help_text="Markdown content for on-site solutions (deprecated, use article field)"
-    )
-    
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -501,31 +474,78 @@ class Solution(models.Model):
         verbose_name="Hidden until",
         help_text="Date and time when this solution becomes visible. Leave blank for immediate visibility."
     )
-    
+
+    # Set when the solution was announced on Discord: at creation if visible, else by
+    # the announce_solutions command once hidden_until has passed
+    discord_announced_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Announced on Discord at",
+    )
+
+    objects = SolutionQuerySet.as_manager()
+
     @property
     def like_count(self):
-        return self.liked_by.count()
+        # Use the list annotation when the queryset provides it
+        annotated = getattr(self, 'like_count_annotated', None)
+        return self.liked_by.count() if annotated is None else annotated
     
     @property
     def get_content(self):
-        """Get content from article if available, otherwise from deprecated content field"""
-        if self.article:
-            return self.article.content
-        return self.content
-    
-    @property
-    def get_title(self):
-        """Get title - for on-site solutions, use the article title if available"""
-        if self.solution_type == SolutionType.ONSITE and self.article:
-            return self.article.title
-        return self.title
+        """The text of an on-site solution, stored in its Article"""
+        return self.article.content if self.article else ""
     
     def user_can_see_hidden_status(self, user):
-        """Check if user should see the hidden badge/status (staff, task author, or solution author)"""
+        """Staff, the task author and the solution author may see a hidden solution"""
         if not user or not user.is_authenticated:
             return False
         return user.is_staff or user == self.analysis_task.author or user == self.author
-    
+
+    @property
+    def is_hidden(self):
+        """True while the solution is still hidden from other users"""
+        return bool(self.hidden_until and self.hidden_until > timezone.now())
+
+    def user_can_view(self, user):
+        """The instance-level twin of Solution.objects.visible_to(user)"""
+        return not self.is_hidden or self.user_can_see_hidden_status(user)
+
+    def user_can_edit(self, user):
+        return user.is_authenticated and (user == self.author or user.is_staff)
+
+    @property
+    def is_reference(self):
+        """Written by the task's own author"""
+        return self.author_id == self.analysis_task.author_id
+
+    def is_last_reference(self):
+        """Every task keeps at least one reference solution, so its last one can't be removed"""
+        if not self.is_reference:
+            return False
+        count = getattr(self, 'reference_count', None)  # from with_reference_count()
+        if count is None:
+            count = Solution.objects.filter(analysis_task_id=self.analysis_task_id).reference().count()
+        return count <= 1
+
+    def user_can_delete(self, user):
+        return self.user_can_edit(user) and not self.is_last_reference()
+
+    def get_absolute_url(self):
+        task = self.analysis_task
+        if self.solution_type == SolutionType.ONSITE:
+            return reverse('view_onsite_solution', kwargs={
+                'sha256': task.sha256, 'task_id': task.id, 'solution_id': self.id,
+            })
+        # External solutions live elsewhere; here they are a highlighted row on the task page
+        return f'{task.get_absolute_url()}?highlight_solution={self.id}'
+
+    @classmethod
+    def title_taken(cls, task, title, exclude_pk=None):
+        """Titles are unique per task (unique_together); check before saving to avoid an IntegrityError"""
+        return cls.objects.filter(analysis_task=task, title=title).exclude(pk=exclude_pk).exists()
+
     class Meta:
         unique_together = ['title', 'analysis_task']
         ordering = ['-created_at']
