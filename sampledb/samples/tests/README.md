@@ -1,339 +1,79 @@
-# Test Suite for Samplepedia
+# Samplepedia tests
 
-## Overview
+## Running
 
-This directory contains comprehensive tests for the Samplepedia application, focusing on analysis task submission functionality.
+From `sampledb/` with the virtualenv active:
 
-## Test Files
-
-### `test_view_count.py`
-
-Test suite for view count functionality with 4 main test classes:
-
-#### 1. **AnalysisTaskViewCountTestCase** - Task View Count Tests
-Tests view count tracking for analysis tasks:
-- ✅ New tasks have view_count of 0
-- ✅ Accessing detail page increments view count
-- ✅ Multiple views increment count correctly
-- ✅ View count persists across requests
-- ✅ View count displayed in template
-
-#### 2. **SolutionViewCountTestCase** - Solution View Count Tests
-Tests view count tracking for solutions:
-- ✅ New solutions have view_count of 0
-- ✅ Accessing onsite solution view increments count
-- ✅ Multiple views increment count correctly
-- ✅ External solutions don't auto-increment (no click tracking)
-- ✅ View count displayed in onsite solution template
-- ✅ View count shown for onsite, hidden for external solutions
-
-#### 3. **ViewCountConcurrencyTestCase** - Atomic Operation Tests
-Tests thread safety and atomic operations:
-- ✅ View count uses F expressions for atomic updates
-- ✅ Rapid consecutive views all counted correctly
-
-#### 4. **ViewCountIntegrationTestCase** - Integration Tests
-Tests view count across multiple features:
-- ✅ Task and solution view counts are independent
-- ✅ Both authenticated and unauthenticated users increment counts
-
-### `test_sample_list.py`
-
-Test suite for sample list view functionality with 4 main test classes:
-
-#### 1. **SampleListUnauthenticatedTestCase** - Unauthenticated User Tests
-Tests behavior for users who are not logged in:
-- ✅ Landing page shown when accessing root without parameters
-- ✅ Browse parameter shows sample list
-- ✅ Search/filter shows list (regression test for redirect bug)
-- ✅ Difficulty filter works for unauthenticated users
-- ✅ Tag filter works for unauthenticated users
-- ✅ Multiple filters work together
-
-#### 2. **SampleListAuthenticatedTestCase** - Authenticated User Tests
-Tests behavior for logged-in users:
-- ✅ Authenticated users see list directly without params
-- ✅ Favorites filter works for authenticated users
-- ✅ Search and filter work together for authenticated users
-
-#### 3. **SampleListSortingTestCase** - Sorting Tests
-Tests sorting functionality:
-- ✅ Sort by SHA256 ascending
-- ✅ Sort by SHA256 descending
-- ✅ Sort by difficulty
-
-#### 4. **SampleListPaginationTestCase** - Pagination Tests
-Tests pagination behavior:
-- ✅ First page has 25 items
-- ✅ Second page has remaining items
-- ✅ Pagination preserves filters
-
-### `test_task_submission.py`
-
-Comprehensive test suite for task submission workflow with 4 main test classes:
-
-#### 1. **AnalysisTaskFormTestCase** - Form Validation Tests
-Tests the `AnalysisTaskForm` validation logic:
-- ✅ Core fields (SHA256, download_link, etc.) are required
-- ✅ Regular users must provide reference solutions
-- ✅ Staff users can submit without reference solutions
-- ✅ Onsite solutions must have content
-- ✅ External solutions (blog/paper/video) must have URLs
-- ✅ MalwareBazaar and MalShare URLs are accepted
-- ✅ Regular users cannot use arbitrary download URLs
-- ✅ Staff users can use any download URL
-- ✅ Expert difficulty is excluded from form choices
-
-#### 2. **TaskSubmissionViewTestCase** - Integration Tests
-Tests the complete submission workflow through the view:
-- ✅ Submission requires authentication
-- ✅ GET request renders the form correctly
-- ✅ Regular users can submit with blog/paper/video reference solutions
-- ✅ Regular users can submit with onsite reference solutions
-- ✅ Staff users can submit without reference solutions
-- ✅ Tags and tools are normalized to lowercase
-- ✅ Duplicate SHA256 hashes are rejected
-- ✅ Image selection works correctly (placeholder)
-
-#### 3. **TaskEditPermissionTestCase** - Permission Tests
-Tests edit permissions for analysis tasks:
-- ✅ Authors can edit their own tasks
-- ✅ Non-authors cannot edit others' tasks
-- ✅ Staff users can edit any task
-- ✅ Contributors can edit any task
-
-### `test_draft_article_publishing.py`
-
-Comprehensive test suite for draft article selection and publishing functionality with 4 main test classes:
-
-#### 1. **DraftSelectionFormTestCase** - Form Validation Tests
-Tests draft article selection in the `AnalysisTaskForm`:
-- ✅ Form accepts valid unpublished drafts owned by the user
-- ✅ Form rejects drafts not owned by the submitting user
-- ✅ Form rejects already published draft articles
-- ✅ Form doesn't require manual solution fields when draft is provided
-- ✅ Form requires reference solution when no draft is provided
-- ✅ Form accepts manual solution fields without draft
-- ✅ Form rejects non-existent draft IDs
-- ✅ Draft validation happens before manual field validation
-
-#### 2. **TaskSubmissionWithDraftTestCase** - View Integration Tests
-Tests task submission view with draft article selection:
-- ✅ Submitting task with draft creates solution with draft attached
-- ✅ Draft gets marked as published (Solution.article FK created)
-- ✅ Solution inherits title from draft and uses 'onsite' type
-- ✅ After submission, redirects to task detail page
-- ✅ Published drafts cannot be used again (validation)
-- ✅ Manual solution submission still works (backward compatibility)
-- ✅ Solution.article field is None for manual submissions
-
-#### 3. **ArticleListButtonStatesTestCase** - UI State Tests
-Tests article list view button states and last reference protection:
-- ✅ Article list shows task SHA256 link for published articles
-- ✅ Task column displays first 8 chars with platform icon
-- ✅ Unpublish/delete buttons disabled for last reference solutions
-- ✅ Disabled buttons show lock icon with muted text
-- ✅ Multi-reference articles have enabled action buttons
-- ✅ Cannot unpublish last reference via POST (protection)
-- ✅ Cannot delete article with last reference via POST
-- ✅ Can unpublish article with multiple solutions
-
-#### 4. **DraftPublishingIntegrationTestCase** - End-to-End Tests
-Tests complete draft publishing workflow:
-- ✅ Full workflow: create draft → submit task → verify solution
-- ✅ Draft marked as published after submission
-- ✅ Task detail page shows solution with draft content
-- ✅ Onsite solution view displays draft article
-- ✅ AJAX endpoint returns only unpublished drafts
-- ✅ Published articles excluded from draft selection
-- ✅ Staff users can submit without draft or manual solution
-
-## Running the Tests
-
-### Run all tests:
-```bash
-cd sampledb
-python manage.py test samples
+```powershell
+python manage.py test samples                       # everything, about 5 seconds
+python manage.py test samples.tests.test_solutions  # one module
+python manage.py test samples --parallel            # what the Railway build runs
 ```
 
-### Run specific test file:
-```bash
-python manage.py test samples.tests.test_task_submission
-python manage.py test samples.tests.test_sample_list
-python manage.py test samples.tests.test_solutions
-python manage.py test samples.tests.test_view_count
-python manage.py test samples.tests.test_draft_article_publishing
-```
+The Railway build (`railway.json`) runs the suite before `collectstatic`; a failing test stops the deploy.
 
-### Run specific test class:
-```bash
-python manage.py test samples.tests.test_task_submission.AnalysisTaskFormTestCase
-python manage.py test samples.tests.test_sample_list.SampleListUnauthenticatedTestCase
-python manage.py test samples.tests.test_draft_article_publishing.DraftSelectionFormTestCase
-```
+## Test environment
 
-### Run specific test method:
-```bash
-python manage.py test samples.tests.test_task_submission.AnalysisTaskFormTestCase.test_form_requires_core_fields
-python manage.py test samples.tests.test_sample_list.SampleListUnauthenticatedTestCase.test_search_shows_list_for_unauthenticated
-python manage.py test samples.tests.test_draft_article_publishing.TaskSubmissionWithDraftTestCase.test_submit_task_with_draft_creates_solution
-```
+`settings.py` detects a test run (`'test' in sys.argv`) and then:
 
-### Run with verbose output:
-```bash
-python manage.py test samples --verbosity=2
-```
+- uses an in-memory SQLite database;
+- hashes passwords with MD5 (PBKDF2 made the suite ~15x slower);
+- blanks every `DISCORD_WEBHOOK_*`, so a local `.env` with real webhooks can't be posted to;
+- disables Turnstile validation (it would call Cloudflare);
+- configures a fixed fake Cloudinary account (image URLs render; uploads are mocked in the tests);
+- quiets the `samples` logger to WARNING.
 
-### Run with coverage (requires coverage.py):
-```bash
-pip install coverage
-coverage run --source='.' manage.py test samples
-coverage report
-coverage html  # Generate HTML report in htmlcov/
-```
+So the suite needs no `.env`, network or credentials.
 
-## Test Coverage
+## Writing tests
 
-Current test coverage focuses on:
-- ✅ Form validation logic
-- ✅ User permission handling
-- ✅ Reference solution requirements
-- ✅ Data normalization (lowercase tags/tools)
-- ✅ URL validation for download links
-- ✅ SHA256 uniqueness constraints
-- ✅ Sample list filtering and search (unauthenticated users)
-- ✅ Landing page vs list view routing
-- ✅ Sorting and pagination
-- ✅ Solution CRUD operations and permissions
-- ✅ Solution hiding functionality (hidden_until field)
-- ✅ View count tracking for tasks and solutions
-- ✅ Atomic view count increments using F expressions
-- ✅ View count display (onsite vs external solutions)
-- ✅ **Draft article selection and publishing workflow**
-- ✅ **Draft ownership and published status validation**
-- ✅ **Task submission with draft as reference solution**
-- ✅ **Article list button states (disabled for last reference)**
-- ✅ **AJAX endpoint for fetching user's unpublished drafts**
-- ✅ **Full integration: create draft → publish → verify solution**
+- Subclass `SampleTestCase` (`base.py`) and create shared data in `setUpTestData` with the factories in
+  `factories.py`: `make_user`, `make_staff`, `make_task`, `make_article`, `make_solution`,
+  `make_onsite_solution` (always backed by an Article). Every factory accepts field overrides.
+  Tasks don't announce themselves on Discord unless you pass `send_discord_notification=True`.
+- Log in with `self.login_as(user)`; use `self.client.login(...)` only when the login itself is under test.
+- Assert redirects with `assertRedirects(..., fetch_redirect_response=False)` and the expected target.
+- List pages must stay constant-query: see `QueryCountTestCase` in `test_visibility.py`.
+- Code that creates solutions, likes or notifications should be tested through the services
+  (`samples/services/`) as well as the views that call them.
 
-## Areas for Future Testing
+## Guardrail tests
 
-Additional tests that could be added:
+These scan the code rather than exercise it, and fail with a list of offending lines:
 
-### Frontend/Integration Tests
-- **Markdown editor integration**: Test localStorage synchronization between submit_task.html and markdown_editor.html
-- **Form field retention**: Test that all fields (including difficulty) are preserved when navigating to/from markdown editor
-- **Image gallery**: Test image selection modal and preview functionality
-- **Auto-fill SHA256**: Test automatic extraction of SHA256 from MalwareBazaar/MalShare URLs
+- `test_design_system.py` - design tokens (raw values only in `static/css/tokens.css`, every token
+  defined and used, no `!important`, dark mode via tokens only, no Bootstrap 4/AdminLTE classes).
+- `test_frontend.py` - no inline scripts, `on*=` handlers, `javascript:` URLs, hardcoded app URLs in JS,
+  cookie parsing or `display` toggling (rules in `frontend_rules.py`, which also runs on its own:
+  `python samples/tests/frontend_rules.py [file filter]`).
 
-### Backend Tests
-- **Discord notifications**: Test that submissions trigger Discord webhooks correctly
-- **Email notifications**: Test notification system for task creation
-- **Tag/tool management**: Test taggit integration more thoroughly
-- **Cloudinary integration**: Test actual image upload/retrieval
-- **Solution CRUD**: Test solution creation, editing, deletion workflows
-- **Comment functionality**: Test django-comments integration
-- **Like/favorite system**: Test user interactions with tasks
+## Files
 
-### Performance Tests
-- **Pagination**: Test task list pagination with large datasets
-- **Search/filter**: Test filtering by tags, tools, difficulty, author, course
-- **Database queries**: Test N+1 query optimization
-
-### Security Tests
-- **XSS prevention**: Test markdown rendering sanitization
-- **CSRF protection**: Test CSRF token validation
-- **SQL injection**: Test query parameterization
-- **Permission bypass attempts**: Test unauthorized access attempts
-
-## Test Data Conventions
-
-The tests use the following conventions:
-- **SHA256 hashes**: Single character repeated 64 times (e.g., 'a' * 64, 'b' * 64) for easy identification
-- **User credentials**: All test users use password 'testpass123'
-- **Download URLs**: Use bazaar.abuse.ch with test SHA256s
-
-## Testing Redirects in Production-like Environments
-
-**IMPORTANT**: When testing redirects with `assertRedirects()`, always use `fetch_redirect_response=False` parameter:
-
-```python
-self.assertRedirects(
-    response,
-    reverse('sample_detail', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
-    fetch_redirect_response=False  # Required for production-like settings
-)
-```
-
-**Why this is necessary:**
-- In production, `DEBUG=False` is set along with security settings like `SECURE_SSL_REDIRECT`
-- When `fetch_redirect_response=True` (default), Django tries to follow the redirect and fetch the target page
-- With `SECURE_SSL_REDIRECT=True`, this can cause SSL-related errors in test environments
-- Using `fetch_redirect_response=False` only verifies that the redirect happens to the correct URL without fetching it
-
-**When to use:**
-- ✅ All `assertRedirects()` calls should use `fetch_redirect_response=False`
-- ✅ Even for simple redirects like login redirects
-- ✅ Especially for redirects after POST requests (form submissions, deletions, etc.)
-
-**Example from test_solutions.py:**
-```python
-def test_unauthenticated_cannot_create_solution(self):
-    """Test that unauthenticated users cannot create solutions"""
-    response = self.client.post(
-        reverse('create_solution', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
-        {
-            'title': 'Test',
-            'solution_type': SolutionType.BLOG,
-            'url': 'https://example.com'
-        }
-    )
-    
-    # Should redirect to login - fetch_redirect_response=False for production compatibility
-    expected_url = f"/login/?next=/sample/{self.task.sha256}/{self.task.id}/solution/add/"
-    self.assertRedirects(response, expected_url, fetch_redirect_response=False)
-    self.assertEqual(Solution.objects.count(), 0)
-```
-
-**Don't use `follow=True` as a workaround:**
-- `follow=True` follows all redirects and returns the final page
-- This is useful when you need to test the final rendered page content
-- But for redirect testing, use `assertRedirects()` with `fetch_redirect_response=False` instead
-
-## Continuous Integration
-
-These tests can be integrated into CI/CD pipeline:
-
-```yaml
-# Example GitHub Actions workflow
-name: Django Tests
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: '3.11'
-      - run: pip install -r requirements.txt
-      - run: cd sampledb && python manage.py test samples
-```
-
-## Debugging Failed Tests
-
-If tests fail:
-
-1. **Check test output**: Look for assertion errors and traceback
-2. **Run with verbosity**: Add `--verbosity=2` for detailed output
-3. **Use pdb**: Add `import pdb; pdb.set_trace()` to pause execution
-4. **Check database state**: Tests use isolated test database, so no risk to production data
-5. **Review migrations**: Ensure all migrations are applied with `python manage.py migrate`
-
-## Contributing
-
-When adding new features:
-1. Write tests first (TDD approach)
-2. Ensure all existing tests pass
-3. Aim for >80% code coverage
-4. Document test purpose and assertions clearly
+| File | Covers |
+|---|---|
+| `test_account_deletion.py` | deleting an account: form, view, cascades, comment anonymization, last-superuser guard |
+| `test_announcements.py` | Discord announcement once per solution; hidden ones via `announce_solutions` after `hidden_until`, retries, max age |
+| `test_comment_notifications.py` | comment and @mention notifications, recipients, query count |
+| `test_design_system.py` | design-system guardrails (see above) and the Discord colors read from tokens.css |
+| `test_discord.py` | webhook choice per difficulty, embed links, failures logged not raised |
+| `test_draft_article_publishing.py` | choosing a draft article as a solution or reference solution, article list buttons |
+| `test_editors.py` | markdown editor hooks and draft clearing after a successful save |
+| `test_emails.py` | verification, resend, password reset and e-mail change mails end to end |
+| `test_form_templates.py` | account pages render fields, errors, Turnstile and password rules |
+| `test_forms.py` | shared form rules: e-mail checks, ArticleForm, gallery image ids |
+| `test_frontend.py` | front-end guardrails (see above) |
+| `test_frontend_pages.py` | data-* hooks carry the right URLs; `mention_links` |
+| `test_legal_pages.py` | impressum and privacy policy per language; e-mail template rendering |
+| `test_likes.py` | liking tasks and solutions, aggregated like notifications, notification icons and pagination |
+| `test_list_templates.py` | pagination keeps filters, filter bar, SHA256 cells, detail sidebar, showcase markup |
+| `test_migrations.py` | data migrations 0019 (legacy solution content into Articles) and 0022 (existing solutions count as announced) |
+| `test_regressions.py` | duplicate titles, hidden-solution leaks, editor re-renders, canonical task URLs |
+| `test_sample_list.py` | task list: filtering, sorting, pagination, landing page |
+| `test_scoring.py` | scores and ranks against the original per-object algorithm |
+| `test_security.py` | CSP headers and reports, markdown sanitizing, safe redirects, likes require POST, comment posting |
+| `test_solution_service.py` | `services/solutions.py`: Articles, drafts, title uniqueness |
+| `test_solutions.py` | solution create/edit/delete, permissions, likes, listing, on-site solutions, hiding |
+| `test_task_image_preview.py` | task images: upload, gallery selection, validation, preview markup |
+| `test_task_submission.py` | task submission and editing, reference solutions, permissions |
+| `test_view_count.py` | task and article view counters |
+| `test_visibility.py` | who sees hidden solutions on every page, delete rules, query counts |

@@ -3,13 +3,8 @@
 
 {% block title %}Notifications - Samplepedia{% endblock %}
 
-{% block page_header %}
-<header class="page-header">
-  <div class="container">
-    <h1 class="page-title">Notifications</h1>
-  </div>
-</header>
-{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block page_header_class %}container{% endblock %}
 
 {% block content %}
 <div class="page-content">
@@ -19,7 +14,7 @@
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">All Notifications</h3>
-            <div class="card-tools">
+            <div class="card-header-actions">
               {% if notifications %}
                 <form method="post" action="{% url 'mark_all_read' %}" class="d-inline">
                   {% csrf_token %}
@@ -38,15 +33,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                       <div class="flex-grow-1">
                         <a href="{% url 'mark_notification_read' notification.id %}" class="text-decoration-none">
-                          {% if notification.verb == 'liked' %}
-                            <i class="fas fa-heart text-danger me-2"></i>
-                          {% elif notification.verb == 'liked_solution' %}
-                            <i class="fas fa-heart text-danger me-2"></i>
-                          {% elif notification.verb == 'commented' %}
-                            <i class="fas fa-comment text-info me-2"></i>
-                          {% elif notification.verb == 'submitted a solution' %}
-                            <i class="fas fa-lightbulb text-warning me-2"></i>
-                          {% endif %}
+                          <i class="{{ notification.icon }} me-2"></i>
                           <strong>{{ notification.description }}</strong>
                           {% if notification.data.sha256 %}
                             <span class="text-muted">[SHA256: {{ notification.data.sha256 }}...]</span>
@@ -58,9 +45,9 @@
                       </div>
                       <div class="ms-3">
                         {% if notification.unread %}
-                          <span class="badge badge-primary">New</span>
+                          <span class="badge text-bg-primary">New</span>
                         {% endif %}
-                        <form method="post" action="{% url 'delete_notification' notification.id %}" class="d-inline" onsubmit="return confirm('Delete this notification?');">
+                        <form method="post" action="{% url 'delete_notification' notification.id %}" class="d-inline" data-confirm="Delete this notification?">
                           {% csrf_token %}
                           <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-2" title="Delete">
                             <i class="fas fa-trash"></i>
@@ -78,6 +65,7 @@
               </div>
             {% endif %}
           </div>
+          {% include 'samples/_pagination.html' %}
         </div>
       </div>
     </div>

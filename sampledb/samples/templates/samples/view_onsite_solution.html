@@ -16,27 +16,20 @@
 
           <!-- Article Content -->
           <div class="prose prose-article">
-            {{ rendered_content|safe }}
+            {{ rendered_content }}
           </div>
         </article>
 
         <!-- Back Button -->
         <div class="mt-5 mb-4">
-          <button onclick="smartBack()" class="btn-back">
+          <a href="{% url 'sample_detail' sha256=sample.sha256 task_id=sample.id %}" class="btn-back d-inline-block">
             <i class="fas fa-arrow-left me-1"></i> Back to task
-          </button>
+          </a>
         </div>
 
       </div>
     </div>
   </div>
 </section>
-
-<script>
-// Smart back navigation
-function smartBack() {
-  window.location.href = '{% url "sample_detail" sha256=sample.sha256 task_id=sample.id %}';
-}
-</script>
 
 {% endblock %}

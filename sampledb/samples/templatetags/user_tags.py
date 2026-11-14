@@ -1,9 +1,7 @@
-from django.utils import timezone
 from django import template
 
-from django.db.models import Q
-
 from samples.design_tokens import difficulty_css_class
+from samples.models import SolutionType
 
 register = template.Library()
 
@@ -39,51 +37,32 @@ def difficulty_badge(difficulty, difficulty_display=None):
         'difficulty_display': difficulty_display
     }
 
-@register.inclusion_tag('samples/_favorite_button.html')
-def favorite_button(task, is_liked_or_set):
-    """
-    Display a favorite/like button with count for an analysis task.
-    
-    Args:
-        task: The AnalysisTask object
-        is_liked_or_set: Either a boolean indicating if liked, or a set of favorited IDs to check against
-    """
-    # Determine if the task is liked
+def _is_liked(obj, is_liked_or_set):
+    """The tags accept either a boolean or a set of the user's liked ids"""
     if isinstance(is_liked_or_set, bool):
-        is_liked = is_liked_or_set
-    else:
-        # Assume it's a set of IDs
-        is_liked = task.id in is_liked_or_set
-    
+        return is_liked_or_set
+    return obj.id in is_liked_or_set
+
+
+def _favorite_context(task, is_liked_or_set):
     return {
         'task_id': task.id,
         'sha256': task.sha256,
         'favorite_count': task.favorite_count,
-        'is_liked': is_liked
+        'is_liked': _is_liked(task, is_liked_or_set),
     }
+
+
+@register.inclusion_tag('samples/_favorite_button.html')
+def favorite_button(task, is_liked_or_set):
+    """Favorite button with count for a task in a list"""
+    return _favorite_context(task, is_liked_or_set)
+
 
 @register.inclusion_tag('samples/_favorite_button_filled.html')
 def favorite_button_filled(task, is_liked_or_set):
-    """
-    Display a favorite/like button with count for an analysis task.
-    
-    Args:
-        task: The AnalysisTask object
-        is_liked_or_set: Either a boolean indicating if liked, or a set of favorited IDs to check against
-    """
-    # Determine if the task is liked
-    if isinstance(is_liked_or_set, bool):
-        is_liked = is_liked_or_set
-    else:
-        # Assume it's a set of IDs
-        is_liked = task.id in is_liked_or_set
-    
-    return {
-        'task_id': task.id,
-        'sha256': task.sha256,
-        'favorite_count': task.favorite_count,
-        'is_liked': is_liked
-    }
+    """The detail page's large favorite button"""
+    return _favorite_context(task, is_liked_or_set)
 
 @register.filter
 def is_in(value, container):
@@ -111,10 +90,10 @@ def solution_icon(solution_type):
     For unknown solution types, returns a generic link icon as fallback.
     """
     icons = {
-        'blog': 'fa-book solution-icon-blog',
-        'paper': 'fa-file-alt solution-icon-paper',
-        'video': 'fa-video solution-icon-video',
-        'onsite': 'fa-file-alt solution-icon-onsite',
+        SolutionType.BLOG: 'fa-book solution-icon-blog',
+        SolutionType.PAPER: 'fa-file-alt solution-icon-paper',
+        SolutionType.VIDEO: 'fa-video solution-icon-video',
+        SolutionType.ONSITE: 'fa-file-alt solution-icon-onsite',
     }
     return icons.get(solution_type, 'fa-link solution-icon-link')
 
@@ -139,31 +118,30 @@ def platform_icon(platform):
 @register.inclusion_tag('samples/_solution_icons.html')
 def solution_icons(task):
     """
-    Display solution type icons for an analysis task.
-    Shows one icon per solution type (blog, paper, video, onsite).
-    Dynamically detects all solution types present.
+    One icon per type of publicly visible solution, plus their count.
+    Rows from AnalysisTask.objects.for_listing() carry both precomputed.
     """
-    from collections import Counter
-    
-    # Filter out currently hidden solutions
-    solutions = task.solutions.filter(
-        Q(hidden_until__isnull=True) | Q(hidden_until__lte=timezone.now())
-    )
-    total_count = solutions.count()
-    
-    # Get all solution types present (ordered by the keys in solution_icon for consistency)
-    solution_types_present = []
-    if total_count > 0:
-        type_counts = Counter(solutions.values_list('solution_type', flat=True))
-        # Order by the keys in solution_icon filter for consistent display
-        icon_order = ['blog', 'paper', 'video', 'onsite']
-        solution_types_present = [st for st in icon_order if st in type_counts]
-    
+    if hasattr(task, 'solution_count_annotated'):
+        total_count = task.solution_count_annotated
+        present = {value for value in SolutionType.values if getattr(task, f'has_{value}_solution')}
+    else:
+        solutions = task.solutions.publicly_visible()
+        total_count = solutions.count()
+        present = set(solutions.values_list('solution_type', flat=True))
+
+    # Declaration order of SolutionType keeps the icons in a stable order
+    solution_types_present = [value for value in SolutionType.values if value in present]
     return {
         'solution_types': solution_types_present,
         'has_any': bool(solution_types_present),
         'total_count': total_count
     }
+
+
+@register.filter
+def editable_by(obj, user):
+    """{% if solution|editable_by:user %}: asks the model's user_can_edit(user)."""
+    return obj.user_can_edit(user)
 
 @register.inclusion_tag('samples/_solution_like_button.html')
 def solution_like_button(solution, is_liked_or_set):
@@ -174,15 +152,8 @@ def solution_like_button(solution, is_liked_or_set):
         solution: The Solution object
         is_liked_or_set: Either a boolean indicating if liked, or a set of liked IDs to check against
     """
-    # Determine if the solution is liked
-    if isinstance(is_liked_or_set, bool):
-        is_liked = is_liked_or_set
-    else:
-        # Assume it's a set of IDs
-        is_liked = solution.id in is_liked_or_set
-    
     return {
         'solution_id': solution.id,
         'like_count': solution.like_count,
-        'is_liked': is_liked
+        'is_liked': _is_liked(solution, is_liked_or_set),
     }

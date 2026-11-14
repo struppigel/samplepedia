@@ -1,11 +1,12 @@
 {% comment %}
-Reusable draft selection modal
+Reusable draft selection modal (js/draft-selection.js)
 Parameters:
   - modal_id: ID for the modal (default: 'draftSelectionModal')
   - modal_title: Title text (default: 'Select Draft Article')
 {% endcomment %}
 
-<div class="modal fade" id="{{ modal_id|default:'draftSelectionModal' }}" tabindex="-1" role="dialog" aria-labelledby="{{ modal_id|default:'draftSelectionModal' }}Label" aria-hidden="true">
+<div class="modal fade" id="{{ modal_id|default:'draftSelectionModal' }}" tabindex="-1" role="dialog" aria-labelledby="{{ modal_id|default:'draftSelectionModal' }}Label" aria-hidden="true"
+     data-drafts-url="{% url 'get_user_drafts_ajax' %}">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -15,18 +16,18 @@ Parameters:
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <div id="draftsLoading" class="text-center py-4">
+        <div class="text-center py-4" data-drafts-loading>
           <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
           <p class="mt-2 text-muted">Loading drafts...</p>
         </div>
-        
-        <div id="draftList" class="list-group" style="display: none; max-height: 400px; overflow-y: auto;">
+
+        <div class="list-group" style="max-height: 400px; overflow-y: auto;" data-drafts-list hidden>
           <!-- Drafts will be populated here by JavaScript -->
         </div>
-        
-        <div id="noDrafts" style="display: none;" class="alert alert-info mb-0">
+
+        <div class="alert alert-info mb-0" data-drafts-empty hidden>
           <i class="fas fa-info-circle"></i>
-          You don't have any unpublished draft articles yet. 
+          You don't have any unpublished draft articles yet.
           <a href="{% url 'article_editor' %}" target="_blank" class="alert-link">Create one now</a>.
         </div>
       </div>

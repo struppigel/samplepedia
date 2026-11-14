@@ -1,0 +1,7 @@
+{% comment %}
+  Responsive YouTube player, centered and at most 560px wide.
+  Include with: youtube_id (the 11-character video ID)
+{% endcomment %}
+<div class="ratio ratio-16x9 mx-auto" style="max-width: 560px;">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/{{ youtube_id }}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</div>

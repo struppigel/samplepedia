@@ -1,148 +1,121 @@
 /**
- * Publish-article modal (samples/_publish_modal.html)
- * Search an analysis task and attach a draft article to it as a solution.
+ * Publish-article modal (samples/_publish_modal.html): search an analysis task
+ * and attach a draft article to it as a solution.
+ *
+ * - openPublishModal(articleId, articleTitle) opens it for that article (the article
+ *   pages call it from their data-publish-article buttons, js/pages/articles.js)
+ *
+ * The modal includes this script itself, so it may run before js/utils.js:
+ * window.sp is only used once the page has loaded.
  */
+(function() {
+  'use strict';
 
-// Publish modal functionality
-let currentArticleId = null;
-let searchTimeout = null;
+  const SEARCH_DELAY_MS = 300;
+  let currentArticleId = null;
+  let searchTimeout = null;
+  let latestQuery = '';
 
-function setPublishVisible(id, visible) {
-  document.getElementById(id).style.display = visible ? '' : 'none';
-}
-
-function openPublishModal(articleId, articleTitle) {
-  currentArticleId = articleId;
-  document.getElementById('publishArticleTitle').textContent = articleTitle;
-  document.getElementById('sampleSearch').value = '';
-  setPublishVisible('searchResults', false);
-  setPublishVisible('noResults', false);
-  bootstrap.Modal.getOrCreateInstance(document.getElementById('publishModal')).show();
-}
-
-// Search samples with debouncing
-document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.getElementById('sampleSearch');
-  if (searchInput) {
-    searchInput.addEventListener('input', function() {
-      const query = this.value.trim();
-
-      // Clear previous timeout
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
-      }
-
-      // Hide results if query is too short
-      if (query.length < 2) {
-        setPublishVisible('searchResults', false);
-        setPublishVisible('noResults', false);
-        return;
-      }
-
-      // Show loading
-      setPublishVisible('searchLoading', true);
-      setPublishVisible('searchResults', false);
-      setPublishVisible('noResults', false);
-
-      // Debounce: wait 300ms after user stops typing
-      searchTimeout = setTimeout(() => {
-        fetch(`/ajax/search-samples/?q=${encodeURIComponent(query)}`)
-          .then(response => response.json())
-          .then(data => {
-            setPublishVisible('searchLoading', false);
-
-            if (data.results && data.results.length > 0) {
-              displaySearchResults(data.results);
-            } else {
-              setPublishVisible('searchResults', false);
-              setPublishVisible('noResults', true);
-            }
-          })
-          .catch(error => {
-            console.error('Search error:', error);
-            setPublishVisible('searchLoading', false);
-            alert('Error searching for analysis tasks. Please try again.');
-          });
-      }, 300);
-    });
+  function byId(id) {
+    return document.getElementById(id);
   }
-});
 
-function displaySearchResults(results) {
-  const escapeHtml = window.sp.escapeHtml;
-  const sampleList = document.getElementById('sampleList');
-  sampleList.innerHTML = '';
+  function showOnly(visibleId) {
+    ['searchResults', 'noResults', 'searchLoading'].forEach(id => window.sp.show(byId(id), id === visibleId));
+  }
 
-  results.forEach(sample => {
+  function openPublishModal(articleId, articleTitle) {
+    currentArticleId = articleId;
+    byId('publishArticleTitle').textContent = articleTitle;
+    byId('sampleSearch').value = '';
+    showOnly(null);
+    bootstrap.Modal.getOrCreateInstance(byId('publishModal')).show();
+  }
+
+  function search(query) {
+    const url = `${byId('publishModal').dataset.searchUrl}?q=${encodeURIComponent(query)}`;
+    window.sp.fetchJSON(url)
+      .then(data => {
+        if (query !== latestQuery) return; // answer to an older query
+        if (data.results && data.results.length > 0) {
+          renderResults(data.results);
+          showOnly('searchResults');
+        } else {
+          showOnly('noResults');
+        }
+      })
+      .catch(error => {
+        console.error('Search error:', error);
+        showOnly(null);
+        alert('Error searching for analysis tasks. Please try again.');
+      });
+  }
+
+  function renderResults(results) {
+    const escapeHtml = window.sp.escapeHtml;
     // difficulty_class comes from the server (samples/design_tokens.py)
-    const item = document.createElement('a');
-    item.href = '#';
-    item.className = 'list-group-item list-group-item-action';
-    item.innerHTML = `
-      <div class="d-flex w-100 justify-content-between align-items-start">
-        <div class="flex-grow-1">
-          <h6 class="mb-1">
-            <code class="text-smaller">${escapeHtml(sample.sha256_short)}...</code>
-            <span class="badge ${escapeHtml(sample.difficulty_class)} ms-2">${escapeHtml(sample.difficulty_display)}</span>
-          </h6>
-          <p class="mb-1 text-muted text-smaller">${escapeHtml(sample.goal)}</p>
-          <small class="text-muted">by ${escapeHtml(sample.author)}</small>
+    byId('sampleList').innerHTML = results.map(sample => `
+      <div class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between align-items-start">
+          <div class="flex-grow-1">
+            <h6 class="mb-1">
+              <code class="text-smaller">${escapeHtml(sample.sha256_short)}...</code>
+              <span class="badge ${escapeHtml(sample.difficulty_class)} ms-2">${escapeHtml(sample.difficulty_display)}</span>
+            </h6>
+            <p class="mb-1 text-muted text-smaller">${escapeHtml(sample.goal)}</p>
+            <small class="text-muted">by ${escapeHtml(sample.author)}</small>
+          </div>
+          <button type="button" class="btn btn-sm btn-secondary ms-3 text-nowrap" data-publish-to-sample="${escapeHtml(sample.id)}">
+            <i class="fas fa-check"></i> Select
+          </button>
         </div>
-        <button class="btn btn-sm btn-secondary ms-3 text-nowrap" onclick="publishToSample(event, ${Number(sample.id)})">
-          <i class="fas fa-check"></i> Select
-        </button>
       </div>
-    `;
-    sampleList.appendChild(item);
-  });
-
-  setPublishVisible('searchResults', true);
-  setPublishVisible('noResults', false);
-}
-
-function publishToSample(event, sampleId) {
-  event.preventDefault();
-  event.stopPropagation();
-
-  if (!currentArticleId) {
-    alert('Error: Article ID not found');
-    return;
+    `).join('');
   }
 
-  // Get CSRF token
-  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
-                    window.sp.getCookie('csrftoken');
-
-  if (!csrfToken) {
-    alert('Error: CSRF token not found');
-    return;
+  function publishToSample(sampleId) {
+    if (!currentArticleId) {
+      alert('Error: Article ID not found');
+      return;
+    }
+    // data-publish-url is the URL for article 0
+    const url = byId('publishModal').dataset.publishUrl.replace('/0/', `/${encodeURIComponent(currentArticleId)}/`);
+    window.sp.fetchJSON(url, { method: 'POST', data: { sample_id: sampleId } })
+      .then(data => {
+        if (data.success) {
+          bootstrap.Modal.getOrCreateInstance(byId('publishModal')).hide();
+          window.location.href = data.redirect_url;
+        } else {
+          alert('Error: ' + (data.error || 'Failed to publish article'));
+        }
+      })
+      .catch(error => {
+        console.error('Publish error:', error);
+        alert('Error publishing article. Please try again.');
+      });
   }
 
-  // Create form data
-  const formData = new FormData();
-  formData.append('sample_id', sampleId);
-  formData.append('csrfmiddlewaretoken', csrfToken);
-
-  // Submit
-  fetch(`/articles/${currentArticleId}/publish/`, {
-    method: 'POST',
-    body: formData,
-    headers: {
-      'X-CSRFToken': csrfToken
+  // Search as the user types, 300 ms after the last key
+  document.addEventListener('input', function(e) {
+    if (e.target.id !== 'sampleSearch') return;
+    const query = e.target.value.trim();
+    latestQuery = query;
+    clearTimeout(searchTimeout);
+    if (query.length < 2) {
+      showOnly(null);
+      return;
     }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      bootstrap.Modal.getOrCreateInstance(document.getElementById('publishModal')).hide();
-      // Redirect to the sample detail page
-      window.location.href = data.redirect_url;
-    } else {
-      alert('Error: ' + (data.error || 'Failed to publish article'));
-    }
-  })
-  .catch(error => {
-    console.error('Publish error:', error);
-    alert('Error publishing article. Please try again.');
+    showOnly('searchLoading');
+    searchTimeout = setTimeout(() => search(query), SEARCH_DELAY_MS);
   });
-}
+
+  document.addEventListener('click', function(e) {
+    const select = e.target.closest('[data-publish-to-sample]');
+    if (select) {
+      e.preventDefault();
+      publishToSample(select.dataset.publishToSample);
+    }
+  });
+
+  window.openPublishModal = openPublishModal;
+})();

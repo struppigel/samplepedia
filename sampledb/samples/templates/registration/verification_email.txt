@@ -1,3 +1,4 @@
+{% autoescape off %}
 Welcome to Samplepedia!
 ========================
 
@@ -18,3 +19,4 @@ The Samplepedia Team
 
 ---
 This is an automated email. Please do not reply to this message.
+{% endautoescape %}

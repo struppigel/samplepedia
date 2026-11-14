@@ -1,165 +1,25 @@
-{% extends "samples/base.html" %}
+{% extends "samples/editor_base.html" %}
+{% load static %}
 {% block title %}Markdown Editor{% endblock %}
+{% block editor_title %}Markdown Editor{% endblock %}
 
-{% block page_header %}
-<header class="page-header">
-  <div class="container-fluid">
-    <div class="page-header-inner mb-2">
-      <h1 class="page-title">Markdown Editor</h1>
-      <div>
-        <button type="button" class="btn btn-secondary" id="clearEditor">
-          <i class="fas fa-trash"></i> Clear
-        </button>
-        <button type="button" class="btn btn-primary" id="copyMarkdown">
-          <i class="fas fa-copy"></i> Copy Markdown
-        </button>
-        <a href="{% url 'submit_task' %}" class="btn btn-danger" id="useInSubmitForm">
-          <i class="fas fa-paper-plane"></i> Use in Submit Form
-        </a>
-      </div>
-    </div>
-    <div class="alert alert-warning mt-3" role="alert">
-      <i class="fas fa-exclamation-triangle me-2"></i>
-      Please do not post any malware code directly or this site will be detected by antivirus software, use screenshots of malicious code instead.
-    </div>
-  </div>
-</header>
+{% block editor_actions %}
+<button type="button" class="btn btn-secondary" data-md-clear>
+  <i class="fas fa-trash"></i> Clear
+</button>
+<button type="button" class="btn btn-primary" id="copyMarkdown">
+  <i class="fas fa-copy"></i> Copy Markdown
+</button>
+<a href="{% url 'submit_task' %}" class="btn btn-danger" id="useInSubmitForm">
+  <i class="fas fa-paper-plane"></i> Use in Submit Form
+</a>
 {% endblock %}
 
-{% block content %}
+{% block editor %}
+{% include "samples/_onsite_editor.html" with draft="markdown-editor" draft_restore="silent" %}
+{% endblock %}
 
-<section class="page-content">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-12">
-        
-        {% include "samples/_onsite_editor.html" %}
-        
-      </div>
-    </div>
-  </div>
-</section>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Wait for editor API to be available
-  const waitForEditor = setInterval(function() {
-    if (window.editorAPI) {
-      clearInterval(waitForEditor);
-      initPageSpecificFeatures();
-    }
-  }, 50);
-  
-  function initPageSpecificFeatures() {
-    const textarea = window.editorAPI.getTextarea();
-    const titleInput = window.editorAPI.getTitleInput();
-    const previewContent = window.editorAPI.getPreviewContent();
-    const clearBtn = document.getElementById('clearEditor');
-    const copyBtn = document.getElementById('copyMarkdown');
-    
-    // Restore title and content from submit form if available
-    const savedTitle = localStorage.getItem('draft_reference_solution_title');
-    const savedContent = localStorage.getItem('draft_reference_solution');
-    
-    if (savedTitle && titleInput) {
-      titleInput.value = savedTitle;
-    }
-    
-    if (savedContent && textarea) {
-      textarea.value = savedContent;
-      window.editorAPI.updateCharCount();
-    }
-    
-    // Clear editor
-    clearBtn.addEventListener('click', function() {
-      if (textarea.value && !confirm('Are you sure you want to clear all content?')) {
-        return;
-      }
-      textarea.value = '';
-      window.editorAPI.setPreviewCache('');
-      window.editorAPI.updateCharCount();
-      previewContent.innerHTML = '<p class="text-muted">Nothing to preview</p>';
-      localStorage.removeItem(STORAGE_KEY);
-    });
-    
-    // Use in Submit Form - save to localStorage and navigate
-    const useInSubmitBtn = document.getElementById('useInSubmitForm');
-    useInSubmitBtn.addEventListener('click', function(e) {
-      if (!textarea.value.trim()) {
-        e.preventDefault();
-        alert('Please write some content first!');
-        return;
-      }
-      
-      // Save content and title to localStorage for submit form
-      localStorage.setItem('draft_reference_solution', textarea.value);
-      
-      if (titleInput && titleInput.value) {
-        localStorage.setItem('draft_reference_solution_title', titleInput.value);
-      }
-      
-      // Visual feedback before navigation
-      const originalHtml = this.innerHTML;
-      this.innerHTML = '<i class="fas fa-check"></i> Saved!';
-      this.classList.remove('btn-danger');
-      this.classList.add('btn-secondary');
-      
-      // Navigate after brief delay
-      setTimeout(() => {
-        window.location.href = this.getAttribute('href');
-      }, 500);
-    });
-    
-    // Copy markdown to clipboard
-    copyBtn.addEventListener('click', function() {
-      if (!textarea.value) {
-        alert('Nothing to copy!');
-        return;
-      }
-      
-      textarea.select();
-      textarea.setSelectionRange(0, 99999); // For mobile devices
-      
-      navigator.clipboard.writeText(textarea.value).then(function() {
-        // Visual feedback
-        const originalHtml = copyBtn.innerHTML;
-        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-        copyBtn.classList.remove('btn-primary');
-        copyBtn.classList.add('btn-secondary');
-        
-        setTimeout(function() {
-          copyBtn.innerHTML = originalHtml;
-          copyBtn.classList.remove('btn-secondary');
-          copyBtn.classList.add('btn-primary');
-        }, 2000);
-      }).catch(function(err) {
-        console.error('Copy failed:', err);
-        alert('Failed to copy to clipboard');
-      });
-    });
-    
-    // Auto-save to localStorage
-    const STORAGE_KEY = 'markdown_editor_content';
-    const AUTOSAVE_INTERVAL = 5000; // 5 seconds
-    
-    // Note: Content was already restored earlier from draft_reference_solution
-    // Only restore from auto-save if no draft content exists
-    if (!savedContent) {
-      const autoSavedContent = localStorage.getItem(STORAGE_KEY);
-      if (autoSavedContent) {
-        textarea.value = autoSavedContent;
-        window.editorAPI.updateCharCount();
-      }
-    }
-    
-    // Auto-save
-    setInterval(function() {
-      if (textarea.value) {
-        localStorage.setItem(STORAGE_KEY, textarea.value);
-      }
-    }, AUTOSAVE_INTERVAL);
-  }
-});
-</script>
-
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'js/pages/markdown-editor.js' %}"></script>
 {% endblock %}

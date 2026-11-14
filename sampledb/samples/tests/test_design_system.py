@@ -13,6 +13,9 @@ This test suite covers:
 7. Python design tokens (samples/design_tokens.py) match tokens.css
 8. Flash messages, the comments base.html shim, the AJAX difficulty class
    and Discord embed colors use the shared design tokens
+9. Every var(--sp-*) in use is defined, and every defined token is used
+10. JavaScript doesn't set design values through element.style
+11. No Bootstrap 4 / AdminLTE class names re-created as shims
 """
 
 import re
@@ -20,15 +23,16 @@ from pathlib import Path
 from unittest import mock
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.contrib.staticfiles import finders
-from django.test import Client, SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 
 from samples import design_tokens
 from samples.discord_utils import send_sample_notification
-from samples.models import AnalysisTask, Difficulty
+from samples.models import Difficulty
 from samples.templatetags.user_tags import difficulty_badge_class
+from samples.tests.base import SampleTestCase
+from samples.tests.factories import make_task, make_user
 
 BASE_DIR = Path(settings.BASE_DIR)
 TEMPLATES_DIR = BASE_DIR / 'samples' / 'templates'
@@ -37,17 +41,16 @@ JS_DIR = BASE_DIR / 'static' / 'js'
 TOKENS_CSS = CSS_DIR / 'tokens.css'
 BOOTSTRAP_THEME_CSS = CSS_DIR / 'bootstrap-theme.css'
 
-# Standalone HTML emails need inline/embedded styles
+# Standalone HTML emails need inline/embedded styles; the mails themselves extend this base
 EMAIL_TEMPLATES = {
-    'registration/password_reset_email.html',
-    'registration/verification_email.html',
-    'registration/email_change_verification.html',
+    'registration/_email_base.html',
 }
 
 STATIC_TAG_RE = re.compile(r"""{%\s*static\s+['"]([^'"]+)['"]\s*%}""")
 STYLE_ATTR_RE = re.compile(r'\sstyle="([^"]*)"')
 COMMENT_RE = re.compile(r'/\*.*?\*/', re.S)
-DECLARATION_RE = re.compile(r'(?<=[{;])\s*(-?[a-z][a-z-]*)\s*:\s*([^;{}]+)')
+# Property names, including vendor prefixes and custom properties (--bs-*, --sp-*)
+DECLARATION_RE = re.compile(r'(?<=[{;])\s*(-{0,2}[a-z][\w-]*)\s*:\s*([^;{}]+)')
 VAR_RE = re.compile(r'var\([^()]*\)')
 HEX_COLOR_RE = re.compile(r'#[0-9a-fA-F]{3,8}\b')
 COLOR_FUNCTION_RE = re.compile(r'\b(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(([^()]*)\)', re.I)
@@ -58,13 +61,18 @@ NAMED_COLOR_RE = re.compile(
 
 # Properties whose values must come from tokens outside tokens.css
 TOKEN_ONLY_PROPERTIES = {
-    'font-family', 'font-size', 'border-radius', 'box-shadow', 'z-index', 'transition', 'animation',
+    'font', 'font-family', 'font-size', 'font-weight', 'line-height',
+    'border-radius', 'box-shadow', 'z-index', 'transition', 'animation',
 }
 KEYWORDS = {'0', 'none', 'inherit', 'initial', 'unset', 'auto', 'transparent', 'currentcolor'}
 
 
 def template_files():
     return sorted(TEMPLATES_DIR.rglob('*.html'))
+
+
+def js_files():
+    return sorted(JS_DIR.glob('*.js'))
 
 
 def relative(path):
@@ -89,22 +97,38 @@ def css_declarations(text):
 
 
 def raw_color_violations(value):
-    literal = strip_vars(value)
+    # Keep a marker where var() was, so rgba(var(--sp-brand-rgb), 0.1) counts as token-based
+    literal = value
+    previous = None
+    while previous != literal:
+        previous = literal
+        literal = VAR_RE.sub('VAR', literal)
     problems = HEX_COLOR_RE.findall(literal) + NAMED_COLOR_RE.findall(literal)
     for name, args in COLOR_FUNCTION_RE.findall(literal):
-        if args.strip(' ,/'):
+        if 'VAR' not in args and args.strip(' ,/'):
             problems.append(f'{name}({args})')
     return problems
 
 
 def inline_styles():
-    """(template, style value) for every style="" outside the email templates."""
+    """(file, style value) for every style="" in templates (except emails) and in HTML built by JS."""
     for path in template_files():
         if relative(path) in EMAIL_TEMPLATES:
             continue
         for style in STYLE_ATTR_RE.findall(path.read_text(encoding='utf-8')):
             # template expressions ({{ }}, {% %}) are data, not design values
             yield relative(path), re.sub(r'{[{%].*?[%}]}', '', style)
+    for path in js_files():
+        for style in STYLE_ATTR_RE.findall(path.read_text(encoding='utf-8')):
+            # ${...} interpolations are data, not design values
+            yield path.name, re.sub(r'\$\{.*?\}', '', style)
+
+
+def token_block_names(selector):
+    """--sp-* names declared in every tokens.css block with this selector (regex)."""
+    text = COMMENT_RE.sub('', TOKENS_CSS.read_text(encoding='utf-8'))
+    blocks = re.findall(selector + r'\s*{(.*?)}', text, re.S)
+    return {name for block in blocks for name in re.findall(r'--sp-([\w-]+)\s*:', block)}
 
 
 class StaticReferencesTestCase(SimpleTestCase):
@@ -182,6 +206,52 @@ class TokensOnlyTestCase(SimpleTestCase):
         self.assertEqual(offenders, [], "\n".join(offenders))
 
 
+class TokenUsageTestCase(SimpleTestCase):
+    """Tokens that are used exist, and tokens that exist are used"""
+
+    TOKEN_USE_RE = re.compile(r'var\(\s*--sp-([\w-]+)')
+    # JS reads or writes tokens by name, e.g. style.setProperty('--sp-x', ...)
+    TOKEN_NAME_RE = re.compile(r"""['"]--sp-([\w-]+)['"]""")
+
+    def used_tokens(self):
+        used = set()
+        for path in [*project_css_files(), *template_files(), *js_files()]:
+            text = path.read_text(encoding='utf-8')
+            used |= set(self.TOKEN_USE_RE.findall(text)) | set(self.TOKEN_NAME_RE.findall(text))
+        return used
+
+    def test_used_tokens_are_defined(self):
+        undefined = sorted(self.used_tokens() - token_block_names(r':root'))
+        self.assertEqual(undefined, [], 'Used but not defined in tokens.css :root')
+
+    def test_defined_tokens_are_used(self):
+        unused = sorted(token_block_names(r':root') - self.used_tokens())
+        self.assertEqual(unused, [], 'Defined in tokens.css but never used')
+
+    def test_dark_theme_only_overrides_existing_tokens(self):
+        extra = sorted(token_block_names(r'\[data-bs-theme="dark"\]') - token_block_names(r':root'))
+        self.assertEqual(extra, [], 'Dark tokens without a light (:root) value')
+
+
+class ScriptStylesTestCase(SimpleTestCase):
+    """JS toggles classes or token-based custom properties; it never sets design values"""
+
+    DESIGN_STYLE_RE = re.compile(
+        r'\.style\.(color|background\w*|font\w*|border\w*|boxShadow|zIndex|lineHeight|transition|animation)\b'
+        r"|\.style\.setProperty\(\s*['\"](?!--)"
+        r'|\.cssText\b'
+    )
+
+    def test_no_design_values_set_from_js(self):
+        offenders = []
+        for path in js_files():
+            text = path.read_text(encoding='utf-8')
+            for match in self.DESIGN_STYLE_RE.finditer(text):
+                line = text.count('\n', 0, match.start()) + 1
+                offenders.append(f"{path.name}:{line} {match.group(0)}")
+        self.assertEqual(offenders, [], "\n".join(offenders))
+
+
 class DarkModeTestCase(SimpleTestCase):
     """Dark mode is token redefinition only"""
 
@@ -230,7 +300,7 @@ class LegacyFrameworkTestCase(SimpleTestCase):
 
     def files(self):
         yield from (p for p in template_files() if relative(p) not in EMAIL_TEMPLATES)
-        yield from sorted(JS_DIR.glob('*.js'))
+        yield from js_files()
         yield BASE_DIR / 'samples' / 'forms.py'
 
     def test_no_legacy_framework_usage(self):
@@ -244,13 +314,37 @@ class LegacyFrameworkTestCase(SimpleTestCase):
         self.assertEqual(offenders, [], "\n".join(offenders))
 
 
+class Bootstrap4ShimTestCase(SimpleTestCase):
+    """
+    Bootstrap 4 / AdminLTE class names must not come back as project shims. Use
+    text-bg-primary/secondary, the semantic badges (.badge-reference, .badge-hidden,
+    .badge-count, .badge-admin), .btn-plain, .btn-compact and .card-header-actions.
+    """
+
+    SHIM_RE = re.compile(
+        r'(?<![\w-])(badge-(?:primary|secondary|info|warning|danger|dark|success)|btn-default|btn-xs|card-tools)(?![\w-])'
+    )
+
+    def test_no_shim_classes(self):
+        found = []
+        files = [p for p in template_files() if relative(p) not in EMAIL_TEMPLATES]
+        for path in [*files, *js_files(), *project_css_files()]:
+            text = path.read_text(encoding='utf-8')
+            for match in self.SHIM_RE.finditer(text):
+                line = text.count('\n', 0, match.start()) + 1
+                found.append(f'{path.relative_to(BASE_DIR).as_posix()}:{line} {match.group(0)}')
+        self.assertEqual(found, [], '\n'.join(found))
+
+
 class DesignTokensSyncTestCase(SimpleTestCase):
-    """samples/design_tokens.py mirrors the matching tokens in tokens.css"""
+    """samples/design_tokens.py reads the matching tokens from tokens.css"""
 
     def root_tokens(self):
         text = COMMENT_RE.sub('', TOKENS_CSS.read_text(encoding='utf-8'))
-        root_block = re.search(r':root\s*{(.*?)}', text, re.S).group(1)
-        return dict(re.findall(r'--sp-([\w-]+)\s*:\s*([^;]+);', root_block))
+        tokens = {}
+        for block in re.findall(r':root\s*{(.*?)}', text, re.S):
+            tokens.update(re.findall(r'--sp-([\w-]+)\s*:\s*([^;]+);', block))
+        return tokens
 
     def test_difficulty_colors_match_tokens(self):
         tokens = self.root_tokens()
@@ -281,23 +375,17 @@ class DesignTokensSyncTestCase(SimpleTestCase):
         self.assertEqual(design_tokens.difficulty_embed_color('nonsense'), 0x6c757d)
 
 
-class DesignIntegrationTestCase(TestCase):
+class DesignIntegrationTestCase(SampleTestCase):
     """Server-side pieces of the design system work end to end"""
 
-    def setUp(self):
-        self.owner = User.objects.create_user(username='owner', password='testpass123')
-        self.other = User.objects.create_user(username='other', password='testpass123')
-        self.task = AnalysisTask.objects.create(
-            sha256='b' * 64,
-            goal='Find the C2 address',
-            difficulty=Difficulty.EASY,
-            description='Test description',
-            author=self.owner,
-        )
-        self.client = Client()
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = make_user()
+        cls.other = make_user()
+        cls.task = make_task(author=cls.owner, goal='Find the C2 address', difficulty=Difficulty.EASY)
 
     def test_error_message_rendered_once_as_danger_alert(self):
-        self.client.login(username='other', password='testpass123')
+        self.login_as(self.other)
         response = self.client.get(
             reverse('edit_task', kwargs={'sha256': self.task.sha256, 'task_id': self.task.id}),
             follow=True,
@@ -314,7 +402,7 @@ class DesignIntegrationTestCase(TestCase):
         self.assertContains(response, 'class="page-title"')
 
     def test_search_samples_ajax_returns_difficulty_class(self):
-        self.client.login(username='owner', password='testpass123')
+        self.login_as(self.owner)
         response = self.client.get(reverse('search_samples_ajax'), {'q': 'C2 address'})
         results = response.json()['results']
         self.assertEqual(len(results), 1)

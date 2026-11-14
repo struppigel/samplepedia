@@ -1,9 +1,12 @@
 {% load static %}
 {% comment %}
 Publish-article modal: search an analysis task and attach the article to it.
-Open it with openPublishModal(articleId, articleTitle) from js/publish-article.js.
+Open it with openPublishModal(articleId, articleTitle) from js/publish-article.js, which
+this partial loads itself.
 {% endcomment %}
-<div class="modal fade" id="publishModal" tabindex="-1" role="dialog" aria-labelledby="publishModalLabel" aria-hidden="true">
+<div class="modal fade" id="publishModal" tabindex="-1" role="dialog" aria-labelledby="publishModalLabel" aria-hidden="true"
+     data-search-url="{% url 'search_samples_ajax' %}"
+     data-publish-url="{% url 'publish_article' 0 %}">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -21,18 +24,18 @@ Open it with openPublishModal(articleId, articleTitle) from js/publish-article.j
           <small class="form-text text-muted">Start typing to search for analysis tasks...</small>
         </div>
 
-        <div id="searchResults" style="display: none;">
+        <div id="searchResults" hidden>
           <h6 class="mt-3 mb-2">Search Results:</h6>
           <div id="sampleList" class="list-group" style="max-height: 400px; overflow-y: auto;">
             <!-- Results will be populated here -->
           </div>
         </div>
 
-        <div id="noResults" style="display: none;" class="alert alert-info mt-3">
+        <div id="noResults" class="alert alert-info mt-3" hidden>
           No analysis tasks found matching your search.
         </div>
 
-        <div id="searchLoading" style="display: none;" class="text-center mt-3">
+        <div id="searchLoading" class="text-center mt-3" hidden>
           <i class="fas fa-spinner fa-spin"></i> Searching...
         </div>
       </div>

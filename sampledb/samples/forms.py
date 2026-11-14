@@ -1,10 +1,55 @@
-from .models import AnalysisTask, Difficulty, Solution, Article
+from .models import AnalysisTask, Difficulty, Solution, SolutionType, Article
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordResetForm
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from django_comments_xtd.forms import XtdCommentForm
 from turnstile.fields import TurnstileField
 from disposable_email_domains import blocklist
+
+
+def get_publishable_draft(article_id, user):
+    """The user's unpublished draft with this id; otherwise a ValidationError for the form."""
+    try:
+        article = Article.objects.get(id=article_id)
+    except Article.DoesNotExist:
+        raise forms.ValidationError("Selected draft article does not exist.")
+    if user is not None and article.author_id != user.id:
+        raise forms.ValidationError("You can only use your own draft articles.")
+    if article.is_published():
+        raise forms.ValidationError(
+            "This draft article is already published. Please select an unpublished draft."
+        )
+    return article
+
+
+def check_new_email(email, user=None):
+    """An address for a new account or an e-mail change: not taken by anyone else, not disposable."""
+    taken = User.objects.filter(email__iexact=email)
+    if user is not None:
+        taken = taken.exclude(pk=user.pk)
+    if taken.exists():
+        raise forms.ValidationError("This email address is already registered.")
+    if email.split('@')[-1].lower() in blocklist:
+        raise forms.ValidationError(
+            "Temporary or disposable email addresses are not allowed. "
+            "Please use a permanent email address."
+        )
+    return email
+
+
+class UserFormMixin:
+    """For forms acting on the logged-in user: takes the user first and can verify their password."""
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def verified_password(self, field, message="Your password is incorrect."):
+        password = self.cleaned_data.get(field)
+        if not self.user.check_password(password):
+            raise forms.ValidationError(message)
+        return password
 
 
 # Custom comment form for authenticated users
@@ -40,35 +85,39 @@ class AuthenticatedCommentForm(XtdCommentForm):
             data['user_email'] = self.user.email
         
         return data
-    
-    def get_success_url(self):
-        """
-        Override success URL to redirect to the comment with highlight parameter.
-        """
-        # This method will be called after the comment is posted
-        # We'll need to get the comment ID from the saved instance
-        return None  # Will be handled by the signal instead
 
 # For submitting analysis solutions to an analysis task
 class SolutionForm(forms.ModelForm):
+    """
+    Validates solution input; saving goes through services.solutions so that
+    on-site text ends up in an Article. cleaned_data['draft_article'] holds the
+    selected draft, if any.
+    """
     draft_article_id = forms.IntegerField(
         required=False,
         widget=forms.HiddenInput(attrs={'id': 'id_draft_article_id'}),
         label=''
     )
-    
+    # On-site text is stored in an Article, not on the Solution
+    content = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 15, 'id': 'id_content'}),
+    )
+
     class Meta:
         model = Solution
-        fields = ['title', 'solution_type', 'url', 'content']
+        fields = ['title', 'solution_type', 'url']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Solution title'}),
             'solution_type': forms.Select(attrs={'class': 'form-select'}),
             'url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 15, 'id': 'id_content'}),
         }
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, task=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        # The task isn't a form field, so the per-task title uniqueness is checked in clean()
+        self.task = task
+        self.user = user
         # Make title not required by default - we'll validate conditionally
         self.fields['title'].required = False
     
@@ -93,26 +142,35 @@ class SolutionForm(forms.ModelForm):
         content = cleaned_data.get('content')
         draft_article_id = cleaned_data.get('draft_article_id')
         
+        title = cleaned_data.get('title')
+
         # If draft article is selected, validate it
         if draft_article_id:
-            try:
-                article = Article.objects.get(id=draft_article_id)
-                # Ensure the article is not already published
-                if article.is_published():
-                    raise forms.ValidationError('Selected draft article is already published.')
-            except Article.DoesNotExist:
-                raise forms.ValidationError('Selected draft article does not exist.')
-            
+            article = get_publishable_draft(draft_article_id, self.user)
+
             # If draft is selected, content should not be provided
             if content and content.strip():
                 raise forms.ValidationError('You cannot provide both a draft article and manual content. Please choose one.')
-        
+
+            # The solution takes the draft's title
+            title = article.title
+            cleaned_data['draft_article'] = article
+
+        if self.task and title and Solution.title_taken(self.task, title, exclude_pk=self.instance.pk):
+            raise forms.ValidationError(f'This task already has a solution titled "{title}".')
+
+        # The on-site text would have no Article to live in
+        if self.instance.pk and self.instance.solution_type != SolutionType.ONSITE and solution_type == SolutionType.ONSITE:
+            raise forms.ValidationError(
+                "An external solution can't become an on-site one. Write a new on-site solution instead."
+            )
+
         # For onsite solutions without draft: require content
-        if solution_type == 'onsite' and not draft_article_id and not content:
+        if solution_type == SolutionType.ONSITE and not draft_article_id and not content:
             raise forms.ValidationError('On-site solutions must have content or a draft article selected.')
-        
+
         # Validate that non-onsite solutions have URL
-        if solution_type != 'onsite' and not url:
+        if solution_type != SolutionType.ONSITE and not draft_article_id and not url:
             raise forms.ValidationError('External solutions must have a URL.')
         
         return cleaned_data
@@ -194,8 +252,6 @@ class AnalysisTaskForm(forms.ModelForm):
             if field_name in self.fields:
                 self.fields[field_name].required = True
         
-        # Import SolutionType choices
-        from .models import SolutionType
         self.fields['reference_solution_type'].choices = [('', '---------')] + list(SolutionType.choices)
         
         # Hide reference solution fields when editing
@@ -309,29 +365,8 @@ class AnalysisTaskForm(forms.ModelForm):
             
             # If draft article is selected, validate it
             if draft_article_id:
-                from .models import Article
-                try:
-                    article = Article.objects.get(id=draft_article_id)
-                    
-                    # Validate user owns the draft
-                    if article.author != self.user:
-                        raise forms.ValidationError(
-                            "You can only use your own draft articles."
-                        )
-                    
-                    # Validate draft is not already published
-                    if article.is_published():
-                        raise forms.ValidationError(
-                            "This draft article is already published. Please select an unpublished draft."
-                        )
-                    
-                    # Store the article for later use in view
-                    cleaned_data['_draft_article'] = article
-                    
-                except Article.DoesNotExist:
-                    raise forms.ValidationError(
-                        "Selected draft article does not exist."
-                    )
+                # Stored for the view, which publishes it as the reference solution
+                cleaned_data['_draft_article'] = get_publishable_draft(draft_article_id, self.user)
             else:
                 # No draft selected, validate manual input is provided
                 # Title and type are required
@@ -341,7 +376,7 @@ class AnalysisTaskForm(forms.ModelForm):
                     )
                 
                 # Validate based on solution type
-                if ref_type == 'onsite':
+                if ref_type == SolutionType.ONSITE:
                     if not ref_content:
                         raise forms.ValidationError(
                             "On-site reference solutions must have content."
@@ -424,27 +459,11 @@ class TurnstileUserRegistrationForm(UserCreationForm):
         return username
 
     def clean_email(self):
-        email = self.cleaned_data.get('email')
-        
-        # Check if email is already registered
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError("This email address is already registered.")
-        
-        # Block disposable/temporary email domains
-        if email:
-            domain = email.split('@')[-1].lower()
-            
-            if domain in blocklist:
-                raise forms.ValidationError(
-                    "Temporary or disposable email addresses are not allowed. "
-                    "Please use a permanent email address."
-                )
-        
-        return email
+        return check_new_email(self.cleaned_data.get('email'))
 
 
 # Delete Account Form with password confirmation and Turnstile CAPTCHA
-class DeleteAccountForm(forms.Form):
+class DeleteAccountForm(UserFormMixin, forms.Form):
     """
     Form for users to delete their account (requires password confirmation).
     This action is irreversible.
@@ -467,22 +486,15 @@ class DeleteAccountForm(forms.Form):
     )
     turnstile = TurnstileField(label="")
 
-    def __init__(self, user, *args, **kwargs):
-        self.user = user
-        super().__init__(*args, **kwargs)
-
     def clean_password(self):
-        """Verify the password is correct"""
-        password = self.cleaned_data.get('password')
-        if not self.user.check_password(password):
-            raise forms.ValidationError("Your password is incorrect.")
-        return password
+        return self.verified_password('password')
 
 
 # Password Reset Form with Turnstile CAPTCHA
-class TurnstilePasswordResetForm(forms.Form):
+class TurnstilePasswordResetForm(PasswordResetForm):
     """
-    Custom password reset form with Turnstile CAPTCHA protection.
+    Django's password reset form (finds every active account with the address)
+    with Turnstile CAPTCHA protection.
     """
     email = forms.EmailField(
         required=True,
@@ -504,7 +516,7 @@ class TurnstileResendVerificationForm(forms.Form):
 
 
 # Change Password Form with Turnstile CAPTCHA
-class ChangePasswordForm(forms.Form):
+class ChangePasswordForm(UserFormMixin, forms.Form):
     """
     Form for users to change their own password (requires current password).
     """
@@ -522,16 +534,8 @@ class ChangePasswordForm(forms.Form):
     )
     turnstile = TurnstileField(label="")
 
-    def __init__(self, user, *args, **kwargs):
-        self.user = user
-        super().__init__(*args, **kwargs)
-
     def clean_current_password(self):
-        """Verify the current password is correct"""
-        current_password = self.cleaned_data.get('current_password')
-        if not self.user.check_password(current_password):
-            raise forms.ValidationError("Your current password is incorrect.")
-        return current_password
+        return self.verified_password('current_password', "Your current password is incorrect.")
 
     def clean(self):
         """Validate that the two password fields match"""
@@ -544,7 +548,6 @@ class ChangePasswordForm(forms.Form):
 
         # Validate password strength
         if password1:
-            from django.contrib.auth.password_validation import validate_password
             try:
                 validate_password(password1, self.user)
             except forms.ValidationError as error:
@@ -561,7 +564,7 @@ class ChangePasswordForm(forms.Form):
 
 
 # Change Email Form with Turnstile CAPTCHA
-class ChangeEmailForm(forms.Form):
+class ChangeEmailForm(UserFormMixin, forms.Form):
     """
     Form for users to change their email address (requires password verification).
     """
@@ -576,37 +579,21 @@ class ChangeEmailForm(forms.Form):
     )
     turnstile = TurnstileField(label="")
 
-    def __init__(self, user, *args, **kwargs):
-        self.user = user
-        super().__init__(*args, **kwargs)
-
     def clean_password(self):
-        """Verify the password is correct"""
-        password = self.cleaned_data.get('password')
-        if not self.user.check_password(password):
-            raise forms.ValidationError("Your password is incorrect.")
-        return password
+        return self.verified_password('password')
 
     def clean_new_email(self):
-        """Validate the new email address"""
         email = self.cleaned_data.get('new_email')
-        
-        # Check if the email is the same as current
-        if email == self.user.email:
+        if email.lower() == self.user.email.lower():
             raise forms.ValidationError("This is already your current email address.")
-        
-        # Check if email is already registered by another user
-        if User.objects.filter(email=email).exclude(pk=self.user.pk).exists():
-            raise forms.ValidationError("This email address is already registered.")
-        
-        # Block disposable/temporary email domains
-        if email:
-            domain = email.split('@')[-1].lower()
-            
-            if domain in blocklist:
-                raise forms.ValidationError(
-                    "Temporary or disposable email addresses are not allowed. "
-                    "Please use a permanent email address."
-                )
-        
-        return email
+        return check_new_email(email, self.user)
+
+
+class ArticleForm(forms.Form):
+    """Title and text of an article, as posted by the markdown editors"""
+    title = forms.CharField(max_length=200, error_messages={'required': 'Title is required.'})
+    content = forms.CharField(error_messages={'required': 'Content is required.'})
+
+    def first_error(self):
+        """The editors show one message at a time"""
+        return next(iter(self.errors.values()))[0]

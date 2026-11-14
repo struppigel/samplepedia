@@ -14,7 +14,8 @@
   font-weight: var(--sp-fw-normal);
 }
 
-.card-tools {
+/* Buttons and counts on the right of a card header */
+.card-header-actions {
   float: right;
   margin-right: calc(-1 * var(--sp-space-2));
 }
@@ -70,22 +71,24 @@
 /* ------------------------------------------------------------------ */
 /* Buttons                                                             */
 /* ------------------------------------------------------------------ */
-.btn-default {
-  --bs-btn-color: var(--sp-btn-default-fg);
-  --bs-btn-bg: var(--sp-btn-default-bg);
-  --bs-btn-border-color: var(--sp-btn-default-border);
-  --bs-btn-hover-color: var(--sp-btn-default-hover-fg);
-  --bs-btn-hover-bg: var(--sp-btn-default-hover-bg);
-  --bs-btn-hover-border-color: var(--sp-btn-default-border);
-  --bs-btn-active-color: var(--sp-btn-default-hover-fg);
-  --bs-btn-active-bg: var(--sp-btn-default-hover-bg);
-  --bs-btn-active-border-color: var(--sp-btn-default-border);
+/* Low-emphasis button on a light surface (filter bars) */
+.btn-plain {
+  --bs-btn-color: var(--sp-btn-plain-fg);
+  --bs-btn-bg: var(--sp-btn-plain-bg);
+  --bs-btn-border-color: var(--sp-btn-plain-border);
+  --bs-btn-hover-color: var(--sp-btn-plain-hover-fg);
+  --bs-btn-hover-bg: var(--sp-btn-plain-hover-bg);
+  --bs-btn-hover-border-color: var(--sp-btn-plain-border);
+  --bs-btn-active-color: var(--sp-btn-plain-hover-fg);
+  --bs-btn-active-bg: var(--sp-btn-plain-hover-bg);
+  --bs-btn-active-border-color: var(--sp-btn-plain-border);
   --bs-btn-focus-shadow-rgb: var(--sp-secondary-rgb);
 }
 
-.btn-xs {
-  --bs-btn-padding-y: var(--sp-btn-xs-py);
-  --bs-btn-padding-x: var(--sp-btn-xs-px);
+/* Smaller than .btn-sm, for buttons inside table rows */
+.btn-compact {
+  --bs-btn-padding-y: var(--sp-btn-compact-py);
+  --bs-btn-padding-x: var(--sp-btn-compact-px);
   --bs-btn-font-size: var(--sp-fs-xs);
   --bs-btn-border-radius: var(--sp-radius-xs);
 }
@@ -113,19 +116,20 @@
 /* ------------------------------------------------------------------ */
 /* Badges                                                              */
 /* ------------------------------------------------------------------ */
-.badge-primary { background-color: var(--sp-badge-primary); }
-.badge-secondary { background-color: var(--sp-badge-secondary); }
-.badge-info { background-color: var(--sp-badge-info); }
-.badge-danger { background-color: var(--sp-badge-danger); }
-.badge-dark { background-color: var(--sp-badge-dark); }
+/* Neutral and primary badges use Bootstrap's text-bg-secondary / text-bg-primary */
 .badge-brand { background-color: var(--sp-badge-brand); }
+.badge-reference { background-color: var(--sp-badge-reference); }  /* written by the task author */
+.badge-count { background-color: var(--sp-badge-count); }
+.badge-admin,
+.score-badge { background-color: var(--sp-badge-emphasis); }
 
-.badge-warning {
+/* A solution that is still hidden from other users */
+.badge-hidden {
   --bs-badge-color: var(--sp-on-warning);
-  background-color: var(--sp-badge-warning);
+  background-color: var(--sp-badge-hidden);
 }
 
-/* Difficulty (colors mirrored in samples/design_tokens.py) */
+/* Difficulty (samples/design_tokens.py reads the colors for Discord) */
 .badge-difficulty-easy,
 .badge-difficulty-medium,
 .badge-difficulty-advanced,
@@ -200,9 +204,9 @@ a.badge:hover::before {
 .tag-list-wrapper {
   position: relative;
   display: inline-block;
-  max-height: 1.6em;
+  max-height: var(--sp-lh-tag-row);
   overflow: hidden;
-  line-height: 1.6em;
+  line-height: var(--sp-lh-tag-row);
   white-space: normal;
   transition: max-height var(--sp-dur-slow) var(--sp-ease);
 }
@@ -351,7 +355,7 @@ a.badge:hover::before {
 /* Solution / comment highlighted from a notification link */
 .solution-highlight {
   background-color: var(--sp-solution-highlight-bg);
-  animation: sp-highlight-fade var(--sp-dur-highlight) ease-out;
+  animation: sp-highlight-fade var(--sp-dur-highlight) var(--sp-ease-out);
 }
 
 @keyframes sp-highlight-fade {
@@ -381,7 +385,7 @@ a.badge:hover::before {
   border-left-color: var(--sp-comment-highlight-border);
   border-radius: var(--sp-radius-content);
   transition: all var(--sp-dur-slow) var(--sp-ease);
-  animation: sp-highlight-fade var(--sp-dur-highlight) ease-in-out;
+  animation: sp-highlight-fade var(--sp-dur-highlight) var(--sp-ease-in-out);
 }
 
 .comment-preview {
@@ -459,7 +463,7 @@ a.badge:hover::before {
   transition: background-color var(--sp-dur) var(--sp-ease);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .article-title {
     font-size: var(--sp-fs-article-title-mobile);
   }
@@ -470,13 +474,64 @@ a.badge:hover::before {
 }
 
 /* ------------------------------------------------------------------ */
-/* Markdown editor (samples/_onsite_editor.html)                       */
+/* Markdown tabs and panes (solution and task forms, editors)          */
+/* ------------------------------------------------------------------ */
+.markdown-tabs {
+  display: flex;
+  gap: var(--sp-space-2);
+  margin-bottom: -1px;
+  border-bottom: var(--sp-border-width) solid var(--sp-input-border);
+}
+
+.markdown-tab {
+  padding: var(--sp-space-2) var(--sp-space-3);
+  font-weight: var(--sp-fw-medium);
+  color: var(--sp-text-muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-bottom: var(--sp-border-width-thick) solid transparent;
+  transition: all var(--sp-dur-fast) var(--sp-ease);
+}
+
+.markdown-tab:hover {
+  color: var(--sp-text);
+  border-bottom-color: var(--sp-input-border);
+}
+
+.markdown-tab.active {
+  color: var(--sp-brand);
+  border-bottom-color: var(--sp-brand);
+}
+
+.markdown-tab-content {
+  position: relative;
+}
+
+.markdown-pane {
+  display: none;
+}
+
+.markdown-pane.active {
+  display: block;
+}
+
+.markdown-pane[data-pane="preview"] {
+  min-height: 200px;
+  padding: var(--sp-space-block);
+  background-color: var(--sp-input-bg);
+  border: var(--sp-border-width) solid var(--sp-input-border);
+  border-radius: var(--sp-radius);
+}
+
+/* ------------------------------------------------------------------ */
+/* Markdown editor page (samples/_onsite_editor.html)                  */
 /* ------------------------------------------------------------------ */
 .md-editor-textarea {
   min-height: 500px;
   font-family: var(--sp-font-editor);
   font-size: var(--sp-fs-editor);
-  line-height: 1.6;
+  line-height: var(--sp-lh-editor);
   resize: vertical;
 }
 
@@ -514,7 +569,7 @@ a.badge:hover::before {
 }
 
 .markdown-help-content pre {
-  padding: 0.75rem;
+  padding: var(--sp-space-block);
   margin: var(--sp-space-2) 0;
   background-color: var(--sp-editor-help-pre-bg);
   border: var(--sp-border-width) solid var(--sp-input-border);
@@ -522,24 +577,8 @@ a.badge:hover::before {
 }
 
 .markdown-help-content code {
-  font-size: var(--sp-fs-count);
+  font-size: var(--sp-fs-code);
   color: var(--sp-text);
-}
-
-/* Keyboard keys */
-kbd {
-  display: inline-block;
-  padding: 0.1em 0.6em;
-  margin: 0 0.1em;
-  font-family: var(--sp-font-kbd);
-  font-size: var(--sp-fs-kbd);
-  line-height: 1.4;
-  color: var(--sp-kbd-fg);
-  text-shadow: var(--sp-kbd-text-shadow);
-  background-color: var(--sp-kbd-bg);
-  border: var(--sp-border-width) solid var(--sp-kbd-border);
-  border-radius: var(--sp-radius-code);
-  box-shadow: var(--sp-kbd-shadow);
 }
 
 /* ------------------------------------------------------------------ */
@@ -553,8 +592,4 @@ kbd {
 
 .page-hero-icon-lg {
   font-size: var(--sp-fs-hero-icon-lg);
-}
-
-.text-brand-icon {
-  color: var(--sp-brand);
 }

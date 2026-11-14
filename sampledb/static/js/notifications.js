@@ -3,6 +3,8 @@
  * - Polls for unread notification count every 60 seconds
  * - Updates bell icon badge
  * - Loads notifications into dropdown when clicked
+ * URLs come from the bell (base.html): data-dropdown-url and data-unread-count-url;
+ * each dropdown item links to the read_url the server sends with it.
  */
 
 (function() {
@@ -11,6 +13,12 @@
     const POLL_INTERVAL = 60000; // 60 seconds
     let pollTimer = null;
     let dropdownLoaded = false;
+
+    /** An endpoint URL from the bell's data-* attribute (rendered with {% url %} in base.html) */
+    function endpointUrl(attribute) {
+        const bell = document.getElementById('notificationBell');
+        return bell ? bell.dataset[attribute] : null;
+    }
     
     /**
      * Update the notification badge with current count
@@ -35,8 +43,9 @@
      * Poll the server for unread notification count
      */
     function pollNotificationCount() {
-        fetch('/notifications/unread-count/')
-            .then(response => response.json())
+        const url = endpointUrl('unreadCountUrl');
+        if (!url) return;
+        window.sp.fetchJSON(url)
             .then(data => {
                 updateBadge(data.unread_count);
             })
@@ -54,10 +63,10 @@
         }
         
         const listContainer = document.getElementById('notificationList');
-        if (!listContainer) return;
+        const url = endpointUrl('dropdownUrl');
+        if (!listContainer || !url) return;
         
-        fetch('/notifications/dropdown/')
-            .then(response => response.json())
+        window.sp.fetchJSON(url)
             .then(data => {
                 dropdownLoaded = true;
                 
@@ -72,19 +81,12 @@
                     let html = '';
                     data.notifications.forEach(notification => {
                         const timeAgo = formatTimeAgo(new Date(notification.timestamp));
-                        let icon = '';
-
-                        if (notification.description.includes('liked')) {
-                            icon = '<i class="fas fa-heart text-danger me-2"></i>';
-                        } else if (notification.description.includes('commented')) {
-                            icon = '<i class="fas fa-comment text-info me-2"></i>';
-                        } else if (notification.description.includes('solution')) {
-                            icon = '<i class="fas fa-lightbulb text-warning me-2"></i>';
-                        }
+                        // The server picks the icon from the notification's verb
+                        const icon = `<i class="${escapeHtml(notification.icon)} me-2"></i>`;
 
                         // Descriptions contain user-provided text (usernames, titles): always escape
                         html += `
-                            <a href="/notifications/${Number(notification.id)}/read/" class="dropdown-item">
+                            <a href="${escapeHtml(notification.read_url)}" class="dropdown-item">
                                 ${icon}
                                 <span>${escapeHtml(notification.description)}</span>
                                 ${notification.sha256 ? `<span class="text-muted small d-block">[SHA256: ${escapeHtml(notification.sha256)}...]</span>` : ''}

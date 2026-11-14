@@ -1,0 +1,40 @@
+{% load url_helpers %}
+{% comment %}
+  Pagination for a Django Page; every link keeps the other query parameters (filters, sort).
+  Include with: page_obj
+  Optional:
+    param         query parameter holding the page number (default "page")
+    page_numbers  numbered links between previous and next; build them in the view with
+                  list(paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1))
+    centered      a centered bar below a grid instead of a card footer
+{% endcomment %}
+{% if page_obj.paginator.num_pages > 1 %}
+{% with param=param|default:'page' %}
+<nav class="{% if centered %}d-flex flex-wrap justify-content-center align-items-center gap-3 mt-4{% else %}card-footer clearfix{% endif %}" aria-label="Pagination">
+  <span class="text-muted{% if not centered %} float-start{% endif %}">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+  </span>
+  <ul class="pagination pagination-sm m-0{% if not centered %} float-end{% endif %}">
+    {% if page_obj.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="{% page_url page_obj.previous_page_number param %}" aria-label="Previous page">«</a>
+    </li>
+    {% endif %}
+    {% for number in page_numbers %}
+      {% if number == page_obj.paginator.ELLIPSIS %}
+      <li class="page-item disabled"><span class="page-link">{{ number }}</span></li>
+      {% elif number == page_obj.number %}
+      <li class="page-item active" aria-current="page"><span class="page-link">{{ number }}</span></li>
+      {% else %}
+      <li class="page-item"><a class="page-link" href="{% page_url number param %}">{{ number }}</a></li>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="{% page_url page_obj.next_page_number param %}" aria-label="Next page">»</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endwith %}
+{% endif %}

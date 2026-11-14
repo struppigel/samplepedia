@@ -1,4 +1,5 @@
 {% extends "samples/base.html" %}
+{% load static %}
 
 {% block title %}{% if solution %}Edit Solution{% else %}Add Solution{% endif %}{% endblock %}
 {% block page_title %}{% if solution %}Edit Solution{% else %}Add Solution{% endif %}{% endblock %}
@@ -55,7 +56,7 @@
               {{ form.draft_article_id }}
 
               <!-- Onsite solution: Choose between writing new or using draft -->
-              <div class="mb-3" id="onsite-choice-field" style="display: none;">
+              <div class="mb-3" id="onsite-choice-field" hidden>
                 <label>How do you want to create this solution?</label>
                 <div class="card bg-body-tertiary">
                   <div class="card-body">
@@ -78,7 +79,8 @@
               </div>
 
               <!-- Draft article selection (shown when user chooses draft option) -->
-              <div class="mb-3" id="draft-selection-field" style="display: none;">
+              <div class="mb-3" id="draft-selection-field" hidden
+                   data-draft-picker="draftSelectionModal" data-draft-input="id_draft_article_id">
                 <label>Select Draft Article</label>
                 <div class="card">
                   <div class="card-body">
@@ -86,20 +88,20 @@
                       <div>
                         <p class="mb-0 small text-muted">Choose a draft article to publish as this solution</p>
                       </div>
-                      <button type="button" class="btn btn-sm btn-primary" id="select-draft-btn">
+                      <button type="button" class="btn btn-sm btn-primary" id="select-draft-btn" data-draft-picker-open>
                         <i class="fas fa-search"></i> Select Draft
                       </button>
                     </div>
                     
                     <!-- Selected draft info (hidden by default) -->
-                    <div id="selected-draft-info" style="display: none;" class="mt-3 pt-3 border-top">
+                    <div id="selected-draft-info" class="mt-3 pt-3 border-top" data-draft-picker-selected hidden>
                       <div class="d-flex justify-content-between align-items-start">
                         <div>
                           <strong>Selected Draft:</strong>
-                          <p class="mb-0" id="selected-draft-title"></p>
-                          <small class="text-muted" id="selected-draft-preview"></small>
+                          <p class="mb-0" id="selected-draft-title" data-draft-picker-title></p>
+                          <small class="text-muted" id="selected-draft-preview" data-draft-picker-preview></small>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearDraftSelection()">
+                        <button type="button" class="btn btn-sm btn-outline-danger" title="Clear selection" data-draft-picker-clear>
                           <i class="fas fa-times"></i>
                         </button>
                       </div>
@@ -136,27 +138,29 @@
                 {% endif %}
               </div>
 
-              <div class="mb-3" id="content-field" style="display: none;">
+              <div class="mb-3" id="content-field" hidden>
                 <label for="{{ form.content.id_for_label }}">Content</label>
                 <div class="alert alert-info mb-2">
                   <i class="fas fa-external-link-alt"></i>
                   <a href="{% url 'onsite_solution_editor' sha256=sample.sha256 task_id=sample.id %}" class="alert-link">Open Dedicated On-Site Editor</a> for a better writing experience with full-page markdown editing and accurate preview.
                 </div>
-                <div class="markdown-tabs">
-                  <button type="button" class="markdown-tab active" data-tab="write">
-                    <i class="fas fa-edit"></i> Write
-                  </button>
-                  <button type="button" class="markdown-tab" data-tab="preview">
-                    <i class="fas fa-eye"></i> Preview
-                  </button>
-                </div>
-                <div class="markdown-tab-content">
-                  <div class="markdown-pane active" data-pane="write">
-                    {{ form.content }}
+                <div data-md-editor data-preview-url="{% url 'markdown_preview' %}">
+                  <div class="markdown-tabs">
+                    <button type="button" class="markdown-tab active" data-tab="write">
+                      <i class="fas fa-edit"></i> Write
+                    </button>
+                    <button type="button" class="markdown-tab" data-tab="preview">
+                      <i class="fas fa-eye"></i> Preview
+                    </button>
                   </div>
-                  <div class="markdown-pane" data-pane="preview">
-                    <div class="prose" data-md-preview>
-                      <p class="text-muted">Nothing to preview</p>
+                  <div class="markdown-tab-content">
+                    <div class="markdown-pane active" data-pane="write">
+                      {{ form.content }}
+                    </div>
+                    <div class="markdown-pane" data-pane="preview">
+                      <div class="prose" data-md-preview>
+                        <p class="text-muted">Nothing to preview</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -211,151 +215,12 @@
 </section>
 
 <!-- Draft Selection Modal -->
-{% load static %}
 {% include 'samples/_draft_selection_modal.html' with modal_id='draftSelectionModal' modal_title='Select Draft Article' %}
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/md-editor.js' %}"></script>
 <script src="{% static 'js/draft-selection.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const solutionTypeSelect = document.getElementById('id_solution_type');
-  const onsiteChoiceField = document.getElementById('onsite-choice-field');
-  const manualFields = document.getElementById('manual-fields');
-  const titleField = document.getElementById('title-field');
-  const urlField = document.getElementById('url-field');
-  const contentField = document.getElementById('content-field');
-  const draftSelectionField = document.getElementById('draft-selection-field');
-  const choiceWriteRadio = document.getElementById('choice-write-new');
-  const choiceDraftRadio = document.getElementById('choice-use-draft');
-  const tabs = document.querySelectorAll('.markdown-tab');
-  const panes = document.querySelectorAll('.markdown-pane');
-  const textarea = document.getElementById('id_content');
-  const previewContent = document.querySelector('[data-md-preview]');
-  let previewCache = '';
-  
-  // Toggle fields based on solution type
-  function toggleSolutionType() {
-    const selectedType = solutionTypeSelect.value;
-    if (selectedType === 'onsite') {
-      // Show onsite choice (write vs draft)
-      onsiteChoiceField.style.display = 'block';
-      // Update based on current radio selection
-      toggleOnsiteChoice();
-    } else {
-      // External solution: show only title and URL
-      onsiteChoiceField.style.display = 'none';
-      draftSelectionField.style.display = 'none';
-      titleField.style.display = 'block';
-      urlField.style.display = 'block';
-      contentField.style.display = 'none';
-    }
-  }
-  
-  // Toggle between write new vs use draft for onsite solutions
-  function toggleOnsiteChoice() {
-    if (choiceWriteRadio.checked) {
-      // Write new solution: show title and content fields
-      manualFields.style.display = 'block';
-      titleField.style.display = 'block';
-      urlField.style.display = 'none';
-      contentField.style.display = 'block';
-      draftSelectionField.style.display = 'none';
-      // Clear draft selection
-      clearDraftSelection();
-    } else if (choiceDraftRadio.checked) {
-      // Use draft: show draft selection, hide manual fields
-      draftSelectionField.style.display = 'block';
-      titleField.style.display = 'none';
-      urlField.style.display = 'none';
-      contentField.style.display = 'none';
-      manualFields.style.display = 'none';
-    }
-  }
-  
-  // Initial toggle
-  toggleSolutionType();
-  
-  // Listen for solution type changes
-  solutionTypeSelect.addEventListener('change', toggleSolutionType);
-  
-  // Listen for onsite choice changes
-  choiceWriteRadio.addEventListener('change', toggleOnsiteChoice);
-  choiceDraftRadio.addEventListener('change', toggleOnsiteChoice);
-  
-  // Draft selection button
-  document.getElementById('select-draft-btn').addEventListener('click', function() {
-    openDraftSelectionModal('draftSelectionModal', function(draft) {
-      // Store draft ID
-      document.getElementById('id_draft_article_id').value = draft.id;
-      
-      // Show selected draft info
-      document.getElementById('selected-draft-title').textContent = draft.title;
-      document.getElementById('selected-draft-preview').textContent = draft.preview;
-      document.getElementById('selected-draft-info').style.display = 'block';
-    });
-  });
-  
-  // Markdown preview tabs
-  tabs.forEach(tab => {
-    tab.addEventListener('click', function() {
-      const targetTab = this.getAttribute('data-tab');
-      
-      // Update active tab
-      tabs.forEach(t => t.classList.remove('active'));
-      this.classList.add('active');
-      
-      // Update active pane
-      panes.forEach(p => {
-        if (p.getAttribute('data-pane') === targetTab) {
-          p.classList.add('active');
-        } else {
-          p.classList.remove('active');
-        }
-      });
-      
-      // If switching to preview, render markdown
-      if (targetTab === 'preview') {
-        const content = textarea.value;
-        
-        // Only fetch if content changed
-        if (content !== previewCache) {
-          previewCache = content;
-          
-          if (!content.trim()) {
-            previewContent.innerHTML = '<p class="text-muted">Nothing to preview</p>';
-            return;
-          }
-          
-          // Show loading state
-          previewContent.innerHTML = '<p class="text-muted"><i class="fas fa-spinner fa-spin"></i> Loading preview...</p>';
-          
-          // Fetch preview from server
-          fetch('{% url "markdown_preview" %}', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: 'content=' + encodeURIComponent(content)
-          })
-          .then(response => response.json())
-          .then(data => {
-            previewContent.innerHTML = data.html;
-          })
-          .catch(error => {
-            console.error('Preview error:', error);
-            previewContent.innerHTML = '<p class="text-danger"><i class="fas fa-exclamation-triangle"></i> Error loading preview</p>';
-          });
-        }
-      }
-    });
-  });
-});
-
-// Clear draft selection
-function clearDraftSelection() {
-  document.getElementById('id_draft_article_id').value = '';
-  document.getElementById('selected-draft-info').style.display = 'none';
-}
-</script>
-
+<script src="{% static 'js/pages/solution-form.js' %}"></script>
 {% endblock %}

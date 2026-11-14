@@ -35,7 +35,7 @@ h6, .h6 { font-size: var(--sp-fs-h6); }
 
 small,
 .small {
-  font-size: var(--sp-fs-small);
+  font-size: var(--sp-fs-fine-print);
 }
 
 label {
@@ -63,6 +63,22 @@ a {
 /* Gray links turn brand red on hover (the utility reads --bs-secondary-color) */
 a.text-muted:hover {
   --bs-secondary-color: var(--sp-brand-hover);
+}
+
+/* Keyboard keys (markdown editor help, rendered markdown) */
+kbd {
+  display: inline-block;
+  padding: 0.1em 0.6em;
+  margin: 0 0.1em;
+  font-family: var(--sp-font-kbd);
+  font-size: var(--sp-fs-kbd);
+  line-height: var(--sp-lh-kbd);
+  color: var(--sp-kbd-fg);
+  text-shadow: var(--sp-kbd-text-shadow);
+  background-color: var(--sp-kbd-bg);
+  border: var(--sp-border-width) solid var(--sp-kbd-border);
+  border-radius: var(--sp-radius-code);
+  box-shadow: var(--sp-kbd-shadow);
 }
 
 /* ------------------------------------------------------------------ */

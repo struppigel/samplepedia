@@ -52,7 +52,7 @@
       if (hiddenCount > 0) {
         // Create +more badge and append it at the end
         const moreBadge = document.createElement('span');
-        moreBadge.className = 'badge badge-secondary tag-more-badge';
+        moreBadge.className = 'badge text-bg-secondary tag-more-badge';
         moreBadge.textContent = '+' + hiddenCount + ' more';
         content.appendChild(moreBadge);
 

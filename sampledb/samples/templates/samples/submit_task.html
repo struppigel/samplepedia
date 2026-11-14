@@ -11,7 +11,7 @@
      data-is-edit="{% if is_edit %}true{% else %}false{% endif %}"
      {% if is_edit and current_image_id %}data-current-image-id="{{ current_image_id }}"{% endif %}
      {% if is_edit and task.image and not current_image_id %}data-current-image-url="{% cloudinary_url task.image width=150 height=150 crop='fill' %}"{% endif %}
-     data-markdown-preview-url="{% url 'markdown_preview' %}">
+     data-restore-draft="{% if is_edit or form.is_bound %}false{% else %}true{% endif %}">
 </div>
 
 <section class="page-content">
@@ -24,7 +24,7 @@
             <h3 class="card-title">Task Details</h3>
           </div>
           <div class="card-body">
-            <form method="post" enctype="multipart/form-data" novalidate>
+            <form method="post" enctype="multipart/form-data" novalidate id="submit-task-form">
               {% csrf_token %}
               
               {% if form.errors %}
@@ -92,17 +92,19 @@
 
               <div class="mb-3">
                 <label for="{{ form.description.id_for_label }}">Description</label>
-                <div class="markdown-tabs">
-                  <button type="button" class="markdown-tab active" data-tab="write">Write</button>
-                  <button type="button" class="markdown-tab" data-tab="preview">Preview</button>
-                </div>
-                <div class="markdown-tab-content">
-                  <div class="markdown-pane active" data-pane="write">
-                    {{ form.description }}
+                <div data-md-editor data-preview-url="{% url 'markdown_preview' %}">
+                  <div class="markdown-tabs">
+                    <button type="button" class="markdown-tab active" data-tab="write">Write</button>
+                    <button type="button" class="markdown-tab" data-tab="preview">Preview</button>
                   </div>
-                  <div class="markdown-pane" data-pane="preview">
-                    <div class="prose" data-md-preview>
-                      <p class="text-muted">Nothing to preview</p>
+                  <div class="markdown-tab-content">
+                    <div class="markdown-pane active" data-pane="write">
+                      {{ form.description }}
+                    </div>
+                    <div class="markdown-pane" data-pane="preview">
+                      <div class="prose" data-md-preview>
+                        <p class="text-muted">Nothing to preview</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -163,16 +165,16 @@
                 <label>Sample Image (Optional)</label>
                 
                 <!-- Image Preview Area (stays visible) -->
-                <div id="image_preview_area" style="display: none;">
-                  <div id="upload_image_preview" class="mt-2" style="display: none;">
+                <div id="image_preview_area" hidden>
+                  <div id="upload_image_preview" class="mt-2" hidden>
                     <img id="upload_preview_img" src="" alt="Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
-                    <button type="button" class="btn btn-sm btn-link text-danger" onclick="clearUploadPreview()">
+                    <button type="button" class="btn btn-sm btn-link text-danger" data-image-remove="upload">
                       <i class="fas fa-times"></i> Remove
                     </button>
                   </div>
-                  <div id="selected_image_preview" class="mt-2" style="display: none;">
+                  <div id="selected_image_preview" class="mt-2" hidden>
                     <img id="preview_img" src="" alt="Selected" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
-                    <button type="button" class="btn btn-sm btn-link text-danger" onclick="clearImageSelection()">
+                    <button type="button" class="btn btn-sm btn-link text-danger" data-image-remove="gallery">
                       <i class="fas fa-times"></i> Remove
                     </button>
                   </div>
@@ -233,27 +235,28 @@
               
               <!-- Draft article selection option -->
               <div class="mb-3">
-                <div class="bg-body-tertiary p-3 rounded dropzone-box">
+                <div class="bg-body-tertiary p-3 rounded dropzone-box" id="reference-draft-picker"
+                     data-draft-picker="draftSelectionModal" data-draft-input="id_reference_draft_article_id">
                   <div class="d-flex justify-content-between align-items-center">
                     <div>
                       <i class="fas fa-file-alt text-primary"></i>
                       <strong>Or Use Existing Draft</strong>
                       <p class="mb-0 small text-muted">Select a draft article you've already written</p>
                     </div>
-                    <button type="button" class="btn btn-sm btn-primary" onclick="openSubmitPageDraftModal()">
+                    <button type="button" class="btn btn-sm btn-primary" data-draft-picker-open>
                       <i class="fas fa-search"></i> Select Draft
                     </button>
                   </div>
                   
                   <!-- Selected draft info (hidden by default) -->
-                  <div id="selected-draft-info" class="selected-draft-info mt-3 pt-3" style="display: none;">
+                  <div id="selected-draft-info" class="selected-draft-info mt-3 pt-3" data-draft-picker-selected hidden>
                     <div class="d-flex justify-content-between align-items-start">
                       <div>
                         <strong>Selected Draft:</strong>
-                        <p class="mb-0" id="selected-draft-title"></p>
-                        <small class="text-muted" id="selected-draft-preview"></small>
+                        <p class="mb-0" id="selected-draft-title" data-draft-picker-title></p>
+                        <small class="text-muted" id="selected-draft-preview" data-draft-picker-preview></small>
                       </div>
-                      <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearDraftSelection()">
+                      <button type="button" class="btn btn-sm btn-outline-danger" data-draft-picker-clear>
                         <i class="fas fa-times"></i> Clear
                       </button>
                     </div>
@@ -273,14 +276,14 @@
                 {% endif %}
               </div>
 
-              <div class="mb-3" id="reference-content-field" style="display: none;">
+              <div class="mb-3" id="reference-content-field" hidden>
                 <label for="reference_solution_content">Solution Content</label>
                 <div class="alert alert-info">
                   <i class="fas fa-external-link-alt"></i>
                   <strong>Use Full Editor:</strong> 
                   <a href="{% url 'markdown_editor' %}" target="_blank" class="alert-link" id="openMarkdownEditorLink">Open Markdown Editor</a> to write your on-site solution, you can either copy and paste it back or press "Use in Submit Form".
                 </div>
-                <textarea id="reference_solution_content" name="reference_solution_content" class="form-control" rows="10" placeholder="Paste your markdown content here..."></textarea>
+                <textarea id="reference_solution_content" name="reference_solution_content" class="form-control" rows="10" placeholder="Paste your markdown content here...">{{ form.reference_solution_content.value|default_if_none:'' }}</textarea>
                 <small class="form-text text-muted">Markdown content for on-site solutions.</small>
               </div>
               
@@ -311,7 +314,7 @@
                   <i class="fas fa-times"></i> Cancel
                 </a>
                 {% if is_edit %}
-                  <button type="button" class="btn btn-outline-danger float-end" onclick="confirmDelete()">
+                  <button type="submit" form="deleteForm" class="btn btn-outline-danger float-end">
                     <i class="fas fa-trash-alt"></i> Delete Task
                   </button>
                 {% endif %}
@@ -319,8 +322,9 @@
             </form>
             
             {% if is_edit %}
-            <!-- Hidden delete form -->
-            <form id="deleteForm" method="post" action="{% url 'delete_task' sha256=task.sha256 task_id=task.id %}" class="d-none">
+            <!-- Delete form (the Delete Task button submits it; js/utils.js asks first) -->
+            <form id="deleteForm" method="post" action="{% url 'delete_task' sha256=task.sha256 task_id=task.id %}" class="d-none"
+                  data-confirm="Are you sure you want to delete this analysis task? This action cannot be undone.">
               {% csrf_token %}
             </form>
             {% endif %}
@@ -416,57 +420,12 @@
   <!-- Draft Selection Modal -->
   {% include 'samples/_draft_selection_modal.html' with modal_id='draftSelectionModal' modal_title='Select Draft Article' %}
 
-  <script src="{% static 'js/submit-task-form.js' %}"></script>
-  <script src="{% static 'js/draft-selection.js' %}"></script>
-  <script>
-  function setShown(id, shown) {
-    document.getElementById(id).style.display = shown ? '' : 'none';
-  }
-
-  // Submit page specific: Open draft modal with form-fill callback
-  function openSubmitPageDraftModal() {
-    openDraftSelectionModal('draftSelectionModal', function(draft) {
-      // Set the hidden field value
-      document.getElementById('id_reference_draft_article_id').value = draft.id;
-
-      // Show selected draft info
-      document.getElementById('selected-draft-title').textContent = draft.title;
-      document.getElementById('selected-draft-preview').textContent = draft.preview;
-      setShown('selected-draft-info', true);
-
-      // Hide manual input fields when draft is selected (don't disable, just hide)
-      setShown('reference-url-field', false);
-      setShown('reference-content-field', false);
-      setShown('ref-title-group', false);
-      setShown('ref-type-group', false);
-
-      // Scroll to show selection
-      const info = document.getElementById('selected-draft-info');
-      window.scrollTo({
-        top: info.getBoundingClientRect().top + window.scrollY - 100,
-        behavior: 'smooth'
-      });
-    });
-  }
-
-  // Clear draft selection and restore manual input fields
-  function clearDraftSelection() {
-    // Clear the hidden field
-    document.getElementById('id_reference_draft_article_id').value = '';
-
-    // Hide selected draft info
-    setShown('selected-draft-info', false);
-
-    // Show manual input fields
-    setShown('ref-title-group', true);
-    setShown('ref-type-group', true);
-
-    // Show appropriate field based on solution type
-    const isOnsite = document.getElementById('id_reference_solution_type').value === 'onsite';
-    setShown('reference-url-field', !isOnsite);
-    setShown('reference-content-field', isOnsite);
-  }
-  </script>
 </section>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/md-editor.js' %}"></script>
+<script src="{% static 'js/draft-selection.js' %}"></script>
+<script src="{% static 'js/submit-task-form.js' %}"></script>
 {% endblock %}

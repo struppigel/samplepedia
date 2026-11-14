@@ -1,26 +1,30 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db.models import F, Q
+from django.db.models import F, Prefetch, Q
 from django.http import JsonResponse
-from markdownx.utils import markdownify
 from ..design_tokens import difficulty_css_class
+from ..constants import ARTICLES_PER_PAGE
+from ..forms import ArticleForm
 from ..models import Article, AnalysisTask, Solution
+from ..services.solutions import publish_draft
+from ..utils.drafts import clear_drafts
+from ..utils.http import safe_next_url
+from ..utils.markdown import render_markdown
+from .lookups import get_task_or_404
 
 
 @login_required
 def article_list(request):
     """List all articles by the current user (both drafts and published)"""
-    from django.db.models import Count, Q
-    
+    # Published articles carry their solution with like and reference counts
+    solutions = Solution.objects.for_listing().with_reference_count()
     articles = Article.objects.filter(
         author=request.user
     ).select_related('author').prefetch_related(
-        'solution',
-        'solution__analysis_task',
-        'solution__analysis_task__author',
-        'solution__liked_by'
+        Prefetch('solution', queryset=solutions),
     ).order_by('-updated_at')
     
     # Get IDs of solutions liked by current user
@@ -30,28 +34,7 @@ def article_list(request):
             request.user.liked_solutions.values_list('id', flat=True)
         )
     
-    # For each published article, calculate reference solution count
-    articles_with_counts = []
-    for article in articles:
-        article_data = {
-            'article': article,
-            'reference_solution_count': 0
-        }
-        
-        # If article is published and is a reference solution, count reference solutions
-        if article.is_published():
-            solution = article.solution
-            task = solution.analysis_task
-            if solution.author_id == task.author_id:
-                # Count reference solutions for this task
-                article_data['reference_solution_count'] = task.solutions.filter(
-                    author=task.author
-                ).count()
-        
-        articles_with_counts.append(article_data)
-    
-    # Pagination
-    paginator = Paginator(articles_with_counts, 25)
+    paginator = Paginator(articles, ARTICLES_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -79,25 +62,22 @@ def article_editor(request, article_id=None):
         if article.is_published():
             messages.error(request, 'This article is already published as a solution. You cannot edit it directly.')
             return redirect('article_list')
-    
+
+    # The browser draft of this editor (static/js/drafts.js)
+    draft_name = f'article:{article.id if article else "new"}'
+
     if request.method == 'POST':
-        title = request.POST.get('title', '').strip()
-        content = request.POST.get('content', '').strip()
-        
-        # Validation
-        if not title:
-            messages.error(request, 'Title is required.')
+        form = ArticleForm(request.POST)
+        if not form.is_valid():
+            # Re-render with what the user typed so nothing is lost
+            messages.error(request, form.first_error())
             return render(request, 'samples/article_editor.html', {
                 'article': article,
-                'form': {'title': {'value': title}, 'content': {'value': content}},
+                'initial_title': request.POST.get('title', ''),
+                'initial_content': request.POST.get('content', ''),
+                'draft_name': draft_name,
             })
-        
-        if not content:
-            messages.error(request, 'Content is required.')
-            return render(request, 'samples/article_editor.html', {
-                'article': article,
-                'form': {'title': {'value': title}, 'content': {'value': content}},
-            })
+        title, content = form.cleaned_data['title'], form.cleaned_data['content']
         
         # Create or update article
         if article:
@@ -114,7 +94,8 @@ def article_editor(request, article_id=None):
                 content=content,
             )
             messages.success(request, 'Article draft created successfully!')
-        
+
+        clear_drafts(request, draft_name)
         # Redirect to view the article
         return redirect('article_view', article_id=article.id)
     
@@ -126,6 +107,7 @@ def article_editor(request, article_id=None):
         'article': article,
         'initial_title': initial_title,
         'initial_content': initial_content,
+        'draft_name': draft_name,
     })
 
 
@@ -137,7 +119,7 @@ def article_view(request, article_id):
     article = get_object_or_404(Article, id=article_id)
     
     # Only allow the author or staff to view draft articles
-    if article.author != request.user and not request.user.is_staff:
+    if not article.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to view this article.')
         return redirect('article_list')
     
@@ -159,7 +141,7 @@ def article_view(request, article_id):
     edit_url = reverse('article_editor_edit', kwargs={'article_id': article_id}) if user_can_edit else None
     
     # Render markdown content
-    rendered_content = markdownify(article.content) if article.content else ''
+    rendered_content = render_markdown(article.content)
     
     return render(request, 'samples/article_view.html', {
         'article': article,
@@ -173,94 +155,52 @@ def article_view(request, article_id):
 def article_delete(request, article_id):
     """Delete an article (and cascade delete solution if published)"""
     article = get_object_or_404(Article, id=article_id)
-    
-    # Get redirect target from POST data or referrer
-    redirect_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
-    default_redirect = 'article_list'
-    
+    next_url = safe_next_url(request, 'article_list')
+
     # Only allow the author or staff to delete
     if not article.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to delete this article.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect)
-    
-    # Prevent deleting if it's the last reference solution
-    if article.is_published():
-        solution = article.solution
-        task = solution.analysis_task
-        is_reference_solution = solution.author == task.author
-        
-        if is_reference_solution:
-            reference_solution_count = task.solutions.filter(author=task.author).count()
-            if reference_solution_count <= 1:
-                messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
-                if redirect_url:
-                    return redirect(redirect_url)
-                return redirect(default_redirect)
-    
+        return redirect(next_url)
+
+    if article.is_published() and article.solution.is_last_reference():
+        messages.error(request, 'Cannot delete the last reference solution. At least one reference solution must remain.')
+        return redirect(next_url)
+
     if request.method == 'POST':
         article_title = article.title
         article.delete()  # This will cascade delete the solution if published
         messages.success(request, f'Article "{article_title}" has been deleted.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect)
-    
-    # If not POST, redirect back
-    if redirect_url:
-        return redirect(redirect_url)
-    return redirect(default_redirect)
+
+    return redirect(next_url)
 
 
 @login_required
 def article_unpublish(request, article_id):
     """Unpublish an article (delete solution, keep article as draft)"""
     article = get_object_or_404(Article, id=article_id)
-    
-    # Get redirect target from POST data or referrer
-    redirect_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
-    default_redirect = 'article_list'
-    
+    next_url = safe_next_url(request, 'article_list')
+
     # Only allow the author or staff to unpublish
     if not article.user_can_edit(request.user):
         messages.error(request, 'You do not have permission to unpublish this article.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect)
-    
+        return redirect(next_url)
+
     # Check if it's published
     if not article.is_published():
         messages.error(request, 'This article is not published.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect)
-    
-    # Prevent unpublishing if it's the last reference solution
+        return redirect(next_url)
+
     solution = article.solution
-    task = solution.analysis_task
-    is_reference_solution = solution.author == task.author
-    
-    if is_reference_solution:
-        reference_solution_count = task.solutions.filter(author=task.author).count()
-        if reference_solution_count <= 1:
-            messages.error(request, 'Cannot unpublish the last reference solution. At least one reference solution must remain.')
-            if redirect_url:
-                return redirect(redirect_url)
-            return redirect(default_redirect)
-    
+    if solution.is_last_reference():
+        messages.error(request, 'Cannot unpublish the last reference solution. At least one reference solution must remain.')
+        return redirect(next_url)
+
     if request.method == 'POST':
         article_title = article.title
         solution.delete()  # Delete only the solution, keep the article
         messages.success(request, f'Article "{article_title}" has been unpublished and converted to a draft.')
-        if redirect_url:
-            return redirect(redirect_url)
-        return redirect(default_redirect)
-    
-    # If not POST, redirect back
-    if redirect_url:
-        return redirect(redirect_url)
-    return redirect(default_redirect)
+
+    return redirect(next_url)
 
 
 @login_required
@@ -331,21 +271,18 @@ def publish_article(request, article_id):
         return JsonResponse({'error': 'Sample ID required'}, status=400)
     
     sample = get_object_or_404(AnalysisTask, id=sample_id)
-    
-    # Create the solution
-    solution = Solution.objects.create(
-        analysis_task=sample,
-        author=request.user,
-        title=article.title,
-        solution_type='onsite',
-        article=article,
-        url=''  # Not used for onsite solutions
-    )
-    
+
+    try:
+        publish_draft(article=article, task=sample, author=request.user)
+    except ValidationError as error:
+        return JsonResponse({'error': ' '.join(error.messages)}, status=400)
+
+    # A published article can't be edited any more: forget unsaved editor changes
+    clear_drafts(request, f'article:{article.id}')
     messages.success(request, f'Article "{article.title}" has been published to sample {sample.sha256[:12]}.')
     return JsonResponse({
         'success': True,
-        'redirect_url': f'/sample/{sample.sha256}/{sample.id}/'
+        'redirect_url': sample.get_absolute_url(),
     })
 
 
@@ -355,7 +292,7 @@ def attach_draft_to_sample(request, sha256, task_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=400)
     
-    sample = get_object_or_404(AnalysisTask, id=task_id, sha256=sha256)
+    sample = get_task_or_404(sha256, task_id)
     
     article_id = request.POST.get('article_id')
     if not article_id:
@@ -367,16 +304,12 @@ def attach_draft_to_sample(request, sha256, task_id):
     if article.is_published():
         return JsonResponse({'error': 'Article is already published'}, status=400)
     
-    # Create the solution
-    solution = Solution.objects.create(
-        analysis_task=sample,
-        author=request.user,
-        title=article.title,
-        solution_type='onsite',
-        article=article,
-        url=''  # Not used for onsite solutions
-    )
-    
+    try:
+        publish_draft(article=article, task=sample, author=request.user)
+    except ValidationError as error:
+        return JsonResponse({'error': ' '.join(error.messages)}, status=400)
+
+    clear_drafts(request, f'article:{article.id}')
     messages.success(request, f'Article "{article.title}" has been published to this sample.')
     return JsonResponse({
         'success': True,
