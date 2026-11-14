@@ -126,17 +126,21 @@ def send_sample_notification(sample):
 
 
 def send_solution_notification(solution):
-    """Announce a new solution in its task's difficulty channel."""
+    """Announce a new solution, or a hidden one whose hidden period ended, in its task's difficulty channel."""
     task = solution.analysis_task
     page_url = absolute_url(solution.get_absolute_url())
     type_display = solution.get_solution_type_display()
     # External solutions link straight to the writeup; on-site ones to their page here
     link = page_url if solution.solution_type == SolutionType.ONSITE else solution.url
+    if solution.hidden_until:
+        description = f'A {type_display.lower()} solution is now available for a malware sample.'
+    else:
+        description = f'A new {type_display.lower()} solution has been added to a malware sample.'
 
     embed = {
         'title': solution.title,
         'url': page_url,
-        'description': f'A new {type_display.lower()} solution has been added to a malware sample.',
+        'description': description,
         'color': difficulty_embed_color(task.difficulty),
         'fields': [
             _field('Author', solution.author.username, inline=True),

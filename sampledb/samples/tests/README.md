@@ -52,6 +52,7 @@ These scan the code rather than exercise it, and fail with a list of offending l
 | File | Covers |
 |---|---|
 | `test_account_deletion.py` | deleting an account: form, view, cascades, comment anonymization, last-superuser guard |
+| `test_announcements.py` | Discord announcement once per solution; hidden ones via `announce_solutions` after `hidden_until`, retries, max age |
 | `test_comment_notifications.py` | comment and @mention notifications, recipients, query count |
 | `test_design_system.py` | design-system guardrails (see above) and the Discord colors read from tokens.css |
 | `test_discord.py` | webhook choice per difficulty, embed links, failures logged not raised |
@@ -65,7 +66,7 @@ These scan the code rather than exercise it, and fail with a list of offending l
 | `test_legal_pages.py` | impressum and privacy policy per language; e-mail template rendering |
 | `test_likes.py` | liking tasks and solutions, aggregated like notifications, notification icons and pagination |
 | `test_list_templates.py` | pagination keeps filters, filter bar, SHA256 cells, detail sidebar, showcase markup |
-| `test_migrations.py` | data migration 0019 (legacy solution content into Articles) |
+| `test_migrations.py` | data migrations 0019 (legacy solution content into Articles) and 0022 (existing solutions count as announced) |
 | `test_regressions.py` | duplicate titles, hidden-solution leaks, editor re-renders, canonical task URLs |
 | `test_sample_list.py` | task list: filtering, sorting, pagination, landing page |
 | `test_scoring.py` | scores and ranks against the original per-object algorithm |

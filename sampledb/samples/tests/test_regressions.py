@@ -100,13 +100,13 @@ class HiddenSolutionTestCase(RegressionTestCase):
         solution.article.refresh_from_db()
         self.assertEqual(solution.article.view_count, 0)
 
-    @mock.patch('samples.signals.send_solution_notification')
+    @mock.patch('samples.signals.announce_solution')
     def test_hidden_solution_is_not_announced(self, send):
         with self.captureOnCommitCallbacks(execute=True):
             self.create_hidden_onsite()
         send.assert_not_called()
 
-    @mock.patch('samples.signals.send_solution_notification')
+    @mock.patch('samples.signals.announce_solution')
     def test_visible_solution_is_announced(self, send):
         with self.captureOnCommitCallbacks(execute=True):
             make_solution(task=self.task)

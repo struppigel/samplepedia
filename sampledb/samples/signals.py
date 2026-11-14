@@ -6,7 +6,8 @@ from django.dispatch import receiver
 from django.db import transaction
 from django_comments.signals import comment_was_posted
 from .models import AnalysisTask, Solution, Notification, NotificationVerb
-from .discord_utils import send_in_background, send_sample_notification, send_solution_notification
+from .discord_utils import send_in_background, send_sample_notification
+from .services.announcements import announce_solution
 import logging
 import re
 
@@ -115,10 +116,11 @@ def notify_on_solution(sender, instance, created, **kwargs):
     # Get the analysis task
     task = instance.analysis_task
     
-    # Announce new solutions on Discord (after transaction commits). Hidden ones are
-    # skipped: the embed links the solution directly, which would defeat the hiding.
+    # Announce new solutions on Discord (after transaction commits). Hidden ones wait:
+    # the embed links the solution directly, which would defeat the hiding, so
+    # manage.py announce_solutions announces them once hidden_until has passed.
     if not instance.is_hidden:
-        transaction.on_commit(lambda: send_in_background(send_solution_notification, instance))
+        transaction.on_commit(lambda: send_in_background(announce_solution, instance))
     
     # Send in-app notification to task author (only if different from solution author)
     if task.author and task.author != instance.author:

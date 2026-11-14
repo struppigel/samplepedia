@@ -1,11 +1,13 @@
 """
-Tests for data migrations, run with the real migration machinery: migrate back
+Tests for data migrations (0019, 0022), run with the real migration machinery: migrate back
 to the state before the migration, create rows with the historical models,
 migrate forward and check the result.
 """
 import importlib
+from datetime import timedelta
 
 from django.db import connection
+from django.utils import timezone
 from django.db.migrations.executor import MigrationExecutor
 from django.test import SimpleTestCase, TransactionTestCase
 
@@ -81,6 +83,36 @@ class MoveLegacyContentMigrationTestCase(TransactionTestCase):
         count = Article.objects.count()
         move_content.move_legacy_content_to_articles(apps, None)
         self.assertEqual(Article.objects.count(), count)
+
+
+class MarkSolutionsAnnouncedMigrationTestCase(TransactionTestCase):
+    """0022 marks every existing solution as announced, so announce_solutions doesn't repost them."""
+
+    def setUp(self):
+        latest = MigrationExecutor(connection).loader.graph.leaf_nodes('samples')
+        self.addCleanup(migrate, latest)
+        apps = migrate([('samples', '0021_remove_legacy_content_and_like_count')])
+        User = apps.get_model('auth', 'User')
+        Task = apps.get_model('samples', 'AnalysisTask')
+        Solution = apps.get_model('samples', 'Solution')
+        author = User.objects.create(username='author')
+        task = Task.objects.create(sha256='b' * 64, goal='g', author=author)
+        self.hidden_until = timezone.now() + timedelta(weeks=2)
+        self.visible = Solution.objects.create(
+            analysis_task=task, title='Visible', solution_type='blog', url='https://example.com', author=author,
+        )
+        self.hidden = Solution.objects.create(
+            analysis_task=task, title='Hidden', solution_type='blog', url='https://example.com', author=author,
+            hidden_until=self.hidden_until,
+        )
+
+    def test_existing_solutions_count_as_announced(self):
+        apps = migrate([('samples', '0022_solution_discord_announced_at')])
+        Solution = apps.get_model('samples', 'Solution')
+        announced = dict(Solution.objects.values_list('title', 'discord_announced_at'))
+        self.assertEqual(announced['Visible'], self.visible.created_at)
+        # Hidden ones were announced at creation by the code before 0022
+        self.assertEqual(announced['Hidden'], self.hidden_until)
 
 
 class RecoveredTitleTestCase(SimpleTestCase):

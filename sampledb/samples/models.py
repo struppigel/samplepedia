@@ -474,7 +474,16 @@ class Solution(models.Model):
         verbose_name="Hidden until",
         help_text="Date and time when this solution becomes visible. Leave blank for immediate visibility."
     )
-    
+
+    # Set when the solution was announced on Discord: at creation if visible, else by
+    # the announce_solutions command once hidden_until has passed
+    discord_announced_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Announced on Discord at",
+    )
+
     objects = SolutionQuerySet.as_manager()
 
     @property
